@@ -4,6 +4,7 @@ import {
   getGetTeacherQueryKey, 
   useUpdateTeacher, 
   useListTeacherGroups,
+  getListTeacherGroupsQueryKey,
   getGetTeacherQueryOptions
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,7 +23,7 @@ export default function TeacherDetail() {
   const queryClient = useQueryClient();
 
   const { data: teacher, isLoading: isTeacherLoading } = useGetTeacher(id, { query: { enabled: !!id, queryKey: getGetTeacherQueryKey(id) } });
-  const { data: groups, isLoading: isGroupsLoading } = useListTeacherGroups(id, { query: { enabled: !!id } });
+  const { data: groups, isLoading: isGroupsLoading } = useListTeacherGroups(id, { query: { enabled: !!id, queryKey: getListTeacherGroupsQueryKey(id) } });
 
   if (isTeacherLoading) {
     return (

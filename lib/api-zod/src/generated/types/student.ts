@@ -5,6 +5,7 @@
  * Dolibarr EDU — API de gestión educativa
  * OpenAPI spec version: 0.1.0
  */
+import type { StudentDolibarrSyncStatus } from './studentDolibarrSyncStatus';
 
 export interface Student {
   id: number;
@@ -16,6 +17,11 @@ export interface Student {
   groupName: string;
   /** @nullable */
   dolibarrEntityId: number | null;
+  dolibarrSyncStatus: StudentDolibarrSyncStatus;
+  /** @nullable */
+  dolibarrSyncError?: string | null;
+  /** @nullable */
+  dolibarrPassword?: string | null;
   /** @nullable */
   companyName?: string | null;
   createdAt: Date;

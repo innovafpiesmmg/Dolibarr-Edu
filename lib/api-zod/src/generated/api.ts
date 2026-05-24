@@ -239,6 +239,9 @@ export const GetGroupResponse = zod.object({
   "groupId": zod.number(),
   "groupName": zod.string(),
   "dolibarrEntityId": zod.number().nullable(),
+  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncError": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish(),
   "companyName": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 }))
@@ -298,6 +301,9 @@ export const ListGroupStudentsResponseItem = zod.object({
   "groupId": zod.number(),
   "groupName": zod.string(),
   "dolibarrEntityId": zod.number().nullable(),
+  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncError": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish(),
   "companyName": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
@@ -326,6 +332,9 @@ export const ListStudentsResponseItem = zod.object({
   "groupId": zod.number(),
   "groupName": zod.string(),
   "dolibarrEntityId": zod.number().nullable(),
+  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncError": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish(),
   "companyName": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
@@ -403,6 +412,9 @@ export const GetStudentResponse = zod.object({
   "groupId": zod.number(),
   "groupName": zod.string(),
   "dolibarrEntityId": zod.number().nullable(),
+  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncError": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish(),
   "companyName": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
@@ -436,6 +448,9 @@ export const UpdateStudentResponse = zod.object({
   "groupId": zod.number(),
   "groupName": zod.string(),
   "dolibarrEntityId": zod.number().nullable(),
+  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncError": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish(),
   "companyName": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
@@ -446,6 +461,40 @@ export const UpdateStudentResponse = zod.object({
  */
 export const DeleteStudentParams = zod.object({
   "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary Desplegar alumno en Dolibarr (crear entidad y usuario)
+ */
+export const DeployStudentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeployStudentResponse = zod.object({
+  "studentId": zod.number(),
+  "status": zod.enum(['synced', 'error', 'skipped']),
+  "entityId": zod.number().nullish(),
+  "dolibarrPassword": zod.string().nullish(),
+  "error": zod.string().nullish()
+})
+
+
+/**
+ * @summary Desplegar todos los alumnos pendientes de un grupo
+ */
+export const DeployGroupStudentsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeployGroupStudentsResponse = zod.object({
+  "deployed": zod.number(),
+  "skipped": zod.number(),
+  "errors": zod.array(zod.object({
+  "studentId": zod.number(),
+  "username": zod.string(),
+  "error": zod.string()
+}))
 })
 
 

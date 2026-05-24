@@ -134,13 +134,17 @@ export default function AlumnosList() {
                           {student.companyName}
                         </div>
                         <div className="mt-1">
-                          {student.dolibarrEntityId ? (
+                          {student.dolibarrSyncStatus === "synced" ? (
                             <Badge variant="outline" className="text-[10px] h-5 px-1.5 text-green-600 border-green-200 bg-green-50 dark:bg-green-500/10">
-                              Entidad #{student.dolibarrEntityId}
+                              ✓ Entidad #{student.dolibarrEntityId}
+                            </Badge>
+                          ) : student.dolibarrSyncStatus === "error" ? (
+                            <Badge variant="outline" className="text-[10px] h-5 px-1.5 text-red-600 border-red-200 bg-red-50 dark:bg-red-500/10">
+                              ✗ Error sync
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="text-[10px] h-5 px-1.5 text-yellow-600 border-yellow-200 bg-yellow-50 dark:bg-yellow-500/10">
-                              Creación pendiente
+                              Pendiente
                             </Badge>
                           )}
                         </div>

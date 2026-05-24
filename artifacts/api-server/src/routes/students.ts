@@ -29,6 +29,9 @@ const studentWithGroupQuery = (whereClause?: ReturnType<typeof eq>) =>
       groupId: studentsTable.groupId,
       groupName: sql<string>`${groupsTable.name}`,
       dolibarrEntityId: studentsTable.dolibarrEntityId,
+      dolibarrSyncStatus: studentsTable.dolibarrSyncStatus,
+      dolibarrSyncError: studentsTable.dolibarrSyncError,
+      dolibarrPassword: studentsTable.dolibarrPassword,
       companyName: studentsTable.companyName,
       createdAt: studentsTable.createdAt,
     })
@@ -73,6 +76,9 @@ router.get("/students", async (req, res) => {
       groupId: studentsTable.groupId,
       groupName: sql<string>`${groupsTable.name}`,
       dolibarrEntityId: studentsTable.dolibarrEntityId,
+      dolibarrSyncStatus: studentsTable.dolibarrSyncStatus,
+      dolibarrSyncError: studentsTable.dolibarrSyncError,
+      dolibarrPassword: studentsTable.dolibarrPassword,
       companyName: studentsTable.companyName,
       createdAt: studentsTable.createdAt,
     })

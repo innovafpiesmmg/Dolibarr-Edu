@@ -505,6 +505,62 @@ paths:
         "204":
           description: Eliminado
 
+  /students/{id}/deploy:
+    post:
+      operationId: deployStudent
+      tags: [students]
+      summary: Desplegar alumno en Dolibarr (crear entidad y usuario)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Resultado del despliegue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeployResult"
+        "404":
+          description: Alumno no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Dolibarr no configurado o no disponible
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /groups/{id}/deploy-all:
+    post:
+      operationId: deployGroupStudents
+      tags: [groups]
+      summary: Desplegar todos los alumnos pendientes de un grupo
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Resultado del despliegue masivo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeployAllResult"
+        "404":
+          description: Grupo no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ── Stats ─────────────────────────────────────────────
   /stats:
     get:
@@ -621,18 +677,21 @@ components:
     # ── Student ──────────────────────────────────────────
     Student:
       type: object
-      required: [id, firstName, lastName, email, username, groupId, groupName, dolibarrEntityId, createdAt]
+      required: [id, firstName, lastName, email, username, groupId, groupName, dolibarrEntityId, dolibarrSyncStatus, createdAt]
       properties:
-        id:               { type: integer }
-        firstName:        { type: string }
-        lastName:         { type: string }
-        email:            { type: string }
-        username:         { type: string }
-        groupId:          { type: integer }
-        groupName:        { type: string }
-        dolibarrEntityId: { type: ["integer", "null"] }
-        companyName:      { type: ["string", "null"] }
-        createdAt:        { type: string, format: date-time }
+        id:                  { type: integer }
+        firstName:           { type: string }
+        lastName:            { type: string }
+        email:               { type: string }
+        username:            { type: string }
+        groupId:             { type: integer }
+        groupName:           { type: string }
+        dolibarrEntityId:    { type: ["integer", "null"] }
+        dolibarrSyncStatus:  { type: string, enum: [pending, synced, error] }
+        dolibarrSyncError:   { type: ["string", "null"] }
+        dolibarrPassword:    { type: ["string", "null"] }
+        companyName:         { type: ["string", "null"] }
+        createdAt:           { type: string, format: date-time }
 
     StudentInput:
       type: object
@@ -678,6 +737,32 @@ components:
             properties:
               username: { type: string }
               error:    { type: string }
+
+    DeployResult:
+      type: object
+      required: [studentId, status]
+      properties:
+        studentId:        { type: integer }
+        status:           { type: string, enum: [synced, error, skipped] }
+        entityId:         { type: ["integer", "null"] }
+        dolibarrPassword: { type: ["string", "null"] }
+        error:            { type: ["string", "null"] }
+
+    DeployAllResult:
+      type: object
+      required: [deployed, skipped, errors]
+      properties:
+        deployed: { type: integer }
+        skipped:  { type: integer }
+        errors:
+          type: array
+          items:
+            type: object
+            required: [studentId, username, error]
+            properties:
+              studentId: { type: integer }
+              username:  { type: string }
+              error:     { type: string }
 
     # ── Auth ─────────────────────────────────────────────
     PanelCredentials:

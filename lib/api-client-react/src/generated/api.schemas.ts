@@ -60,6 +60,15 @@ export interface Group {
   createdAt: string;
 }
 
+export type StudentDolibarrSyncStatus = typeof StudentDolibarrSyncStatus[keyof typeof StudentDolibarrSyncStatus];
+
+
+export const StudentDolibarrSyncStatus = {
+  pending: 'pending',
+  synced: 'synced',
+  error: 'error',
+} as const;
+
 export interface Student {
   id: number;
   firstName: string;
@@ -70,6 +79,11 @@ export interface Student {
   groupName: string;
   /** @nullable */
   dolibarrEntityId: number | null;
+  dolibarrSyncStatus: StudentDolibarrSyncStatus;
+  /** @nullable */
+  dolibarrSyncError?: string | null;
+  /** @nullable */
+  dolibarrPassword?: string | null;
   /** @nullable */
   companyName?: string | null;
   createdAt: string;
@@ -142,6 +156,38 @@ export type BulkImportResultErrorsItem = {
 export interface BulkImportResult {
   created: number;
   errors: BulkImportResultErrorsItem[];
+}
+
+export type DeployResultStatus = typeof DeployResultStatus[keyof typeof DeployResultStatus];
+
+
+export const DeployResultStatus = {
+  synced: 'synced',
+  error: 'error',
+  skipped: 'skipped',
+} as const;
+
+export interface DeployResult {
+  studentId: number;
+  status: DeployResultStatus;
+  /** @nullable */
+  entityId?: number | null;
+  /** @nullable */
+  dolibarrPassword?: string | null;
+  /** @nullable */
+  error?: string | null;
+}
+
+export type DeployAllResultErrorsItem = {
+  studentId: number;
+  username: string;
+  error: string;
+};
+
+export interface DeployAllResult {
+  deployed: number;
+  skipped: number;
+  errors: DeployAllResultErrorsItem[];
 }
 
 export interface PanelCredentials {

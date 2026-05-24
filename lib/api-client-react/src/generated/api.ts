@@ -23,6 +23,8 @@ import type {
   AlumnoCredentials,
   AlumnoSesion,
   BulkImportResult,
+  DeployAllResult,
+  DeployResult,
   ErrorResponse,
   Group,
   GroupInput,
@@ -1621,6 +1623,146 @@ export const useDeleteStudent = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDeleteStudentMutationOptions(options));
+    }
+
+export const getDeployStudentUrl = (id: number,) => {
+
+
+
+
+  return `/api/students/${id}/deploy`
+}
+
+/**
+ * @summary Desplegar alumno en Dolibarr (crear entidad y usuario)
+ */
+export const deployStudent = async (id: number, options?: RequestInit): Promise<DeployResult> => {
+
+  return customFetch<DeployResult>(getDeployStudentUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getDeployStudentMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deployStudent>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deployStudent>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deployStudent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deployStudent>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deployStudent(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeployStudentMutationResult = NonNullable<Awaited<ReturnType<typeof deployStudent>>>
+
+    export type DeployStudentMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Desplegar alumno en Dolibarr (crear entidad y usuario)
+ */
+export const useDeployStudent = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deployStudent>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deployStudent>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeployStudentMutationOptions(options));
+    }
+
+export const getDeployGroupStudentsUrl = (id: number,) => {
+
+
+
+
+  return `/api/groups/${id}/deploy-all`
+}
+
+/**
+ * @summary Desplegar todos los alumnos pendientes de un grupo
+ */
+export const deployGroupStudents = async (id: number, options?: RequestInit): Promise<DeployAllResult> => {
+
+  return customFetch<DeployAllResult>(getDeployGroupStudentsUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getDeployGroupStudentsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deployGroupStudents>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deployGroupStudents>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deployGroupStudents'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deployGroupStudents>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deployGroupStudents(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeployGroupStudentsMutationResult = NonNullable<Awaited<ReturnType<typeof deployGroupStudents>>>
+
+    export type DeployGroupStudentsMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Desplegar todos los alumnos pendientes de un grupo
+ */
+export const useDeployGroupStudents = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deployGroupStudents>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deployGroupStudents>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeployGroupStudentsMutationOptions(options));
     }
 
 export const getGetStatsUrl = () => {
