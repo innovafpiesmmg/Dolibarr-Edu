@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, varchar, numeric, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, varchar, numeric, timestamp, text } from "drizzle-orm/pg-core";
 import { studentsTable } from "./students";
 import { employeesTable } from "./employees";
 
@@ -36,6 +36,10 @@ export const payrollsTable = pgTable("payrolls", {
   ssEmpresaFogasa: numeric("ss_empresa_fogasa", { precision: 10, scale: 2 }).notNull(),
   totalSsEmpresa: numeric("total_ss_empresa", { precision: 10, scale: 2 }).notNull(),
   totalCosteEmpresa: numeric("total_coste_empresa", { precision: 10, scale: 2 }).notNull(),
+  dolibarrSalaryId: integer("dolibarr_salary_id"),
+  dolibarrAccountingId: integer("dolibarr_accounting_id"),
+  dolibarrSyncStatus: varchar("dolibarr_sync_status", { length: 20 }).notNull().default("pending"),
+  dolibarrSyncError: text("dolibarr_sync_error"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

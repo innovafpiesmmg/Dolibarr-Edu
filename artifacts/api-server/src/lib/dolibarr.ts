@@ -5,14 +5,6 @@ export interface DolibarrConfig {
   apiKey: string;
 }
 
-export interface CreatedEntity {
-  entityId: number;
-}
-
-export interface CreatedUser {
-  userId: number;
-}
-
 function getConfig(): DolibarrConfig | null {
   const apiUrl = process.env.DOLIBARR_API_URL;
   const apiKey = process.env.DOLIBARR_API_KEY;
@@ -36,90 +28,193 @@ async function dolibarrFetch(
     ...(entityId !== undefined ? { DOLENTITY: String(entityId) } : {}),
     ...(fetchOptions.headers as Record<string, string> ?? {}),
   };
-
   const url = `${config.apiUrl}/api/index.php${path}`;
-  const res = await fetch(url, { ...fetchOptions, headers });
-  return res;
+  return fetch(url, { ...fetchOptions, headers });
 }
 
-export async function createEntity(companyName: string, username: string): Promise<CreatedEntity> {
+async function parseId(res: Response, context: string): Promise<number> {
+  if (!res.ok) {
+    const text = await res.text();
+    logger.error({ status: res.status, body: text }, `Dolibarr error: ${context}`);
+    throw new Error(`${context}: ${res.status} — ${text.slice(0, 200)}`);
+  }
+  const data = await res.json() as unknown;
+  const id = typeof data === "number" ? data : (data as { id: number }).id;
+  if (!id) throw new Error(`${context}: respuesta sin ID`);
+  return id;
+}
+
+// ── Company entity ────────────────────────────────────────────────────────────
+
+export async function createEntity(companyName: string, username: string): Promise<{ entityId: number }> {
   const config = getConfig();
   if (!config) throw new Error("Dolibarr no está configurado (falta DOLIBARR_API_URL o DOLIBARR_API_KEY)");
 
-  const body = JSON.stringify({
-    label: companyName || `Empresa de ${username}`,
-    description: `Empresa simulada FP — alumno: ${username}`,
-    country_id: 4,
-    active: 1,
-  });
-
   const res = await dolibarrFetch(config, "/multicompany/entities", {
     method: "POST",
-    body,
+    body: JSON.stringify({
+      label: companyName || `Empresa de ${username}`,
+      description: `Empresa simulada FP — alumno: ${username}`,
+      country_id: 4,
+      active: 1,
+    }),
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    logger.error({ status: res.status, body: text }, "Error al crear entidad en Dolibarr");
-    throw new Error(`Dolibarr respondió con ${res.status}: ${text.slice(0, 200)}`);
-  }
-
-  const data = await res.json() as unknown;
-  const entityId = typeof data === "number" ? data : (data as { id: number }).id;
-  if (!entityId) throw new Error("Dolibarr no devolvió un ID de entidad válido");
-
-  return { entityId };
+  return { entityId: await parseId(res, "createEntity") };
 }
 
 export async function createDolibarrUser(
   entityId: number,
-  opts: {
-    username: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  },
-): Promise<CreatedUser> {
+  opts: { username: string; password: string; firstName: string; lastName: string; email: string },
+): Promise<{ userId: number }> {
   const config = getConfig();
   if (!config) throw new Error("Dolibarr no está configurado");
 
-  const body = JSON.stringify({
-    login: opts.username,
-    pass: opts.password,
-    firstname: opts.firstName,
-    lastname: opts.lastName,
-    email: opts.email,
-    entity: entityId,
-    admin: 0,
-    statut: 1,
-  });
-
   const res = await dolibarrFetch(config, "/users", {
     method: "POST",
-    body,
     entityId,
+    body: JSON.stringify({
+      login: opts.username,
+      pass: opts.password,
+      firstname: opts.firstName,
+      lastname: opts.lastName,
+      email: opts.email,
+      entity: entityId,
+      admin: 0,
+      statut: 1,
+    }),
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    logger.error({ status: res.status, body: text, entityId }, "Error al crear usuario en Dolibarr");
-    throw new Error(`Error al crear usuario Dolibarr: ${res.status} ${text.slice(0, 200)}`);
-  }
-
-  const data = await res.json() as unknown;
-  const userId = typeof data === "number" ? data : (data as { id: number }).id;
-  if (!userId) throw new Error("Dolibarr no devolvió un ID de usuario válido");
-
-  return { userId };
+  return { userId: await parseId(res, "createDolibarrUser") };
 }
 
 export function generateDolibarrPassword(username: string): string {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#";
-  const base = `${username}-`;
   let suffix = "";
-  for (let i = 0; i < 6; i++) {
-    suffix += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return base + suffix;
+  for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+  return `${username}-${suffix}`;
+}
+
+// ── HRM — Empleados ───────────────────────────────────────────────────────────
+
+export async function createDolibarrEmployee(
+  entityId: number,
+  opts: {
+    firstName: string;
+    lastName: string;
+    jobTitle: string;
+    contractType: "indefinido" | "temporal";
+    salaryBase: number;
+    dni?: string | null;
+  },
+): Promise<{ employeeId: number }> {
+  const config = getConfig();
+  if (!config) throw new Error("Dolibarr no está configurado");
+
+  // Endpoint del módulo HRM de Dolibarr
+  const res = await dolibarrFetch(config, "/hrm/employees", {
+    method: "POST",
+    entityId,
+    body: JSON.stringify({
+      firstname: opts.firstName,
+      lastname: opts.lastName,
+      job: opts.jobTitle,
+      // type: 1=indefinido, 2=temporal
+      contract_type: opts.contractType === "indefinido" ? 1 : 2,
+      salary: opts.salaryBase,
+      ref_number: opts.dni ?? "",
+      statut: 1,
+      entity: entityId,
+    }),
+  });
+
+  return { employeeId: await parseId(res, "createDolibarrEmployee") };
+}
+
+// ── Salary record ─────────────────────────────────────────────────────────────
+
+export async function createDolibarrSalary(
+  entityId: number,
+  opts: {
+    dolibarrEmployeeId: number;
+    label: string;
+    periodMonth: number;
+    periodYear: number;
+    totalDevengos: number;
+    totalDeducciones: number;
+    liquidoPercibir: number;
+  },
+): Promise<{ salaryId: number }> {
+  const config = getConfig();
+  if (!config) throw new Error("Dolibarr no está configurado");
+
+  const dateStr = `${opts.periodYear}-${String(opts.periodMonth).padStart(2, "0")}-01`;
+
+  const res = await dolibarrFetch(config, "/salaries", {
+    method: "POST",
+    entityId,
+    body: JSON.stringify({
+      label: opts.label,
+      fk_user: opts.dolibarrEmployeeId,
+      datesp: dateStr,
+      dateep: dateStr,
+      amount: opts.liquidoPercibir,
+      // campos adicionales para mostrar en Dolibarr
+      note_public: `Devengos: ${opts.totalDevengos} € | Deducciones: ${opts.totalDeducciones} € | Líquido: ${opts.liquidoPercibir} €`,
+    }),
+  });
+
+  return { salaryId: await parseId(res, "createDolibarrSalary") };
+}
+
+// ── Accounting entry ──────────────────────────────────────────────────────────
+// Crea los apuntes contables de nómina en el plan contable del alumno.
+// Cuentas según PGC español:
+//   640  Sueldos y salarios (debe) — bruto
+//   642  SS a cargo de la empresa (debe)
+//   465  Remuneraciones pendientes de pago (haber) — líquido
+//   476  Organismos SS acreedores (haber) — SS total + retención IRPF
+//   4751 HP acreedora retenciones IRPF (haber)
+
+export async function createPayrollAccountingEntry(
+  entityId: number,
+  opts: {
+    periodMonth: number;
+    periodYear: number;
+    employeeName: string;
+    totalDevengos: number;
+    ssEmpresa: number;
+    liquidoPercibir: number;
+    totalSsTrabajador: number;
+    irpfAmount: number;
+  },
+): Promise<{ accountingId: number }> {
+  const config = getConfig();
+  if (!config) throw new Error("Dolibarr no está configurado");
+
+  const dateStr = `${opts.periodYear}-${String(opts.periodMonth).padStart(2, "0")}-28`;
+  const label = `Nómina ${opts.employeeName} — ${String(opts.periodMonth).padStart(2, "0")}/${opts.periodYear}`;
+
+  const ssAcreedores = opts.totalSsTrabajador + opts.ssEmpresa;
+
+  const lines = [
+    { accountno: "640", label, debit: opts.totalDevengos, credit: 0 },
+    { accountno: "642", label: `SS empresa — ${label}`, debit: opts.ssEmpresa, credit: 0 },
+    { accountno: "465", label: `Remuneraciones pend. — ${label}`, debit: 0, credit: opts.liquidoPercibir },
+    { accountno: "476", label: `SS acreedores — ${label}`, debit: 0, credit: ssAcreedores },
+    { accountno: "4751", label: `HP IRPF — ${label}`, debit: 0, credit: opts.irpfAmount },
+  ];
+
+  const res = await dolibarrFetch(config, "/accountancy/bookkeeping", {
+    method: "POST",
+    entityId,
+    body: JSON.stringify({
+      label,
+      date_document: dateStr,
+      journal_code: "OD",
+      lines,
+    }),
+  });
+
+  return { accountingId: await parseId(res, "createPayrollAccountingEntry") };
 }

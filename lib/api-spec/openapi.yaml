@@ -997,21 +997,24 @@ components:
     # ── Employee ─────────────────────────────────────────
     Employee:
       type: object
-      required: [id, studentId, firstName, lastName, jobTitle, contractType, groupCategory, salaryBase, extraPayments, irpfRate, active, createdAt]
+      required: [id, studentId, firstName, lastName, jobTitle, contractType, groupCategory, salaryBase, extraPayments, irpfRate, active, dolibarrSyncStatus, createdAt]
       properties:
-        id:            { type: integer }
-        studentId:     { type: integer }
-        firstName:     { type: string }
-        lastName:      { type: string }
-        dni:           { type: ["string", "null"] }
-        jobTitle:      { type: string }
-        contractType:  { type: string, enum: [indefinido, temporal] }
-        groupCategory: { type: integer }
-        salaryBase:    { type: number }
-        extraPayments: { type: integer, enum: [12, 14] }
-        irpfRate:      { type: number }
-        active:        { type: boolean }
-        createdAt:     { type: string, format: date-time }
+        id:                   { type: integer }
+        studentId:            { type: integer }
+        firstName:            { type: string }
+        lastName:             { type: string }
+        dni:                  { type: ["string", "null"] }
+        jobTitle:             { type: string }
+        contractType:         { type: string, enum: [indefinido, temporal] }
+        groupCategory:        { type: integer }
+        salaryBase:           { type: number }
+        extraPayments:        { type: integer, enum: [12, 14] }
+        irpfRate:             { type: number }
+        active:               { type: boolean }
+        dolibarrEmployeeId:   { type: ["integer", "null"] }
+        dolibarrSyncStatus:   { type: string, enum: [pending, synced, error] }
+        dolibarrSyncError:    { type: ["string", "null"] }
+        createdAt:            { type: string, format: date-time }
 
     EmployeeInput:
       type: object
@@ -1080,10 +1083,14 @@ components:
       allOf:
         - $ref: "#/components/schemas/PayrollCalculation"
         - type: object
-          required: [id, createdAt]
+          required: [id, dolibarrSyncStatus, createdAt]
           properties:
-            id:        { type: integer }
-            createdAt: { type: string, format: date-time }
+            id:                   { type: integer }
+            dolibarrSalaryId:     { type: ["integer", "null"] }
+            dolibarrAccountingId: { type: ["integer", "null"] }
+            dolibarrSyncStatus:   { type: string, enum: [pending, synced, error] }
+            dolibarrSyncError:    { type: ["string", "null"] }
+            createdAt:            { type: string, format: date-time }
 
     # ── Stats ────────────────────────────────────────────
     Stats:

@@ -518,6 +518,9 @@ export const ListEmployeesResponseItem = zod.object({
   "extraPayments": zod.union([zod.literal(12),zod.literal(14)]),
   "irpfRate": zod.number(),
   "active": zod.boolean(),
+  "dolibarrEmployeeId": zod.number().nullish(),
+  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncError": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 export const ListEmployeesResponse = zod.array(ListEmployeesResponseItem)
@@ -576,6 +579,9 @@ export const GetEmployeeResponse = zod.object({
   "extraPayments": zod.union([zod.literal(12),zod.literal(14)]),
   "irpfRate": zod.number(),
   "active": zod.boolean(),
+  "dolibarrEmployeeId": zod.number().nullish(),
+  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncError": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -629,6 +635,9 @@ export const UpdateEmployeeResponse = zod.object({
   "extraPayments": zod.union([zod.literal(12),zod.literal(14)]),
   "irpfRate": zod.number(),
   "active": zod.boolean(),
+  "dolibarrEmployeeId": zod.number().nullish(),
+  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncError": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -737,6 +746,10 @@ export const ListPayrollsResponseItem = zod.object({
   "totalCosteEmpresa": zod.number()
 }).and(zod.object({
   "id": zod.number(),
+  "dolibarrSalaryId": zod.number().nullish(),
+  "dolibarrAccountingId": zod.number().nullish(),
+  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncError": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 }))
 export const ListPayrollsResponse = zod.array(ListPayrollsResponseItem)
@@ -807,6 +820,10 @@ export const GetPayrollResponse = zod.object({
   "totalCosteEmpresa": zod.number()
 }).and(zod.object({
   "id": zod.number(),
+  "dolibarrSalaryId": zod.number().nullish(),
+  "dolibarrAccountingId": zod.number().nullish(),
+  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncError": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 }))
 

@@ -1,8 +1,13 @@
 import { Router, type IRouter } from "express";
 import { and, eq } from "drizzle-orm";
-import { db, payrollsTable, employeesTable } from "@workspace/db";
+import { db, payrollsTable, employeesTable, studentsTable } from "@workspace/db";
 import { z } from "zod";
 import { calculatePayroll } from "../lib/payroll-calculator";
+import {
+  isDolibarrConfigured,
+  createDolibarrSalary,
+  createPayrollAccountingEntry,
+} from "../lib/dolibarr";
 
 const router: IRouter = Router();
 
@@ -19,13 +24,21 @@ const PayrollInputSchema = z.object({
   irpfRateOverride: z.number().min(0).max(45).optional(),
 });
 
-async function getEmployeeOrFail(employeeId: number, studentId: number) {
+async function getEmployeeAndStudent(employeeId: number, studentId: number) {
   const [emp] = await db
     .select()
     .from(employeesTable)
     .where(and(eq(employeesTable.id, employeeId), eq(employeesTable.studentId, studentId)))
     .limit(1);
-  return emp ?? null;
+  if (!emp) return null;
+
+  const [student] = await db
+    .select({ dolibarrEntityId: studentsTable.dolibarrEntityId })
+    .from(studentsTable)
+    .where(eq(studentsTable.id, studentId))
+    .limit(1);
+
+  return { employee: emp, entityId: student?.dolibarrEntityId ?? null };
 }
 
 function toDto(p: typeof payrollsTable.$inferSelect) {
@@ -58,24 +71,28 @@ function toDto(p: typeof payrollsTable.$inferSelect) {
     ssEmpresaFogasa: Number(p.ssEmpresaFogasa),
     totalSsEmpresa: Number(p.totalSsEmpresa),
     totalCosteEmpresa: Number(p.totalCosteEmpresa),
+    dolibarrSalaryId: p.dolibarrSalaryId,
+    dolibarrAccountingId: p.dolibarrAccountingId,
+    dolibarrSyncStatus: p.dolibarrSyncStatus,
+    dolibarrSyncError: p.dolibarrSyncError,
     createdAt: p.createdAt,
   };
 }
 
 router.post("/payrolls/calculate", async (req, res) => {
   const body = PayrollInputSchema.parse(req.body);
-  const employee = await getEmployeeOrFail(body.employeeId, body.studentId);
-  if (!employee) {
+  const row = await getEmployeeAndStudent(body.employeeId, body.studentId);
+  if (!row) {
     res.status(404).json({ error: "Trabajador no encontrado o no pertenece al alumno indicado" });
     return;
   }
 
   const result = calculatePayroll({
     ...body,
-    salaryBase: Number(employee.salaryBase),
-    extraPayments: employee.extraPayments,
-    contractType: employee.contractType as "indefinido" | "temporal",
-    irpfRate: Number(employee.irpfRate),
+    salaryBase: Number(row.employee.salaryBase),
+    extraPayments: row.employee.extraPayments,
+    contractType: row.employee.contractType as "indefinido" | "temporal",
+    irpfRate: Number(row.employee.irpfRate),
   });
 
   res.json(result);
@@ -105,18 +122,18 @@ router.get("/payrolls", async (req, res) => {
 
 router.post("/payrolls", async (req, res) => {
   const body = PayrollInputSchema.parse(req.body);
-  const employee = await getEmployeeOrFail(body.employeeId, body.studentId);
-  if (!employee) {
+  const row = await getEmployeeAndStudent(body.employeeId, body.studentId);
+  if (!row) {
     res.status(404).json({ error: "Trabajador no encontrado o no pertenece al alumno indicado" });
     return;
   }
 
   const calc = calculatePayroll({
     ...body,
-    salaryBase: Number(employee.salaryBase),
-    extraPayments: employee.extraPayments,
-    contractType: employee.contractType as "indefinido" | "temporal",
-    irpfRate: Number(employee.irpfRate),
+    salaryBase: Number(row.employee.salaryBase),
+    extraPayments: row.employee.extraPayments,
+    contractType: row.employee.contractType as "indefinido" | "temporal",
+    irpfRate: Number(row.employee.irpfRate),
   });
 
   const s = (n: number) => String(n);
@@ -151,8 +168,63 @@ router.post("/payrolls", async (req, res) => {
       ssEmpresaFogasa: s(calc.ssEmpresaFogasa),
       totalSsEmpresa: s(calc.totalSsEmpresa),
       totalCosteEmpresa: s(calc.totalCosteEmpresa),
+      dolibarrSyncStatus: "pending",
     })
     .returning();
+
+  // Integración directa con Dolibarr
+  if (isDolibarrConfigured() && row.entityId && row.employee.dolibarrEmployeeId) {
+    const employeeName = `${row.employee.firstName} ${row.employee.lastName}`;
+    let salaryId: number | undefined;
+    let accountingId: number | undefined;
+    let syncError: string | undefined;
+
+    try {
+      const { salaryId: sid } = await createDolibarrSalary(row.entityId, {
+        dolibarrEmployeeId: row.employee.dolibarrEmployeeId,
+        label: `Nómina ${employeeName} ${String(calc.periodMonth).padStart(2, "0")}/${calc.periodYear}`,
+        periodMonth: calc.periodMonth,
+        periodYear: calc.periodYear,
+        totalDevengos: calc.totalDevengos,
+        totalDeducciones: calc.totalDeducciones,
+        liquidoPercibir: calc.liquidoPercibir,
+      });
+      salaryId = sid;
+    } catch (err) {
+      syncError = `Salario: ${err instanceof Error ? err.message : "Error"}`;
+    }
+
+    try {
+      const { accountingId: aid } = await createPayrollAccountingEntry(row.entityId, {
+        periodMonth: calc.periodMonth,
+        periodYear: calc.periodYear,
+        employeeName,
+        totalDevengos: calc.totalDevengos,
+        ssEmpresa: calc.totalSsEmpresa,
+        liquidoPercibir: calc.liquidoPercibir,
+        totalSsTrabajador: calc.totalSsTrabajador,
+        irpfAmount: calc.irpfAmount,
+      });
+      accountingId = aid;
+    } catch (err) {
+      const msg = `Contabilidad: ${err instanceof Error ? err.message : "Error"}`;
+      syncError = syncError ? `${syncError} | ${msg}` : msg;
+    }
+
+    const [updated] = await db
+      .update(payrollsTable)
+      .set({
+        dolibarrSalaryId: salaryId ?? null,
+        dolibarrAccountingId: accountingId ?? null,
+        dolibarrSyncStatus: syncError ? "error" : "synced",
+        dolibarrSyncError: syncError ?? null,
+      })
+      .where(eq(payrollsTable.id, payroll.id))
+      .returning();
+
+    res.status(201).json(toDto(updated));
+    return;
+  }
 
   res.status(201).json(toDto(payroll));
 });

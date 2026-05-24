@@ -13,6 +13,10 @@ import GroupDetail from "@/pages/grupos/detail";
 import AlumnosList from "@/pages/alumnos/index";
 import StudentDetail from "@/pages/alumnos/detail";
 import ImportarAlumnos from "@/pages/importar/index";
+import NominasIndex from "@/pages/nominas/index";
+import NominasEmpleados from "@/pages/nominas/empleados";
+import NuevaNomina from "@/pages/nominas/nueva";
+import NominaDetalle from "@/pages/nominas/detalle";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
@@ -73,6 +77,19 @@ function Router() {
 
       <Route path="/importar">
         <ProtectedRoute><ImportarAlumnos /></ProtectedRoute>
+      </Route>
+
+      <Route path="/nominas">
+        <ProtectedRoute><NominasIndex /></ProtectedRoute>
+      </Route>
+      <Route path="/nominas/empleados">
+        <ProtectedRoute><NominasEmpleados /></ProtectedRoute>
+      </Route>
+      <Route path="/nominas/nueva">
+        <ProtectedRoute><NuevaNomina /></ProtectedRoute>
+      </Route>
+      <Route path="/nominas/:id">
+        <ProtectedRoute><NominaDetalle /></ProtectedRoute>
       </Route>
 
       <Route component={NotFound} />

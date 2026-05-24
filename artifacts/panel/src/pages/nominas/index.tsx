@@ -27,7 +27,7 @@ export default function NominasIndex() {
   const { data: students } = useListStudents({});
   const { data: payrolls, isLoading } = useListPayrolls({ studentId });
   const { data: employees } = useListEmployees({ studentId: studentId ?? 0 }, {
-    query: { enabled: !!studentId },
+    query: { enabled: !!studentId, queryKey: ["listEmployees", studentId] },
   });
   const deleteMut = useDeletePayroll();
 

@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, varchar, numeric, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, varchar, numeric, boolean, timestamp, text } from "drizzle-orm/pg-core";
 import { studentsTable } from "./students";
 
 export const employeesTable = pgTable("employees", {
@@ -14,6 +14,9 @@ export const employeesTable = pgTable("employees", {
   extraPayments: integer("extra_payments").notNull().default(14),
   irpfRate: numeric("irpf_rate", { precision: 5, scale: 2 }).notNull().default("15"),
   active: boolean("active").notNull().default(true),
+  dolibarrEmployeeId: integer("dolibarr_employee_id"),
+  dolibarrSyncStatus: varchar("dolibarr_sync_status", { length: 20 }).notNull().default("pending"),
+  dolibarrSyncError: text("dolibarr_sync_error"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

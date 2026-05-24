@@ -70,7 +70,7 @@ export default function NominasEmpleados() {
   const { data: students } = useListStudents({});
   const { data: employees, isLoading } = useListEmployees(
     { studentId: studentId ?? 0 },
-    { query: { enabled: !!studentId } },
+    { query: { enabled: !!studentId, queryKey: ["listEmployees", studentId] } },
   );
 
   const createMut = useCreateEmployee();

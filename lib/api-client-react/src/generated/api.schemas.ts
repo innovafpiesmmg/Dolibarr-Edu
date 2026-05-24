@@ -228,6 +228,15 @@ export const EmployeeExtraPayments = {
   NUMBER_14: 14,
 } as const;
 
+export type EmployeeDolibarrSyncStatus = typeof EmployeeDolibarrSyncStatus[keyof typeof EmployeeDolibarrSyncStatus];
+
+
+export const EmployeeDolibarrSyncStatus = {
+  pending: 'pending',
+  synced: 'synced',
+  error: 'error',
+} as const;
+
 export interface Employee {
   id: number;
   studentId: number;
@@ -242,6 +251,11 @@ export interface Employee {
   extraPayments: EmployeeExtraPayments;
   irpfRate: number;
   active: boolean;
+  /** @nullable */
+  dolibarrEmployeeId?: number | null;
+  dolibarrSyncStatus: EmployeeDolibarrSyncStatus;
+  /** @nullable */
+  dolibarrSyncError?: string | null;
   createdAt: string;
 }
 
@@ -338,10 +352,26 @@ export interface PayrollCalculation {
   totalCosteEmpresa: number;
 }
 
-export type Payroll = PayrollCalculation & {
+export type PayrollDolibarrSyncStatus = typeof PayrollDolibarrSyncStatus[keyof typeof PayrollDolibarrSyncStatus];
+
+
+export const PayrollDolibarrSyncStatus = {
+  pending: 'pending',
+  synced: 'synced',
+  error: 'error',
+} as const;
+
+export type Payroll = PayrollCalculation & ({
   id: number;
+  /** @nullable */
+  dolibarrSalaryId?: number | null;
+  /** @nullable */
+  dolibarrAccountingId?: number | null;
+  dolibarrSyncStatus: PayrollDolibarrSyncStatus;
+  /** @nullable */
+  dolibarrSyncError?: string | null;
   createdAt: string;
-};
+});
 
 export type StatsStudentsPerGroupItem = {
   groupId: number;

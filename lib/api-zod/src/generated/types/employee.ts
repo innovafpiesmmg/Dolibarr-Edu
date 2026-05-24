@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { EmployeeContractType } from './employeeContractType';
+import type { EmployeeDolibarrSyncStatus } from './employeeDolibarrSyncStatus';
 import type { EmployeeExtraPayments } from './employeeExtraPayments';
 
 export interface Employee {
@@ -22,5 +23,10 @@ export interface Employee {
   extraPayments: EmployeeExtraPayments;
   irpfRate: number;
   active: boolean;
+  /** @nullable */
+  dolibarrEmployeeId?: number | null;
+  dolibarrSyncStatus: EmployeeDolibarrSyncStatus;
+  /** @nullable */
+  dolibarrSyncError?: string | null;
   createdAt: Date;
 }

@@ -6,8 +6,16 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { PayrollCalculation } from './payrollCalculation';
+import type { PayrollDolibarrSyncStatus } from './payrollDolibarrSyncStatus';
 
-export type Payroll = PayrollCalculation & {
+export type Payroll = PayrollCalculation & ({
   id: number;
+  /** @nullable */
+  dolibarrSalaryId?: number | null;
+  /** @nullable */
+  dolibarrAccountingId?: number | null;
+  dolibarrSyncStatus: PayrollDolibarrSyncStatus;
+  /** @nullable */
+  dolibarrSyncError?: string | null;
   createdAt: Date;
-};
+});
