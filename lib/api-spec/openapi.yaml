@@ -561,6 +561,205 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  # ── Employees (nóminas) ───────────────────────────────
+  /employees:
+    get:
+      operationId: listEmployees
+      tags: [employees]
+      summary: Listar trabajadores
+      parameters:
+        - in: query
+          name: studentId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Lista de trabajadores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Employee"
+    post:
+      operationId: createEmployee
+      tags: [employees]
+      summary: Crear trabajador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmployeeInput"
+      responses:
+        "201":
+          description: Trabajador creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+
+  /employees/{id}:
+    get:
+      operationId: getEmployee
+      tags: [employees]
+      summary: Obtener trabajador
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trabajador
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+        "404":
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateEmployee
+      tags: [employees]
+      summary: Actualizar trabajador
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmployeeInput"
+      responses:
+        "200":
+          description: Trabajador actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+    delete:
+      operationId: deleteEmployee
+      tags: [employees]
+      summary: Eliminar trabajador
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Eliminado
+
+  # ── Payrolls (nóminas) ────────────────────────────────
+  /payrolls/calculate:
+    post:
+      operationId: calculatePayroll
+      tags: [payrolls]
+      summary: Calcular nómina (sin guardar)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayrollInput"
+      responses:
+        "200":
+          description: Resultado del cálculo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayrollCalculation"
+
+  /payrolls:
+    get:
+      operationId: listPayrolls
+      tags: [payrolls]
+      summary: Listar nóminas
+      parameters:
+        - in: query
+          name: studentId
+          schema:
+            type: integer
+        - in: query
+          name: employeeId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Lista de nóminas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payroll"
+    post:
+      operationId: createPayroll
+      tags: [payrolls]
+      summary: Crear y guardar nómina
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayrollInput"
+      responses:
+        "201":
+          description: Nómina guardada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payroll"
+
+  /payrolls/{id}:
+    get:
+      operationId: getPayroll
+      tags: [payrolls]
+      summary: Obtener nómina
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Nómina
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payroll"
+        "404":
+          description: No encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deletePayroll
+      tags: [payrolls]
+      summary: Eliminar nómina
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Eliminada
+
   # ── Stats ─────────────────────────────────────────────
   /stats:
     get:
@@ -794,6 +993,97 @@ components:
         groupName:   { type: string }
         dolibarrUrl: { type: string }
         entityId:    { type: integer, nullable: true }
+
+    # ── Employee ─────────────────────────────────────────
+    Employee:
+      type: object
+      required: [id, studentId, firstName, lastName, jobTitle, contractType, groupCategory, salaryBase, extraPayments, irpfRate, active, createdAt]
+      properties:
+        id:            { type: integer }
+        studentId:     { type: integer }
+        firstName:     { type: string }
+        lastName:      { type: string }
+        dni:           { type: ["string", "null"] }
+        jobTitle:      { type: string }
+        contractType:  { type: string, enum: [indefinido, temporal] }
+        groupCategory: { type: integer }
+        salaryBase:    { type: number }
+        extraPayments: { type: integer, enum: [12, 14] }
+        irpfRate:      { type: number }
+        active:        { type: boolean }
+        createdAt:     { type: string, format: date-time }
+
+    EmployeeInput:
+      type: object
+      required: [studentId, firstName, lastName, jobTitle, salaryBase]
+      properties:
+        studentId:     { type: integer }
+        firstName:     { type: string, minLength: 1 }
+        lastName:      { type: string, minLength: 1 }
+        dni:           { type: string }
+        jobTitle:      { type: string, minLength: 1 }
+        contractType:  { type: string, enum: [indefinido, temporal], default: indefinido }
+        groupCategory: { type: integer, minimum: 1, maximum: 11, default: 7 }
+        salaryBase:    { type: number, minimum: 0 }
+        extraPayments: { type: integer, enum: [12, 14], default: 14 }
+        irpfRate:      { type: number, minimum: 0, maximum: 45, default: 15 }
+
+    # ── Payroll ───────────────────────────────────────────
+    PayrollInput:
+      type: object
+      required: [employeeId, studentId, periodMonth, periodYear]
+      properties:
+        employeeId:        { type: integer }
+        studentId:         { type: integer }
+        periodMonth:       { type: integer, minimum: 1, maximum: 12 }
+        periodYear:        { type: integer }
+        plusConvenio:      { type: number, default: 0 }
+        plusTransporte:    { type: number, default: 0 }
+        importeHorasExtra: { type: number, default: 0 }
+        otroDevengo:       { type: number, default: 0 }
+        otroDevengoLabel:  { type: string }
+        irpfRateOverride:  { type: number, minimum: 0, maximum: 45 }
+
+    PayrollCalculation:
+      type: object
+      required: [employeeId, studentId, periodMonth, periodYear, salaryBase, plusConvenio, plusTransporte, importeHorasExtra, otroDevengo, prorataPagasExtra, totalDevengos, baseCotizacion, ssContingencias, ssDesempleo, ssFp, totalSsTrabajador, irpfRate, irpfAmount, totalDeducciones, liquidoPercibir, ssEmpresaContingencias, ssEmpresaDesempleo, ssEmpresaFp, ssEmpresaFogasa, totalSsEmpresa, totalCosteEmpresa]
+      properties:
+        employeeId:             { type: integer }
+        studentId:              { type: integer }
+        periodMonth:            { type: integer }
+        periodYear:             { type: integer }
+        salaryBase:             { type: number }
+        plusConvenio:           { type: number }
+        plusTransporte:         { type: number }
+        importeHorasExtra:      { type: number }
+        otroDevengo:            { type: number }
+        otroDevengoLabel:       { type: ["string", "null"] }
+        prorataPagasExtra:      { type: number }
+        totalDevengos:          { type: number }
+        baseCotizacion:         { type: number }
+        ssContingencias:        { type: number }
+        ssDesempleo:            { type: number }
+        ssFp:                   { type: number }
+        totalSsTrabajador:      { type: number }
+        irpfRate:               { type: number }
+        irpfAmount:             { type: number }
+        totalDeducciones:       { type: number }
+        liquidoPercibir:        { type: number }
+        ssEmpresaContingencias: { type: number }
+        ssEmpresaDesempleo:     { type: number }
+        ssEmpresaFp:            { type: number }
+        ssEmpresaFogasa:        { type: number }
+        totalSsEmpresa:         { type: number }
+        totalCosteEmpresa:      { type: number }
+
+    Payroll:
+      allOf:
+        - $ref: "#/components/schemas/PayrollCalculation"
+        - type: object
+          required: [id, createdAt]
+          properties:
+            id:        { type: integer }
+            createdAt: { type: string, format: date-time }
 
     # ── Stats ────────────────────────────────────────────
     Stats:

@@ -499,6 +499,327 @@ export const DeployGroupStudentsResponse = zod.object({
 
 
 /**
+ * @summary Listar trabajadores
+ */
+export const ListEmployeesQueryParams = zod.object({
+  "studentId": zod.coerce.number()
+})
+
+export const ListEmployeesResponseItem = zod.object({
+  "id": zod.number(),
+  "studentId": zod.number(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "dni": zod.string().nullish(),
+  "jobTitle": zod.string(),
+  "contractType": zod.enum(['indefinido', 'temporal']),
+  "groupCategory": zod.number(),
+  "salaryBase": zod.number(),
+  "extraPayments": zod.union([zod.literal(12),zod.literal(14)]),
+  "irpfRate": zod.number(),
+  "active": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+export const ListEmployeesResponse = zod.array(ListEmployeesResponseItem)
+
+
+/**
+ * @summary Crear trabajador
+ */
+
+
+
+export const createEmployeeBodyContractTypeDefault = `indefinido`;
+export const createEmployeeBodyGroupCategoryDefault = 7;
+export const createEmployeeBodyGroupCategoryMax = 11;
+
+export const createEmployeeBodySalaryBaseMin = 0;
+
+export const createEmployeeBodyExtraPaymentsDefault = 14;
+export const createEmployeeBodyIrpfRateDefault = 15;
+export const createEmployeeBodyIrpfRateMin = 0;
+export const createEmployeeBodyIrpfRateMax = 45;
+
+
+
+export const CreateEmployeeBody = zod.object({
+  "studentId": zod.number(),
+  "firstName": zod.string().min(1),
+  "lastName": zod.string().min(1),
+  "dni": zod.string().optional(),
+  "jobTitle": zod.string().min(1),
+  "contractType": zod.enum(['indefinido', 'temporal']).default(createEmployeeBodyContractTypeDefault),
+  "groupCategory": zod.number().min(1).max(createEmployeeBodyGroupCategoryMax).default(createEmployeeBodyGroupCategoryDefault),
+  "salaryBase": zod.number().min(createEmployeeBodySalaryBaseMin),
+  "extraPayments": zod.union([zod.literal(12),zod.literal(14)]).default(createEmployeeBodyExtraPaymentsDefault),
+  "irpfRate": zod.number().min(createEmployeeBodyIrpfRateMin).max(createEmployeeBodyIrpfRateMax).default(createEmployeeBodyIrpfRateDefault)
+})
+
+
+/**
+ * @summary Obtener trabajador
+ */
+export const GetEmployeeParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetEmployeeResponse = zod.object({
+  "id": zod.number(),
+  "studentId": zod.number(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "dni": zod.string().nullish(),
+  "jobTitle": zod.string(),
+  "contractType": zod.enum(['indefinido', 'temporal']),
+  "groupCategory": zod.number(),
+  "salaryBase": zod.number(),
+  "extraPayments": zod.union([zod.literal(12),zod.literal(14)]),
+  "irpfRate": zod.number(),
+  "active": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Actualizar trabajador
+ */
+export const UpdateEmployeeParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const updateEmployeeBodyContractTypeDefault = `indefinido`;
+export const updateEmployeeBodyGroupCategoryDefault = 7;
+export const updateEmployeeBodyGroupCategoryMax = 11;
+
+export const updateEmployeeBodySalaryBaseMin = 0;
+
+export const updateEmployeeBodyExtraPaymentsDefault = 14;
+export const updateEmployeeBodyIrpfRateDefault = 15;
+export const updateEmployeeBodyIrpfRateMin = 0;
+export const updateEmployeeBodyIrpfRateMax = 45;
+
+
+
+export const UpdateEmployeeBody = zod.object({
+  "studentId": zod.number(),
+  "firstName": zod.string().min(1),
+  "lastName": zod.string().min(1),
+  "dni": zod.string().optional(),
+  "jobTitle": zod.string().min(1),
+  "contractType": zod.enum(['indefinido', 'temporal']).default(updateEmployeeBodyContractTypeDefault),
+  "groupCategory": zod.number().min(1).max(updateEmployeeBodyGroupCategoryMax).default(updateEmployeeBodyGroupCategoryDefault),
+  "salaryBase": zod.number().min(updateEmployeeBodySalaryBaseMin),
+  "extraPayments": zod.union([zod.literal(12),zod.literal(14)]).default(updateEmployeeBodyExtraPaymentsDefault),
+  "irpfRate": zod.number().min(updateEmployeeBodyIrpfRateMin).max(updateEmployeeBodyIrpfRateMax).default(updateEmployeeBodyIrpfRateDefault)
+})
+
+export const UpdateEmployeeResponse = zod.object({
+  "id": zod.number(),
+  "studentId": zod.number(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "dni": zod.string().nullish(),
+  "jobTitle": zod.string(),
+  "contractType": zod.enum(['indefinido', 'temporal']),
+  "groupCategory": zod.number(),
+  "salaryBase": zod.number(),
+  "extraPayments": zod.union([zod.literal(12),zod.literal(14)]),
+  "irpfRate": zod.number(),
+  "active": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Eliminar trabajador
+ */
+export const DeleteEmployeeParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary Calcular nómina (sin guardar)
+ */
+export const calculatePayrollBodyPeriodMonthMax = 12;
+
+export const calculatePayrollBodyPlusConvenioDefault = 0;
+export const calculatePayrollBodyPlusTransporteDefault = 0;
+export const calculatePayrollBodyImporteHorasExtraDefault = 0;
+export const calculatePayrollBodyOtroDevengoDefault = 0;
+export const calculatePayrollBodyIrpfRateOverrideMin = 0;
+export const calculatePayrollBodyIrpfRateOverrideMax = 45;
+
+
+
+export const CalculatePayrollBody = zod.object({
+  "employeeId": zod.number(),
+  "studentId": zod.number(),
+  "periodMonth": zod.number().min(1).max(calculatePayrollBodyPeriodMonthMax),
+  "periodYear": zod.number(),
+  "plusConvenio": zod.number().default(calculatePayrollBodyPlusConvenioDefault),
+  "plusTransporte": zod.number().default(calculatePayrollBodyPlusTransporteDefault),
+  "importeHorasExtra": zod.number().default(calculatePayrollBodyImporteHorasExtraDefault),
+  "otroDevengo": zod.number().default(calculatePayrollBodyOtroDevengoDefault),
+  "otroDevengoLabel": zod.string().optional(),
+  "irpfRateOverride": zod.number().min(calculatePayrollBodyIrpfRateOverrideMin).max(calculatePayrollBodyIrpfRateOverrideMax).optional()
+})
+
+export const CalculatePayrollResponse = zod.object({
+  "employeeId": zod.number(),
+  "studentId": zod.number(),
+  "periodMonth": zod.number(),
+  "periodYear": zod.number(),
+  "salaryBase": zod.number(),
+  "plusConvenio": zod.number(),
+  "plusTransporte": zod.number(),
+  "importeHorasExtra": zod.number(),
+  "otroDevengo": zod.number(),
+  "otroDevengoLabel": zod.string().nullish(),
+  "prorataPagasExtra": zod.number(),
+  "totalDevengos": zod.number(),
+  "baseCotizacion": zod.number(),
+  "ssContingencias": zod.number(),
+  "ssDesempleo": zod.number(),
+  "ssFp": zod.number(),
+  "totalSsTrabajador": zod.number(),
+  "irpfRate": zod.number(),
+  "irpfAmount": zod.number(),
+  "totalDeducciones": zod.number(),
+  "liquidoPercibir": zod.number(),
+  "ssEmpresaContingencias": zod.number(),
+  "ssEmpresaDesempleo": zod.number(),
+  "ssEmpresaFp": zod.number(),
+  "ssEmpresaFogasa": zod.number(),
+  "totalSsEmpresa": zod.number(),
+  "totalCosteEmpresa": zod.number()
+})
+
+
+/**
+ * @summary Listar nóminas
+ */
+export const ListPayrollsQueryParams = zod.object({
+  "studentId": zod.coerce.number().optional(),
+  "employeeId": zod.coerce.number().optional()
+})
+
+export const ListPayrollsResponseItem = zod.object({
+  "employeeId": zod.number(),
+  "studentId": zod.number(),
+  "periodMonth": zod.number(),
+  "periodYear": zod.number(),
+  "salaryBase": zod.number(),
+  "plusConvenio": zod.number(),
+  "plusTransporte": zod.number(),
+  "importeHorasExtra": zod.number(),
+  "otroDevengo": zod.number(),
+  "otroDevengoLabel": zod.string().nullish(),
+  "prorataPagasExtra": zod.number(),
+  "totalDevengos": zod.number(),
+  "baseCotizacion": zod.number(),
+  "ssContingencias": zod.number(),
+  "ssDesempleo": zod.number(),
+  "ssFp": zod.number(),
+  "totalSsTrabajador": zod.number(),
+  "irpfRate": zod.number(),
+  "irpfAmount": zod.number(),
+  "totalDeducciones": zod.number(),
+  "liquidoPercibir": zod.number(),
+  "ssEmpresaContingencias": zod.number(),
+  "ssEmpresaDesempleo": zod.number(),
+  "ssEmpresaFp": zod.number(),
+  "ssEmpresaFogasa": zod.number(),
+  "totalSsEmpresa": zod.number(),
+  "totalCosteEmpresa": zod.number()
+}).and(zod.object({
+  "id": zod.number(),
+  "createdAt": zod.coerce.date()
+}))
+export const ListPayrollsResponse = zod.array(ListPayrollsResponseItem)
+
+
+/**
+ * @summary Crear y guardar nómina
+ */
+export const createPayrollBodyPeriodMonthMax = 12;
+
+export const createPayrollBodyPlusConvenioDefault = 0;
+export const createPayrollBodyPlusTransporteDefault = 0;
+export const createPayrollBodyImporteHorasExtraDefault = 0;
+export const createPayrollBodyOtroDevengoDefault = 0;
+export const createPayrollBodyIrpfRateOverrideMin = 0;
+export const createPayrollBodyIrpfRateOverrideMax = 45;
+
+
+
+export const CreatePayrollBody = zod.object({
+  "employeeId": zod.number(),
+  "studentId": zod.number(),
+  "periodMonth": zod.number().min(1).max(createPayrollBodyPeriodMonthMax),
+  "periodYear": zod.number(),
+  "plusConvenio": zod.number().default(createPayrollBodyPlusConvenioDefault),
+  "plusTransporte": zod.number().default(createPayrollBodyPlusTransporteDefault),
+  "importeHorasExtra": zod.number().default(createPayrollBodyImporteHorasExtraDefault),
+  "otroDevengo": zod.number().default(createPayrollBodyOtroDevengoDefault),
+  "otroDevengoLabel": zod.string().optional(),
+  "irpfRateOverride": zod.number().min(createPayrollBodyIrpfRateOverrideMin).max(createPayrollBodyIrpfRateOverrideMax).optional()
+})
+
+
+/**
+ * @summary Obtener nómina
+ */
+export const GetPayrollParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetPayrollResponse = zod.object({
+  "employeeId": zod.number(),
+  "studentId": zod.number(),
+  "periodMonth": zod.number(),
+  "periodYear": zod.number(),
+  "salaryBase": zod.number(),
+  "plusConvenio": zod.number(),
+  "plusTransporte": zod.number(),
+  "importeHorasExtra": zod.number(),
+  "otroDevengo": zod.number(),
+  "otroDevengoLabel": zod.string().nullish(),
+  "prorataPagasExtra": zod.number(),
+  "totalDevengos": zod.number(),
+  "baseCotizacion": zod.number(),
+  "ssContingencias": zod.number(),
+  "ssDesempleo": zod.number(),
+  "ssFp": zod.number(),
+  "totalSsTrabajador": zod.number(),
+  "irpfRate": zod.number(),
+  "irpfAmount": zod.number(),
+  "totalDeducciones": zod.number(),
+  "liquidoPercibir": zod.number(),
+  "ssEmpresaContingencias": zod.number(),
+  "ssEmpresaDesempleo": zod.number(),
+  "ssEmpresaFp": zod.number(),
+  "ssEmpresaFogasa": zod.number(),
+  "totalSsEmpresa": zod.number(),
+  "totalCosteEmpresa": zod.number()
+}).and(zod.object({
+  "id": zod.number(),
+  "createdAt": zod.coerce.date()
+}))
+
+
+/**
+ * @summary Eliminar nómina
+ */
+export const DeletePayrollParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
  * @summary Estadísticas generales del panel
  */
 export const GetStatsResponse = zod.object({

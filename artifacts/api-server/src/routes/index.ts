@@ -6,6 +6,8 @@ import groupsRouter from "./groups";
 import studentsRouter from "./students";
 import statsRouter from "./stats";
 import deployRouter from "./deploy";
+import employeesRouter from "./employees";
+import payrollsRouter from "./payrolls";
 
 const router: IRouter = Router();
 
@@ -16,5 +18,7 @@ router.use(groupsRouter);
 router.use(studentsRouter);
 router.use(statsRouter);
 router.use(deployRouter);
+router.use(employeesRouter);
+router.use(payrollsRouter);
 
 export default router;

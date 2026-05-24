@@ -212,6 +212,137 @@ export interface AlumnoSesion {
   entityId?: number | null;
 }
 
+export type EmployeeContractType = typeof EmployeeContractType[keyof typeof EmployeeContractType];
+
+
+export const EmployeeContractType = {
+  indefinido: 'indefinido',
+  temporal: 'temporal',
+} as const;
+
+export type EmployeeExtraPayments = typeof EmployeeExtraPayments[keyof typeof EmployeeExtraPayments];
+
+
+export const EmployeeExtraPayments = {
+  NUMBER_12: 12,
+  NUMBER_14: 14,
+} as const;
+
+export interface Employee {
+  id: number;
+  studentId: number;
+  firstName: string;
+  lastName: string;
+  /** @nullable */
+  dni?: string | null;
+  jobTitle: string;
+  contractType: EmployeeContractType;
+  groupCategory: number;
+  salaryBase: number;
+  extraPayments: EmployeeExtraPayments;
+  irpfRate: number;
+  active: boolean;
+  createdAt: string;
+}
+
+export type EmployeeInputContractType = typeof EmployeeInputContractType[keyof typeof EmployeeInputContractType];
+
+
+export const EmployeeInputContractType = {
+  indefinido: 'indefinido',
+  temporal: 'temporal',
+} as const;
+
+export type EmployeeInputExtraPayments = typeof EmployeeInputExtraPayments[keyof typeof EmployeeInputExtraPayments];
+
+
+export const EmployeeInputExtraPayments = {
+  NUMBER_12: 12,
+  NUMBER_14: 14,
+} as const;
+
+export interface EmployeeInput {
+  studentId: number;
+  /** @minLength 1 */
+  firstName: string;
+  /** @minLength 1 */
+  lastName: string;
+  dni?: string;
+  /** @minLength 1 */
+  jobTitle: string;
+  contractType?: EmployeeInputContractType;
+  /**
+     * @minimum 1
+     * @maximum 11
+     */
+  groupCategory?: number;
+  /** @minimum 0 */
+  salaryBase: number;
+  extraPayments?: EmployeeInputExtraPayments;
+  /**
+     * @minimum 0
+     * @maximum 45
+     */
+  irpfRate?: number;
+}
+
+export interface PayrollInput {
+  employeeId: number;
+  studentId: number;
+  /**
+     * @minimum 1
+     * @maximum 12
+     */
+  periodMonth: number;
+  periodYear: number;
+  plusConvenio?: number;
+  plusTransporte?: number;
+  importeHorasExtra?: number;
+  otroDevengo?: number;
+  otroDevengoLabel?: string;
+  /**
+     * @minimum 0
+     * @maximum 45
+     */
+  irpfRateOverride?: number;
+}
+
+export interface PayrollCalculation {
+  employeeId: number;
+  studentId: number;
+  periodMonth: number;
+  periodYear: number;
+  salaryBase: number;
+  plusConvenio: number;
+  plusTransporte: number;
+  importeHorasExtra: number;
+  otroDevengo: number;
+  /** @nullable */
+  otroDevengoLabel?: string | null;
+  prorataPagasExtra: number;
+  totalDevengos: number;
+  baseCotizacion: number;
+  ssContingencias: number;
+  ssDesempleo: number;
+  ssFp: number;
+  totalSsTrabajador: number;
+  irpfRate: number;
+  irpfAmount: number;
+  totalDeducciones: number;
+  liquidoPercibir: number;
+  ssEmpresaContingencias: number;
+  ssEmpresaDesempleo: number;
+  ssEmpresaFp: number;
+  ssEmpresaFogasa: number;
+  totalSsEmpresa: number;
+  totalCosteEmpresa: number;
+}
+
+export type Payroll = PayrollCalculation & {
+  id: number;
+  createdAt: string;
+};
+
 export type StatsStudentsPerGroupItem = {
   groupId: number;
   groupName: string;
@@ -243,5 +374,14 @@ groupId?: number;
 search?: string;
 limit?: number;
 offset?: number;
+};
+
+export type ListEmployeesParams = {
+studentId: number;
+};
+
+export type ListPayrollsParams = {
+studentId?: number;
+employeeId?: number;
 };
 
