@@ -78,9 +78,16 @@ El profesorado gestiona grupos, alumnos, accesos y nóminas desde un panel web c
 - Muestra el nombre del alumno y su empresa al autenticarse
 - Botón directo a la empresa en Dolibarr (entidad asignada)
 
+### Módulo PHP nativo — NominasEDU
+- **Módulo real de Dolibarr** — aparece en el menú del ERP igual que Facturas, Contabilidad o RRHH
+- Usa la interfaz y el estilo visual de Dolibarr (sin iframe, sin redirección)
+- Tablas propias en MariaDB con el prefijo `llx_nominasedu_*`
+- Permisos de Dolibarr configurables por usuario: lectura / escritura / borrado
+- Tipos SS 2024 aplicados correctamente (obrero 6,47% / empresa 30,48%)
+
 ### Despliegue en servidor escolar
 - Instalación con un único comando `curl`
-- Docker Compose con Dolibarr + MariaDB + Cloudflare Tunnel
+- Docker Compose con Dolibarr + MariaDB + Cloudflare Tunnel — el módulo NominasEDU se monta automáticamente
 - Scripts CLI para gestión avanzada desde terminal
 - Script de actualización con backup automático
 

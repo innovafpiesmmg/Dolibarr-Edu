@@ -1,0 +1,98 @@
+# Translation file for NominasEDU module - Spanish
+# Copyright (C) Atreyu Servicios Digitales (ASD)
+
+NominasEDU=Nóminas EDU
+ListaNominas=Lista de nóminas
+NuevaNomina=Nueva nómina
+LiquidacionSS=Liquidación SS/IRPF
+Empleados=Empleados
+NuevoEmpleado=Nuevo empleado
+
+# Payroll fields
+NominaDelMes=Nómina del mes
+Periodo=Período
+SalarioBruto=Salario bruto
+SalarioNeto=Salario neto
+SalarioBase=Salario base
+RetencionIRPF=Retención IRPF
+PorcentajeIRPF=% IRPF
+CuotaObreroSS=Cuota obrero SS
+CuotaEmpresaSS=Cuota empresa SS
+CosteTotalEmpresa=Coste total empresa
+EstadoNomina=Estado
+NominaValidada=Validada
+NominaBorrador=Borrador
+ValidarNomina=Validar nómina
+AnularNomina=Anular validación
+EliminarNomina=Eliminar nómina
+ConfirmarEliminarNomina=¿Seguro que deseas eliminar esta nómina?
+NominaCreada=Nómina creada correctamente
+NominaActualizada=Nómina actualizada correctamente
+NominaEliminada=Nómina eliminada correctamente
+NominaValidadaOK=Nómina validada correctamente
+NominaNoEncontrada=Nómina no encontrada
+PagasExtra=Pagas extra / complementos
+
+# Employee fields
+NombreEmpleado=Nombre del empleado
+UsuarioDolibarr=Usuario Dolibarr
+TipoContrato=Tipo de contrato
+GrupoSS=Grupo cotización SS
+TasaIRPF=IRPF habitual (%)
+EmpleadoActivo=Activo
+EmpleadoBaja=De baja
+EmpleadoCreado=Empleado creado correctamente
+EmpleadoActualizado=Empleado actualizado correctamente
+EmpleadoEliminado=Empleado eliminado correctamente
+SinEmpleados=No hay empleados registrados. <a href="empleados.php?action=create">Crea el primero</a>.
+
+# Contract types
+TipoMensual=Mensual
+TipoHoras=Por horas
+TipoPracticas=Prácticas / Beca
+
+# SS Liquidation
+LiquidacionDelMes=Liquidación del mes
+TotalSSPagar=Total SS a pagar (empresa + obrero)
+TotalIRPFPagar=Total IRPF a pagar (Modelo 111)
+SSPagada=SS liquidada
+IRPFPagado=IRPF pagado
+FechaPagoSS=Fecha pago SS
+FechaPagoIRPF=Fecha pago IRPF
+MarcarSSPagada=Registrar pago SS
+MarcarIRPFPagado=Registrar pago IRPF
+SinNominasEnPeriodo=No hay nóminas validadas en este período.
+LiquidacionActualizada=Liquidación actualizada correctamente
+CuotaEmpresaTotal=Cuota empresa total
+CuotaObreroTotal=Cuota obrero total
+SSTotal=Total SS (empresa + obrero)
+
+# Table headers
+PeriodoMesAnio=Período
+NombreCompleto=Nombre completo
+AccionesNomina=Acciones
+
+# Summary
+TotalNominas=Total nóminas
+TotalMasaSalarial=Masa salarial bruta
+TotalNetos=Total netos
+TotalCosteSS=Coste SS empresa
+TotalCosteMes=Coste total mes
+
+# SS Rates 2024
+TiposSSObrero=Cuotas SS obrero 2024
+TiposSSEmpresa=Cuotas SS empresa 2024
+ContingenciasComunes=Contingencias comunes
+Desempleo=Desempleo
+FormacionProfesional=Formación profesional
+FOGASA=FOGASA
+MEI=MEI (Mecanismo Equidad Intergeneracional)
+
+# Messages
+SeleccionaEmpleado=Selecciona un empleado
+SeleccionaPeriodo=Selecciona el período
+NoHayNominas=No hay nóminas registradas
+ErrorGuardarNomina=Error al guardar la nómina
+EmpleadoRequerido=El empleado es obligatorio
+PeriodoRequerido=El período es obligatorio
+SalarioRequerido=El salario bruto es obligatorio
