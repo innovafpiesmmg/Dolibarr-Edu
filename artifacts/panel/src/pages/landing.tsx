@@ -321,14 +321,24 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="bg-card border-t border-border py-12">
-        <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary">
-            <BookOpen className="h-6 w-6" />
-            <span>Dolibarr EDU</span>
+      <footer className="bg-card border-t border-border py-4">
+        <div className="mx-auto max-w-7xl px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-4">
+            <img src="/images/asd-logo.png" alt="ASD" className="h-7 w-auto" />
+            <span className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} Atreyu Servicios Digitales. Todos los derechos reservados.
+            </span>
           </div>
-          <p className="text-muted-foreground text-sm">
-            © {new Date().getFullYear()} Dolibarr EDU. Panel de administración para Formación Profesional.
+          <p className="text-xs text-muted-foreground">
+            Basado en{" "}
+            <a
+              href="https://www.dolibarr.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground underline underline-offset-2 transition-colors"
+            >
+              Dolibarr ERP/CRM
+            </a>
           </p>
         </div>
       </footer>
