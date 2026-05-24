@@ -8,6 +8,7 @@ import {
   isDolibarrConfigured,
 } from "../lib/dolibarr";
 import { getTaxSystem } from "./settings";
+import { logActivity } from "../lib/activity";
 
 const router: IRouter = Router();
 
@@ -53,7 +54,7 @@ router.post("/students/:id/deploy", async (req, res) => {
       student.username,
       taxSystem,
     );
-    await createDolibarrUser(entityId, {
+    const { userId } = await createDolibarrUser(entityId, {
       username: student.username,
       password,
       firstName: student.firstName,
@@ -65,11 +66,20 @@ router.post("/students/:id/deploy", async (req, res) => {
       .update(studentsTable)
       .set({
         dolibarrEntityId: entityId,
+        dolibarrUserId: userId,
         dolibarrSyncStatus: "synced",
         dolibarrSyncError: null,
         dolibarrPassword: password,
       })
       .where(eq(studentsTable.id, studentId));
+
+    await logActivity({
+      action: "deploy_student",
+      entityType: "student",
+      entityId: studentId,
+      entityName: `${student.firstName} ${student.lastName}`,
+      details: `Entidad Dolibarr #${entityId} creada`,
+    });
 
     res.json({
       studentId,

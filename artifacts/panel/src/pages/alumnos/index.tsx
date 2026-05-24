@@ -7,7 +7,8 @@ import {
   useListGroups
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Search, Plus, Trash2, Edit, MoreVertical, AlertTriangle, Building2, Upload } from "lucide-react";
+import { Search, Plus, Trash2, Edit, MoreVertical, AlertTriangle, Building2, Upload, FileDown } from "lucide-react";
+import { downloadCSV } from "@/lib/export-csv";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -30,6 +31,20 @@ export default function AlumnosList() {
   const [studentToDelete, setStudentToDelete] = useState<number | null>(null);
 
   const deleteStudent = useDeleteStudent();
+
+  const handleExportCSV = () => {
+    const rows = (students ?? []).map((s) => ({
+      Nombre: s.firstName,
+      Apellidos: s.lastName,
+      Usuario: s.username,
+      Email: s.email,
+      Grupo: s.groupName,
+      Empresa: s.companyName ?? "",
+      Estado_Dolibarr: s.dolibarrSyncStatus,
+      Entidad_ID: s.dolibarrEntityId ?? "",
+    }));
+    downloadCSV(rows, `alumnos-${new Date().toISOString().slice(0, 10)}.csv`);
+  };
 
   const handleDelete = () => {
     if (!studentToDelete) return;
@@ -54,6 +69,9 @@ export default function AlumnosList() {
         </div>
         
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportCSV} disabled={!students?.length}>
+            <FileDown className="mr-2 h-4 w-4" /> Exportar CSV
+          </Button>
           <Button asChild variant="outline">
             <Link href="/importar"><Upload className="mr-2 h-4 w-4" /> Importación Masiva</Link>
           </Button>

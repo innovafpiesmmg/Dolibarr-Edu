@@ -19,6 +19,8 @@ import NuevaNomina from "@/pages/nominas/nueva";
 import NominaDetalle from "@/pages/nominas/detalle";
 import LiquidacionSS from "@/pages/nominas/ss";
 import Configuracion from "@/pages/configuracion/index";
+import EstadoSincronizacion from "@/pages/estado/index";
+import Actividad from "@/pages/actividad/index";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
@@ -99,6 +101,14 @@ function Router() {
 
       <Route path="/configuracion">
         <ProtectedRoute><Configuracion /></ProtectedRoute>
+      </Route>
+
+      <Route path="/estado">
+        <ProtectedRoute><EstadoSincronizacion /></ProtectedRoute>
+      </Route>
+
+      <Route path="/actividad">
+        <ProtectedRoute><Actividad /></ProtectedRoute>
       </Route>
 
       <Route component={NotFound} />

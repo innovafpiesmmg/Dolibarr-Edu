@@ -104,6 +104,21 @@ export async function createDolibarrUser(
   return { userId: await parseId(res, "createDolibarrUser") };
 }
 
+export async function updateDolibarrUserPassword(
+  userId: number,
+  entityId: number,
+  newPassword: string,
+): Promise<void> {
+  const config = getConfig();
+  if (!config) throw new Error("Dolibarr no está configurado");
+
+  await dolibarrFetch(config, `/users/${userId}`, {
+    method: "PUT",
+    entityId,
+    body: JSON.stringify({ pass: newPassword }),
+  });
+}
+
 export function generateDolibarrPassword(username: string): string {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#";
   let suffix = "";

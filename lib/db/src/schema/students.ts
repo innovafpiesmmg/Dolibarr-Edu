@@ -12,6 +12,7 @@ export const studentsTable = pgTable("students", {
   passwordHash: text("password_hash").notNull(),
   groupId: integer("group_id").notNull().references(() => groupsTable.id, { onDelete: "restrict" }),
   dolibarrEntityId: integer("dolibarr_entity_id"),
+  dolibarrUserId: integer("dolibarr_user_id"),
   dolibarrSyncStatus: varchar("dolibarr_sync_status", { length: 20 }).notNull().default("pending"),
   dolibarrSyncError: text("dolibarr_sync_error"),
   dolibarrPassword: varchar("dolibarr_password", { length: 255 }),

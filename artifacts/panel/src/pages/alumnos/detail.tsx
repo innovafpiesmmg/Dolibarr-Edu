@@ -5,9 +5,11 @@ import {
   getGetStudentQueryKey,
   useUpdateStudent,
   useDeployStudent,
+  useResetStudentPassword,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Building2, User, Mail, Server, Clock, Rocket, Copy, Check, AlertCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, Building2, User, Mail, Server, Clock, Rocket, Copy, Check, AlertCircle, RefreshCw, KeyRound } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,6 +51,21 @@ export default function StudentDetail() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [resetResult, setResetResult] = useState<{ newPassword: string; message: string } | null>(null);
+
+  const resetPasswordMutation = useResetStudentPassword();
+
+  const handleResetPassword = () => {
+    resetPasswordMutation.mutate({ id }, {
+      onSuccess: (result) => {
+        queryClient.invalidateQueries({ queryKey: getGetStudentQueryKey(id) });
+        setResetResult({ newPassword: result.newPassword, message: result.message ?? "" });
+      },
+      onError: () => {
+        toast({ variant: "destructive", title: "Error", description: "No se pudo restablecer la contraseña." });
+      },
+    });
+  };
 
   const { data: student, isLoading } = useGetStudent(id, {
     query: { enabled: !!id, queryKey: getGetStudentQueryKey(id) },
@@ -113,6 +130,7 @@ export default function StudentDetail() {
   const dolibarrBaseUrl = (import.meta.env.VITE_DOLIBARR_BASE_URL as string | undefined) ?? "";
 
   return (
+    <>
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
@@ -179,6 +197,19 @@ export default function StudentDetail() {
               </div>
               <CardTitle>Entorno de Simulación</CardTitle>
             </div>
+            <div className="flex gap-2">
+            <Button
+              onClick={handleResetPassword}
+              disabled={resetPasswordMutation.isPending}
+              size="sm"
+              variant="outline"
+            >
+              {resetPasswordMutation.isPending ? (
+                <><RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" /> Restableciendo...</>
+              ) : (
+                <><KeyRound className="mr-2 h-3.5 w-3.5" /> Restablecer contraseña</>
+              )}
+            </Button>
             <Button
               onClick={handleDeploy}
               disabled={deployMutation.isPending || (isSynced && !isError)}
@@ -196,6 +227,7 @@ export default function StudentDetail() {
                 <><Rocket className="mr-2 h-3.5 w-3.5" /> Desplegar</>
               )}
             </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between p-3 rounded-lg border bg-card">
@@ -257,5 +289,36 @@ export default function StudentDetail() {
         </Card>
       </div>
     </div>
+
+    {/* Reset password result dialog */}
+    <Dialog open={!!resetResult} onOpenChange={(open) => { if (!open) setResetResult(null); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Contraseña restablecida</DialogTitle>
+          <DialogDescription>{resetResult?.message}</DialogDescription>
+        </DialogHeader>
+        <div className="my-2 p-4 rounded-lg border bg-muted/50 text-center">
+          <p className="text-xs text-muted-foreground mb-1">Nueva contraseña</p>
+          <p className="font-mono text-xl font-bold tracking-widest">{resetResult?.newPassword}</p>
+        </div>
+        <p className="text-xs text-muted-foreground text-center">
+          Anota esta contraseña — no se podrá recuperar después de cerrar este cuadro.
+        </p>
+        <DialogFooter>
+          <Button onClick={() => {
+            if (resetResult?.newPassword) {
+              void navigator.clipboard.writeText(resetResult.newPassword);
+              toast({ title: "Copiado al portapapeles" });
+            }
+          }} variant="outline" className="w-full sm:w-auto">
+            <Copy className="mr-2 h-4 w-4" /> Copiar contraseña
+          </Button>
+          <Button onClick={() => setResetResult(null)} className="w-full sm:w-auto">
+            Cerrar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

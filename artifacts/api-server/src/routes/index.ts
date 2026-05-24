@@ -10,6 +10,8 @@ import employeesRouter from "./employees";
 import payrollsRouter from "./payrolls";
 import ssRouter from "./ss";
 import settingsRouter from "./settings";
+import resetPasswordRouter from "./reset-password";
+import activityRouter from "./activity";
 
 const router: IRouter = Router();
 
@@ -24,5 +26,7 @@ router.use(employeesRouter);
 router.use(payrollsRouter);
 router.use(ssRouter);
 router.use(settingsRouter);
+router.use(resetPasswordRouter);
+router.use(activityRouter);
 
 export default router;

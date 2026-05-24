@@ -443,6 +443,25 @@ export interface SSPayResult {
   message: string;
 }
 
+export interface ResetPasswordResult {
+  studentId: number;
+  newPassword: string;
+  dolibarrUpdated: boolean;
+  message?: string;
+}
+
+export interface ActivityEntry {
+  id: number;
+  action: string;
+  entityType: string;
+  /** @nullable */
+  entityId?: number | null;
+  entityName: string;
+  /** @nullable */
+  details?: string | null;
+  createdAt: string;
+}
+
 export type SettingsTaxSystem = typeof SettingsTaxSystem[keyof typeof SettingsTaxSystem];
 
 
@@ -518,5 +537,10 @@ studentId: number;
 export type ListPayrollsParams = {
 studentId?: number;
 employeeId?: number;
+};
+
+export type ListActivityParams = {
+limit?: number;
+entityType?: string;
 };
 

@@ -481,6 +481,21 @@ export const DeployStudentResponse = zod.object({
 
 
 /**
+ * @summary Genera una nueva contraseña para el alumno y la sincroniza con Dolibarr
+ */
+export const ResetStudentPasswordParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ResetStudentPasswordResponse = zod.object({
+  "studentId": zod.number(),
+  "newPassword": zod.string(),
+  "dolibarrUpdated": zod.boolean(),
+  "message": zod.string().optional()
+})
+
+
+/**
  * @summary Resumen de cotizaciones SS por período (RNT + RLC)
  */
 export const GetSSSummaryParams = zod.object({
@@ -934,6 +949,26 @@ export const GetPayrollResponse = zod.object({
 export const DeletePayrollParams = zod.object({
   "id": zod.coerce.number()
 })
+
+
+/**
+ * @summary Historial de actividad del panel
+ */
+export const ListActivityQueryParams = zod.object({
+  "limit": zod.coerce.number().optional(),
+  "entityType": zod.coerce.string().optional()
+})
+
+export const ListActivityResponseItem = zod.object({
+  "id": zod.number(),
+  "action": zod.string(),
+  "entityType": zod.string(),
+  "entityId": zod.number().nullish(),
+  "entityName": zod.string(),
+  "details": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+export const ListActivityResponse = zod.array(ListActivityResponseItem)
 
 
 /**

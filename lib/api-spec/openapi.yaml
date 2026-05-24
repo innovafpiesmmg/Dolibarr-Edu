@@ -536,6 +536,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /students/{id}/reset-password:
+    post:
+      operationId: resetStudentPassword
+      tags: [students]
+      summary: Genera una nueva contraseña para el alumno y la sincroniza con Dolibarr
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Nueva contraseña generada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetPasswordResult"
+        "404":
+          description: Alumno no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /students/{id}/ss-summary:
     get:
       operationId: getSSSummary
@@ -853,6 +877,29 @@ paths:
       responses:
         "204":
           description: Eliminada
+
+  # ── Activity log ──────────────────────────────────────
+  /activity:
+    get:
+      operationId: listActivity
+      tags: [activity]
+      summary: Historial de actividad del panel
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer }
+        - in: query
+          name: entityType
+          schema: { type: string }
+      responses:
+        "200":
+          description: Entradas de actividad
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityEntry"
 
   # ── Settings ──────────────────────────────────────────
   /settings:
@@ -1281,6 +1328,29 @@ components:
         accountingId: { type: integer }
         total:        { type: number }
         message:      { type: string }
+
+    # ── Reset password ───────────────────────────────────
+    ResetPasswordResult:
+      type: object
+      required: [studentId, newPassword, dolibarrUpdated]
+      properties:
+        studentId:       { type: integer }
+        newPassword:     { type: string }
+        dolibarrUpdated: { type: boolean }
+        message:         { type: string }
+
+    # ── Activity log ──────────────────────────────────────
+    ActivityEntry:
+      type: object
+      required: [id, action, entityType, entityName, createdAt]
+      properties:
+        id:          { type: integer }
+        action:      { type: string }
+        entityType:  { type: string }
+        entityId:    { type: ["integer", "null"] }
+        entityName:  { type: string }
+        details:     { type: ["string", "null"] }
+        createdAt:   { type: string, format: date-time }
 
     # ── Settings ─────────────────────────────────────────
     Settings:

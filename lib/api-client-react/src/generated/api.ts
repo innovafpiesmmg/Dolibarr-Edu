@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ActivityEntry,
   AlumnoCredentials,
   AlumnoSesion,
   BulkImportResult,
@@ -34,6 +35,7 @@ import type {
   GroupUpdate,
   GroupWithStudents,
   HealthStatus,
+  ListActivityParams,
   ListEmployeesParams,
   ListGroupsParams,
   ListPayrollsParams,
@@ -44,6 +46,7 @@ import type {
   Payroll,
   PayrollCalculation,
   PayrollInput,
+  ResetPasswordResult,
   SSPayInput,
   SSPayResult,
   SSSummary,
@@ -1708,6 +1711,76 @@ export const useDeployStudent = <TError = ErrorType<ErrorResponse>,
       return useMutation(getDeployStudentMutationOptions(options));
     }
 
+export const getResetStudentPasswordUrl = (id: number,) => {
+
+
+
+
+  return `/api/students/${id}/reset-password`
+}
+
+/**
+ * @summary Genera una nueva contraseña para el alumno y la sincroniza con Dolibarr
+ */
+export const resetStudentPassword = async (id: number, options?: RequestInit): Promise<ResetPasswordResult> => {
+
+  return customFetch<ResetPasswordResult>(getResetStudentPasswordUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getResetStudentPasswordMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetStudentPassword>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof resetStudentPassword>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['resetStudentPassword'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resetStudentPassword>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  resetStudentPassword(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResetStudentPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof resetStudentPassword>>>
+
+    export type ResetStudentPasswordMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Genera una nueva contraseña para el alumno y la sincroniza con Dolibarr
+ */
+export const useResetStudentPassword = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetStudentPassword>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof resetStudentPassword>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getResetStudentPasswordMutationOptions(options));
+    }
+
 export const getGetSSSummaryUrl = (id: number,
     params: GetSSSummaryParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -2757,6 +2830,90 @@ export const useDeletePayroll = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getDeletePayrollMutationOptions(options));
     }
+
+export const getListActivityUrl = (params?: ListActivityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/activity?${stringifiedParams}` : `/api/activity`
+}
+
+/**
+ * @summary Historial de actividad del panel
+ */
+export const listActivity = async (params?: ListActivityParams, options?: RequestInit): Promise<ActivityEntry[]> => {
+
+  return customFetch<ActivityEntry[]>(getListActivityUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListActivityQueryKey = (params?: ListActivityParams,) => {
+    return [
+    `/api/activity`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListActivityQueryOptions = <TData = Awaited<ReturnType<typeof listActivity>>, TError = ErrorType<unknown>>(params?: ListActivityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listActivity>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListActivityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listActivity>>> = ({ signal }) => listActivity(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listActivity>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListActivityQueryResult = NonNullable<Awaited<ReturnType<typeof listActivity>>>
+export type ListActivityQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Historial de actividad del panel
+ */
+
+export function useListActivity<TData = Awaited<ReturnType<typeof listActivity>>, TError = ErrorType<unknown>>(
+ params?: ListActivityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listActivity>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListActivityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getGetSettingsUrl = () => {
 
