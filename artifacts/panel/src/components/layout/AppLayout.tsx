@@ -8,6 +8,7 @@ import {
   LogOut,
   Banknote,
   Landmark,
+  Settings,
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,6 +32,7 @@ const navigation = [
   { name: "Nóminas y SS", href: "/nominas", icon: Banknote },
   { name: "Liquidaciones SS", href: "/nominas/ss", icon: Landmark },
   { name: "Importar", href: "/importar", icon: Upload },
+  { name: "Configuración", href: "/configuracion", icon: Settings },
 ];
 
 export function AppSidebar() {

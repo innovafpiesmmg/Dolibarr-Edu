@@ -854,6 +854,37 @@ paths:
         "204":
           description: Eliminada
 
+  # ── Settings ──────────────────────────────────────────
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Obtiene la configuración del panel
+      responses:
+        "200":
+          description: Configuración actual
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    patch:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Actualiza la configuración del panel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsInput"
+      responses:
+        "200":
+          description: Configuración actualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
   # ── Stats ─────────────────────────────────────────────
   /stats:
     get:
@@ -1250,6 +1281,26 @@ components:
         accountingId: { type: integer }
         total:        { type: number }
         message:      { type: string }
+
+    # ── Settings ─────────────────────────────────────────
+    Settings:
+      type: object
+      required: [taxSystem, currency, language]
+      properties:
+        taxSystem:
+          type: string
+          enum: [iva, igic]
+        currency:
+          type: string
+        language:
+          type: string
+
+    SettingsInput:
+      type: object
+      properties:
+        taxSystem:
+          type: string
+          enum: [iva, igic]
 
     # ── Stats ────────────────────────────────────────────
     Stats:

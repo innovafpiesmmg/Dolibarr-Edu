@@ -7,6 +7,7 @@ import {
   generateDolibarrPassword,
   isDolibarrConfigured,
 } from "../lib/dolibarr";
+import { getTaxSystem } from "./settings";
 
 const router: IRouter = Router();
 
@@ -45,10 +46,12 @@ router.post("/students/:id/deploy", async (req, res) => {
   }
 
   try {
+    const taxSystem = await getTaxSystem();
     const password = student.dolibarrPassword ?? generateDolibarrPassword(student.username);
     const { entityId } = await createEntity(
       student.companyName ?? `Empresa de ${student.username}`,
       student.username,
+      taxSystem,
     );
     await createDolibarrUser(entityId, {
       username: student.username,

@@ -937,6 +937,30 @@ export const DeletePayrollParams = zod.object({
 
 
 /**
+ * @summary Obtiene la configuración del panel
+ */
+export const GetSettingsResponse = zod.object({
+  "taxSystem": zod.enum(['iva', 'igic']),
+  "currency": zod.string(),
+  "language": zod.string()
+})
+
+
+/**
+ * @summary Actualiza la configuración del panel
+ */
+export const UpdateSettingsBody = zod.object({
+  "taxSystem": zod.enum(['iva', 'igic']).optional()
+})
+
+export const UpdateSettingsResponse = zod.object({
+  "taxSystem": zod.enum(['iva', 'igic']),
+  "currency": zod.string(),
+  "language": zod.string()
+})
+
+
+/**
  * @summary Estadísticas generales del panel
  */
 export const GetStatsResponse = zod.object({

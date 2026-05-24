@@ -46,17 +46,33 @@ async function parseId(res: Response, context: string): Promise<number> {
 
 // ── Company entity ────────────────────────────────────────────────────────────
 
-export async function createEntity(companyName: string, username: string): Promise<{ entityId: number }> {
+export type TaxSystem = "iva" | "igic";
+
+export async function createEntity(
+  companyName: string,
+  username: string,
+  taxSystem: TaxSystem = "igic",
+): Promise<{ entityId: number }> {
   const config = getConfig();
   if (!config) throw new Error("Dolibarr no está configurado (falta DOLIBARR_API_URL o DOLIBARR_API_KEY)");
+
+  // IGIC (Canarias): sin IVA, con impuesto local 1
+  // IVA  (peninsular): con IVA, sin impuesto local
+  const taxFields =
+    taxSystem === "igic"
+      ? { tva_assuj: 0, localtax1_assuj: 1, localtax2_assuj: 0 }
+      : { tva_assuj: 1, localtax1_assuj: 0, localtax2_assuj: 0 };
 
   const res = await dolibarrFetch(config, "/multicompany/entities", {
     method: "POST",
     body: JSON.stringify({
       label: companyName || `Empresa de ${username}`,
       description: `Empresa simulada FP — alumno: ${username}`,
-      country_id: 4,
+      country_id: 4,   // España
       active: 1,
+      currency_code: "EUR",
+      lang: "es_ES",
+      ...taxFields,
     }),
   });
 

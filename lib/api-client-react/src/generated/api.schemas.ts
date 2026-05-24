@@ -443,6 +443,32 @@ export interface SSPayResult {
   message: string;
 }
 
+export type SettingsTaxSystem = typeof SettingsTaxSystem[keyof typeof SettingsTaxSystem];
+
+
+export const SettingsTaxSystem = {
+  iva: 'iva',
+  igic: 'igic',
+} as const;
+
+export interface Settings {
+  taxSystem: SettingsTaxSystem;
+  currency: string;
+  language: string;
+}
+
+export type SettingsInputTaxSystem = typeof SettingsInputTaxSystem[keyof typeof SettingsInputTaxSystem];
+
+
+export const SettingsInputTaxSystem = {
+  iva: 'iva',
+  igic: 'igic',
+} as const;
+
+export interface SettingsInput {
+  taxSystem?: SettingsInputTaxSystem;
+}
+
 export type StatsStudentsPerGroupItem = {
   groupId: number;
   groupName: string;

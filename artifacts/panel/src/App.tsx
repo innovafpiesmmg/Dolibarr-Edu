@@ -18,6 +18,7 @@ import NominasEmpleados from "@/pages/nominas/empleados";
 import NuevaNomina from "@/pages/nominas/nueva";
 import NominaDetalle from "@/pages/nominas/detalle";
 import LiquidacionSS from "@/pages/nominas/ss";
+import Configuracion from "@/pages/configuracion/index";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
@@ -94,6 +95,10 @@ function Router() {
       </Route>
       <Route path="/nominas/:id">
         <ProtectedRoute><NominaDetalle /></ProtectedRoute>
+      </Route>
+
+      <Route path="/configuracion">
+        <ProtectedRoute><Configuracion /></ProtectedRoute>
       </Route>
 
       <Route component={NotFound} />
