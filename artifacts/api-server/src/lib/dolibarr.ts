@@ -176,6 +176,64 @@ export async function createDolibarrSalary(
 //   476  Organismos SS acreedores (haber) — SS total + retención IRPF
 //   4751 HP acreedora retenciones IRPF (haber)
 
+// ── SS / IRPF payment to bank ─────────────────────────────────────────────────
+// SS payment:   476 Organismos SS acreedores → 572 Banco c/c
+// IRPF payment: 4751 HP acreedora retenciones IRPF → 572 Banco c/c
+
+export async function paySSToBank(
+  entityId: number,
+  opts: { periodMonth: number; periodYear: number; total: number },
+): Promise<{ accountingId: number }> {
+  const config = getConfig();
+  if (!config) throw new Error("Dolibarr no está configurado");
+
+  const dateStr = `${opts.periodYear}-${String(opts.periodMonth).padStart(2, "0")}-28`;
+  const label = `Pago SS Tesorería — ${String(opts.periodMonth).padStart(2, "0")}/${opts.periodYear}`;
+
+  const res = await dolibarrFetch(config, "/accountancy/bookkeeping", {
+    method: "POST",
+    entityId,
+    body: JSON.stringify({
+      label,
+      date_document: dateStr,
+      journal_code: "BQ",
+      lines: [
+        { accountno: "476", label, debit: opts.total, credit: 0 },
+        { accountno: "572", label, debit: 0, credit: opts.total },
+      ],
+    }),
+  });
+
+  return { accountingId: await parseId(res, "paySSToBank") };
+}
+
+export async function payIRPFToBank(
+  entityId: number,
+  opts: { periodMonth: number; periodYear: number; total: number },
+): Promise<{ accountingId: number }> {
+  const config = getConfig();
+  if (!config) throw new Error("Dolibarr no está configurado");
+
+  const dateStr = `${opts.periodYear}-${String(opts.periodMonth).padStart(2, "0")}-20`;
+  const label = `Pago IRPF Modelo 111 — ${String(opts.periodMonth).padStart(2, "0")}/${opts.periodYear}`;
+
+  const res = await dolibarrFetch(config, "/accountancy/bookkeeping", {
+    method: "POST",
+    entityId,
+    body: JSON.stringify({
+      label,
+      date_document: dateStr,
+      journal_code: "BQ",
+      lines: [
+        { accountno: "4751", label, debit: opts.total, credit: 0 },
+        { accountno: "572", label, debit: 0, credit: opts.total },
+      ],
+    }),
+  });
+
+  return { accountingId: await parseId(res, "payIRPFToBank") };
+}
+
 export async function createPayrollAccountingEntry(
   entityId: number,
   opts: {

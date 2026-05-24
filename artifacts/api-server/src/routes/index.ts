@@ -8,6 +8,7 @@ import statsRouter from "./stats";
 import deployRouter from "./deploy";
 import employeesRouter from "./employees";
 import payrollsRouter from "./payrolls";
+import ssRouter from "./ss";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(statsRouter);
 router.use(deployRouter);
 router.use(employeesRouter);
 router.use(payrollsRouter);
+router.use(ssRouter);
 
 export default router;

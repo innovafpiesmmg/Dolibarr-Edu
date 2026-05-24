@@ -481,6 +481,106 @@ export const DeployStudentResponse = zod.object({
 
 
 /**
+ * @summary Resumen de cotizaciones SS por período (RNT + RLC)
+ */
+export const GetSSSummaryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const getSSSummaryQueryMonthMax = 12;
+
+
+
+export const GetSSSummaryQueryParams = zod.object({
+  "month": zod.coerce.number().min(1).max(getSSSummaryQueryMonthMax),
+  "year": zod.coerce.number()
+})
+
+export const GetSSSummaryResponse = zod.object({
+  "studentId": zod.number(),
+  "periodMonth": zod.number(),
+  "periodYear": zod.number(),
+  "lines": zod.array(zod.object({
+  "employeeId": zod.number(),
+  "payrollId": zod.number(),
+  "employeeName": zod.string(),
+  "jobTitle": zod.string().optional(),
+  "contractType": zod.string().optional(),
+  "baseCotizacion": zod.number(),
+  "ssTrabajador": zod.number(),
+  "ssEmpresa": zod.number(),
+  "totalSS": zod.number(),
+  "irpf": zod.number(),
+  "liquidoPercibir": zod.number()
+})),
+  "totalSSTrabajadores": zod.number(),
+  "totalSSEmpresa": zod.number(),
+  "totalSSIngresar": zod.number(),
+  "totalIrpf": zod.number(),
+  "ssPayment": zod.object({
+  "id": zod.number(),
+  "ssStatus": zod.enum(['pending', 'paid', 'error']),
+  "irpfStatus": zod.enum(['pending', 'paid', 'error']),
+  "ssDolibarrAccountingId": zod.number().nullish(),
+  "irpfDolibarrAccountingId": zod.number().nullish()
+}).nullable(),
+  "ssPaymentRecord": zod.object({
+  "id": zod.number(),
+  "ssStatus": zod.enum(['pending', 'paid', 'error']),
+  "irpfStatus": zod.enum(['pending', 'paid', 'error']),
+  "ssDolibarrAccountingId": zod.number().nullish(),
+  "irpfDolibarrAccountingId": zod.number().nullish()
+}).nullish()
+})
+
+
+/**
+ * @summary Registrar pago SS en Dolibarr y contabilidad (476→572)
+ */
+export const PaySSLiquidacionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const paySSLiquidacionBodyMonthMax = 12;
+
+
+
+export const PaySSLiquidacionBody = zod.object({
+  "month": zod.number().min(1).max(paySSLiquidacionBodyMonthMax),
+  "year": zod.number()
+})
+
+export const PaySSLiquidacionResponse = zod.object({
+  "accountingId": zod.number(),
+  "total": zod.number(),
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Registrar pago IRPF en Dolibarr (4751→572) — Modelo 111
+ */
+export const PayIRPFLiquidacionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const payIRPFLiquidacionBodyMonthMax = 12;
+
+
+
+export const PayIRPFLiquidacionBody = zod.object({
+  "month": zod.number().min(1).max(payIRPFLiquidacionBodyMonthMax),
+  "year": zod.number()
+})
+
+export const PayIRPFLiquidacionResponse = zod.object({
+  "accountingId": zod.number(),
+  "total": zod.number(),
+  "message": zod.string()
+})
+
+
+/**
  * @summary Desplegar todos los alumnos pendientes de un grupo
  */
 export const DeployGroupStudentsParams = zod.object({

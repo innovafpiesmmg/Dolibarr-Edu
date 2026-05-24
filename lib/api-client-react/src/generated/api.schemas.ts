@@ -373,6 +373,76 @@ export type Payroll = PayrollCalculation & ({
   createdAt: string;
 });
 
+export interface SSLine {
+  employeeId: number;
+  payrollId: number;
+  employeeName: string;
+  jobTitle?: string;
+  contractType?: string;
+  baseCotizacion: number;
+  ssTrabajador: number;
+  ssEmpresa: number;
+  totalSS: number;
+  irpf: number;
+  liquidoPercibir: number;
+}
+
+export type SSPaymentRecordSsStatus = typeof SSPaymentRecordSsStatus[keyof typeof SSPaymentRecordSsStatus];
+
+
+export const SSPaymentRecordSsStatus = {
+  pending: 'pending',
+  paid: 'paid',
+  error: 'error',
+} as const;
+
+export type SSPaymentRecordIrpfStatus = typeof SSPaymentRecordIrpfStatus[keyof typeof SSPaymentRecordIrpfStatus];
+
+
+export const SSPaymentRecordIrpfStatus = {
+  pending: 'pending',
+  paid: 'paid',
+  error: 'error',
+} as const;
+
+export interface SSPaymentRecord {
+  id: number;
+  ssStatus: SSPaymentRecordSsStatus;
+  irpfStatus: SSPaymentRecordIrpfStatus;
+  /** @nullable */
+  ssDolibarrAccountingId?: number | null;
+  /** @nullable */
+  irpfDolibarrAccountingId?: number | null;
+}
+
+export interface SSSummary {
+  studentId: number;
+  periodMonth: number;
+  periodYear: number;
+  lines: SSLine[];
+  totalSSTrabajadores: number;
+  totalSSEmpresa: number;
+  totalSSIngresar: number;
+  totalIrpf: number;
+  ssPayment: SSPaymentRecord | null;
+  ssPaymentRecord?: SSPaymentRecord | null;
+}
+
+export interface SSPayInput {
+  /**
+     * @minimum 1
+     * @maximum 12
+     */
+  month: number;
+  year: number;
+}
+
+export interface SSPayResult {
+  accountingId: number;
+  total: number;
+  message: string;
+}
+
 export type StatsStudentsPerGroupItem = {
   groupId: number;
   groupName: string;
@@ -404,6 +474,15 @@ groupId?: number;
 search?: string;
 limit?: number;
 offset?: number;
+};
+
+export type GetSSSummaryParams = {
+/**
+ * @minimum 1
+ * @maximum 12
+ */
+month: number;
+year: number;
 };
 
 export type ListEmployeesParams = {

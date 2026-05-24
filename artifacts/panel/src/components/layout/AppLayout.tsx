@@ -7,6 +7,7 @@ import {
   Upload,
   LogOut,
   Banknote,
+  Landmark,
 } from "lucide-react";
 import {
   Sidebar,
@@ -28,6 +29,7 @@ const navigation = [
   { name: "Grupos", href: "/grupos", icon: BookOpen },
   { name: "Alumnos", href: "/alumnos", icon: GraduationCap },
   { name: "Nóminas y SS", href: "/nominas", icon: Banknote },
+  { name: "Liquidaciones SS", href: "/nominas/ss", icon: Landmark },
   { name: "Importar", href: "/importar", icon: Upload },
 ];
 

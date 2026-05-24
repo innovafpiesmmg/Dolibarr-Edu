@@ -536,6 +536,100 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /students/{id}/ss-summary:
+    get:
+      operationId: getSSSummary
+      tags: [students]
+      summary: "Resumen de cotizaciones SS por período (RNT + RLC)"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+        - in: query
+          name: month
+          required: true
+          schema: { type: integer, minimum: 1, maximum: 12 }
+        - in: query
+          name: year
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Resumen de cotizaciones
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SSSummary" }
+        "404":
+          description: Alumno no encontrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /students/{id}/ss-pay:
+    post:
+      operationId: paySSLiquidacion
+      tags: [students]
+      summary: "Registrar pago SS en Dolibarr y contabilidad (476→572)"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SSPayInput" }
+      responses:
+        "200":
+          description: Asiento de pago registrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SSPayResult" }
+        "404":
+          description: Alumno no encontrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "503":
+          description: Dolibarr no configurado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /students/{id}/irpf-pay:
+    post:
+      operationId: payIRPFLiquidacion
+      tags: [students]
+      summary: "Registrar pago IRPF en Dolibarr (4751→572) — Modelo 111"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SSPayInput" }
+      responses:
+        "200":
+          description: Asiento de pago IRPF registrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SSPayResult" }
+        "404":
+          description: Alumno no encontrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "503":
+          description: Dolibarr no configurado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
   /groups/{id}/deploy-all:
     post:
       operationId: deployGroupStudents
@@ -1091,6 +1185,71 @@ components:
             dolibarrSyncStatus:   { type: string, enum: [pending, synced, error] }
             dolibarrSyncError:    { type: ["string", "null"] }
             createdAt:            { type: string, format: date-time }
+
+    # ── SS Liquidaciones ─────────────────────────────────
+    SSLine:
+      type: object
+      required: [employeeId, payrollId, employeeName, baseCotizacion, ssTrabajador, ssEmpresa, totalSS, irpf, liquidoPercibir]
+      properties:
+        employeeId:      { type: integer }
+        payrollId:       { type: integer }
+        employeeName:    { type: string }
+        jobTitle:        { type: string }
+        contractType:    { type: string }
+        baseCotizacion:  { type: number }
+        ssTrabajador:    { type: number }
+        ssEmpresa:       { type: number }
+        totalSS:         { type: number }
+        irpf:            { type: number }
+        liquidoPercibir: { type: number }
+
+    SSSummary:
+      type: object
+      required: [studentId, periodMonth, periodYear, lines, totalSSTrabajadores, totalSSEmpresa, totalSSIngresar, totalIrpf, ssPayment]
+      properties:
+        studentId:           { type: integer }
+        periodMonth:         { type: integer }
+        periodYear:          { type: integer }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/SSLine" }
+        totalSSTrabajadores: { type: number }
+        totalSSEmpresa:      { type: number }
+        totalSSIngresar:     { type: number }
+        totalIrpf:           { type: number }
+        ssPayment:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/SSPaymentRecord"
+        ssPaymentRecord:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/SSPaymentRecord"
+
+    SSPaymentRecord:
+      type: object
+      required: [id, ssStatus, irpfStatus]
+      properties:
+        id:                       { type: integer }
+        ssStatus:                 { type: string, enum: [pending, paid, error] }
+        irpfStatus:               { type: string, enum: [pending, paid, error] }
+        ssDolibarrAccountingId:   { type: ["integer", "null"] }
+        irpfDolibarrAccountingId: { type: ["integer", "null"] }
+
+    SSPayInput:
+      type: object
+      required: [month, year]
+      properties:
+        month: { type: integer, minimum: 1, maximum: 12 }
+        year:  { type: integer }
+
+    SSPayResult:
+      type: object
+      required: [accountingId, total, message]
+      properties:
+        accountingId: { type: integer }
+        total:        { type: number }
+        message:      { type: string }
 
     # ── Stats ────────────────────────────────────────────
     Stats:

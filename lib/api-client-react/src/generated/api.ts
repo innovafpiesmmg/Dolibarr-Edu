@@ -28,6 +28,7 @@ import type {
   Employee,
   EmployeeInput,
   ErrorResponse,
+  GetSSSummaryParams,
   Group,
   GroupInput,
   GroupUpdate,
@@ -43,6 +44,9 @@ import type {
   Payroll,
   PayrollCalculation,
   PayrollInput,
+  SSPayInput,
+  SSPayResult,
+  SSSummary,
   Stats,
   Student,
   StudentBulkInput,
@@ -1700,6 +1704,239 @@ export const useDeployStudent = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeployStudentMutationOptions(options));
+    }
+
+export const getGetSSSummaryUrl = (id: number,
+    params: GetSSSummaryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/students/${id}/ss-summary?${stringifiedParams}` : `/api/students/${id}/ss-summary`
+}
+
+/**
+ * @summary Resumen de cotizaciones SS por período (RNT + RLC)
+ */
+export const getSSSummary = async (id: number,
+    params: GetSSSummaryParams, options?: RequestInit): Promise<SSSummary> => {
+
+  return customFetch<SSSummary>(getGetSSSummaryUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSSSummaryQueryKey = (id: number,
+    params?: GetSSSummaryParams,) => {
+    return [
+    `/api/students/${id}/ss-summary`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetSSSummaryQueryOptions = <TData = Awaited<ReturnType<typeof getSSSummary>>, TError = ErrorType<ErrorResponse>>(id: number,
+    params: GetSSSummaryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSSSummary>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSSSummaryQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSSSummary>>> = ({ signal }) => getSSSummary(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSSSummary>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSSSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getSSSummary>>>
+export type GetSSSummaryQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Resumen de cotizaciones SS por período (RNT + RLC)
+ */
+
+export function useGetSSSummary<TData = Awaited<ReturnType<typeof getSSSummary>>, TError = ErrorType<ErrorResponse>>(
+ id: number,
+    params: GetSSSummaryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSSSummary>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSSSummaryQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getPaySSLiquidacionUrl = (id: number,) => {
+
+
+
+
+  return `/api/students/${id}/ss-pay`
+}
+
+/**
+ * @summary Registrar pago SS en Dolibarr y contabilidad (476→572)
+ */
+export const paySSLiquidacion = async (id: number,
+    sSPayInput: SSPayInput, options?: RequestInit): Promise<SSPayResult> => {
+
+  return customFetch<SSPayResult>(getPaySSLiquidacionUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      sSPayInput,)
+  }
+);}
+
+
+
+
+export const getPaySSLiquidacionMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paySSLiquidacion>>, TError,{id: number;data: BodyType<SSPayInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof paySSLiquidacion>>, TError,{id: number;data: BodyType<SSPayInput>}, TContext> => {
+
+const mutationKey = ['paySSLiquidacion'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paySSLiquidacion>>, {id: number;data: BodyType<SSPayInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  paySSLiquidacion(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PaySSLiquidacionMutationResult = NonNullable<Awaited<ReturnType<typeof paySSLiquidacion>>>
+    export type PaySSLiquidacionMutationBody = BodyType<SSPayInput>
+    export type PaySSLiquidacionMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Registrar pago SS en Dolibarr y contabilidad (476→572)
+ */
+export const usePaySSLiquidacion = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paySSLiquidacion>>, TError,{id: number;data: BodyType<SSPayInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof paySSLiquidacion>>,
+        TError,
+        {id: number;data: BodyType<SSPayInput>},
+        TContext
+      > => {
+      return useMutation(getPaySSLiquidacionMutationOptions(options));
+    }
+
+export const getPayIRPFLiquidacionUrl = (id: number,) => {
+
+
+
+
+  return `/api/students/${id}/irpf-pay`
+}
+
+/**
+ * @summary Registrar pago IRPF en Dolibarr (4751→572) — Modelo 111
+ */
+export const payIRPFLiquidacion = async (id: number,
+    sSPayInput: SSPayInput, options?: RequestInit): Promise<SSPayResult> => {
+
+  return customFetch<SSPayResult>(getPayIRPFLiquidacionUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      sSPayInput,)
+  }
+);}
+
+
+
+
+export const getPayIRPFLiquidacionMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof payIRPFLiquidacion>>, TError,{id: number;data: BodyType<SSPayInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof payIRPFLiquidacion>>, TError,{id: number;data: BodyType<SSPayInput>}, TContext> => {
+
+const mutationKey = ['payIRPFLiquidacion'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof payIRPFLiquidacion>>, {id: number;data: BodyType<SSPayInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  payIRPFLiquidacion(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PayIRPFLiquidacionMutationResult = NonNullable<Awaited<ReturnType<typeof payIRPFLiquidacion>>>
+    export type PayIRPFLiquidacionMutationBody = BodyType<SSPayInput>
+    export type PayIRPFLiquidacionMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Registrar pago IRPF en Dolibarr (4751→572) — Modelo 111
+ */
+export const usePayIRPFLiquidacion = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof payIRPFLiquidacion>>, TError,{id: number;data: BodyType<SSPayInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof payIRPFLiquidacion>>,
+        TError,
+        {id: number;data: BodyType<SSPayInput>},
+        TContext
+      > => {
+      return useMutation(getPayIRPFLiquidacionMutationOptions(options));
     }
 
 export const getDeployGroupStudentsUrl = (id: number,) => {
