@@ -6,6 +6,16 @@ Desarrollado por **Atreyu Servicios Digitales (ASD)**.
 
 ---
 
+## Capturas de pantalla
+
+### Página de inicio — acceso del alumno a su empresa
+![Landing page](screenshots/landing.jpg)
+
+### Panel de gestión — acceso del profesorado
+![Panel de gestión](screenshots/login.jpg)
+
+---
+
 ## Índice
 
 1. [Descripción general](#descripción-general)
@@ -33,7 +43,7 @@ Cada alumno recibe:
 - Una empresa aislada en Dolibarr (entidad multi-empresa)
 - Acceso directo desde la landing page del centro
 
-El profesorado gestiona grupos, alumnos y accesos desde un panel web centralizado protegido con contraseña.
+El profesorado gestiona grupos, alumnos, accesos y nóminas desde un panel web centralizado protegido con contraseña.
 
 ---
 
@@ -44,8 +54,24 @@ El profesorado gestiona grupos, alumnos y accesos desde un panel web centralizad
 - **Gestión de profesores** — alta, edición y baja con conteo de grupos y alumnos asignados
 - **Gestión de grupos** — CRUD completo con asignación de profesor responsable
 - **Gestión de alumnos** — búsqueda, filtrado por grupo, alta, edición y baja
+- **Exportar CSV** — descarga el listado completo de alumnos (con estado de sincronización) en formato Excel-compatible
 - **Importación masiva** — carga de alumnos por CSV con resumen de errores
+- **Restablecer contraseña** — genera una nueva contraseña para cualquier alumno y la sincroniza con Dolibarr
 - **Acceso protegido** — contraseña configurada en la instalación, sesión persistente en navegador
+
+### Módulo de nóminas
+- **Empleados** — vincula empleados del centro a alumnos para las prácticas de nóminas
+- **Nueva nómina** — cálculo completo de nómina mensual (salario bruto, IRPF, cuotas SS obrero/empresa)
+- **Detalle de nómina** — consulta y sincronización del asiento contable 640/642/465/476/4751 con Dolibarr HRM
+- **Liquidaciones SS** — generación de RNT y RLC, asientos de pago a Tesorería (476→572) y a Hacienda — Modelo 111 (4751→572)
+
+### Sincronización con Dolibarr
+- **Estado de sincronización** (`/estado`) — vista global del despliegue de alumnos con filtros por estado (desplegado / error / pendiente), botón de reintento por alumno e indicador de errores activos
+- **Despliegue automático** — crea entidad empresa, usuario ERP y configura régimen fiscal (IGIC por defecto para Canarias, IVA para Península)
+
+### Administración
+- **Historial de actividad** (`/actividad`) — registro cronológico de todas las acciones del panel: altas, bajas, despliegues, cambios de contraseña, etc., con filtros por tipo de entidad
+- **Configuración fiscal** (`/configuracion`) — régimen fiscal (IGIC/IVA), moneda y idioma aplicados al crear entidades en Dolibarr
 
 ### Portal del alumno (landing page)
 - Formulario de acceso con usuario y contraseña en la página pública
@@ -152,6 +178,7 @@ El archivo `.env` (en `/opt/dolibarr-edu/.env` en producción) contiene todas la
 | `ADMIN_PASSWORD_HASH` | Hash SHA-256 de la contraseña del panel |
 | `SESSION_SECRET` | Clave secreta para firmar tokens de sesión |
 | `DOLIBARR_BASE_URL` | URL pública de Dolibarr (ej: `https://erp.micentro.es`) |
+| `DOLIBARR_API_KEY` | Clave API del administrador de Dolibarr |
 | `DATABASE_URL` | Cadena de conexión PostgreSQL del panel EDU |
 | `DOLI_DB_PASSWORD` | Contraseña de la base de datos de Dolibarr |
 | `DOLI_ADMIN_PASSWORD` | Contraseña del administrador de Dolibarr |
@@ -170,6 +197,15 @@ nano /opt/dolibarr-edu/.env
 docker compose restart panel
 ```
 
+### Configuración fiscal
+
+Desde el panel, en **Configuración**, se puede cambiar el régimen fiscal aplicado al crear nuevas entidades:
+
+- **IGIC** (por defecto) — para centros de Canarias
+- **IVA** — para centros de la Península y resto del territorio
+
+El régimen se aplica únicamente al crear nuevas entidades; las existentes no se modifican.
+
 ---
 
 ## Panel de gestión — guía de uso
@@ -181,9 +217,11 @@ docker compose restart panel
 
 ### Flujo de trabajo recomendado al inicio de curso
 
-1. **Crea los profesores** — Ve a *Profesores → Nuevo profesor*
-2. **Crea los grupos** — Ve a *Grupos → Nuevo grupo*, asigna un profesor
-3. **Importa los alumnos** — Ve a *Importar* y pega el CSV del listado oficial
+1. **Configura el régimen fiscal** — Ve a *Configuración* y comprueba que IGIC o IVA es el correcto para tu centro
+2. **Crea los profesores** — Ve a *Profesores → Nuevo profesor*
+3. **Crea los grupos** — Ve a *Grupos → Nuevo grupo*, asigna un profesor
+4. **Importa los alumnos** — Ve a *Importar* y pega el CSV del listado oficial
+5. **Despliega las empresas** — En la ficha de cada alumno (o desde *Estado Dolibarr*) pulsa *Desplegar*
 
 ### Formato CSV para importación masiva
 
@@ -194,6 +232,13 @@ María,Sánchez Ruiz,maria.sanchez@alumnos.es,maria.sanchez,MiContraseña2!,Ases
 ```
 
 Los campos mínimos requeridos son `nombre`, `apellidos`, `usuario` y `contraseña`. El campo `empresa` es opcional.
+
+### Restablecer contraseña de un alumno
+
+1. Ve a *Alumnos* y abre la ficha del alumno
+2. Pulsa **Restablecer contraseña** en la tarjeta *Entorno de Simulación*
+3. Se genera una nueva contraseña aleatoria y se actualiza tanto en la BD como en Dolibarr (si el alumno está desplegado)
+4. Anota la nueva contraseña del cuadro que aparece — no se puede recuperar después de cerrarlo
 
 ---
 
@@ -259,10 +304,10 @@ Si `ADMIN_PASSWORD_HASH` no está definida, el panel no pide contraseña (modo n
 ### Comandos útiles
 
 ```bash
-pnpm run typecheck              # Verificación de tipos completa
-pnpm run build                  # Build de todos los paquetes
-pnpm --filter @workspace/db run push         # Aplicar cambios de esquema DB
-pnpm --filter @workspace/api-spec run codegen  # Regenerar hooks y schemas Zod
+pnpm run typecheck                               # Verificación de tipos completa
+pnpm run build                                   # Build de todos los paquetes
+pnpm --filter @workspace/db run push             # Aplicar cambios de esquema DB
+pnpm --filter @workspace/api-spec run codegen    # Regenerar hooks y schemas Zod
 ```
 
 ---
@@ -282,17 +327,42 @@ lib/
 │   ├── api-spec/openapi.yaml   # Contrato OpenAPI (fuente de verdad)
 │   ├── api-client-react/       # Hooks React Query generados por Orval
 │   ├── api-zod/                # Schemas Zod generados por Orval
-│   └── db/src/schema/          # Tablas Drizzle ORM (teachers, groups, students)
+│   └── db/src/schema/          # Tablas Drizzle ORM
+│       ├── teachers.ts         # Profesores
+│       ├── groups.ts           # Grupos
+│       ├── students.ts         # Alumnos + estado sincronización Dolibarr
+│       ├── employees.ts        # Empleados para nóminas
+│       ├── payrolls.ts         # Nóminas mensuales
+│       ├── ss-payments.ts      # Liquidaciones SS/IRPF por período
+│       ├── settings.ts         # Configuración del panel (clave/valor)
+│       └── activity-logs.ts    # Historial de actividad
 │
 artifacts/
-│   ├── api-server/src/         # API Express 5
-│   │   ├── routes/             # teachers, groups, students, stats, auth
-│   │   ├── middleware/         # requireAuth (protección del panel)
-│   │   └── lib/                # auth helpers, logger
-│   └── panel/src/              # Frontend React + Vite
-│       ├── pages/              # landing, login, dashboard, profesores, grupos, alumnos, importar
-│       ├── components/         # AppLayout, shadcn/ui
+│   ├── api-server/src/
+│   │   ├── routes/             # teachers, groups, students, stats, auth,
+│   │   │                       # deploy, employees, payrolls, ss,
+│   │   │                       # settings, reset-password, activity
+│   │   ├── middleware/         # requireAuth
+│   │   └── lib/                # dolibarr.ts, activity.ts, auth.ts, logger
+│   └── panel/src/
+│       ├── pages/
+│       │   ├── landing.tsx     # Portal público del alumno
+│       │   ├── login.tsx       # Login del profesorado
+│       │   ├── dashboard/      # Estadísticas generales
+│       │   ├── profesores/     # CRUD profesores
+│       │   ├── grupos/         # CRUD grupos
+│       │   ├── alumnos/        # CRUD alumnos + exportar CSV + reset password
+│       │   ├── importar/       # Importación masiva CSV
+│       │   ├── nominas/        # Nóminas, empleados, SS/IRPF
+│       │   ├── estado/         # Estado sincronización Dolibarr
+│       │   ├── actividad/      # Historial de actividad
+│       │   └── configuracion/  # Régimen fiscal, moneda, idioma
+│       ├── components/         # AppLayout (sidebar), shadcn/ui
 │       └── contexts/           # AuthContext
+│
+screenshots/
+│   ├── landing.jpg             # Página pública de inicio
+│   └── login.jpg               # Login del panel de gestión
 ```
 
 ---
@@ -312,21 +382,29 @@ La especificación completa está en `lib/api-spec/openapi.yaml`.
 | `POST` | `/api/auth/student-login` | Login del alumno (devuelve URL empresa) |
 | `GET` | `/api/teachers` | Listar profesores |
 | `POST` | `/api/teachers` | Crear profesor |
-| `GET` | `/api/teachers/:id` | Detalle de profesor |
-| `PUT` | `/api/teachers/:id` | Actualizar profesor |
-| `DELETE` | `/api/teachers/:id` | Eliminar profesor |
+| `GET/PUT/DELETE` | `/api/teachers/:id` | Detalle, actualizar, eliminar |
 | `GET` | `/api/groups` | Listar grupos |
 | `POST` | `/api/groups` | Crear grupo |
-| `GET` | `/api/groups/:id` | Detalle de grupo |
-| `PUT` | `/api/groups/:id` | Actualizar grupo |
-| `DELETE` | `/api/groups/:id` | Eliminar grupo |
-| `GET` | `/api/students` | Listar alumnos |
+| `GET/PUT/DELETE` | `/api/groups/:id` | Detalle, actualizar, eliminar |
+| `GET` | `/api/students` | Listar alumnos (búsqueda + filtro por grupo) |
 | `POST` | `/api/students` | Crear alumno |
 | `POST` | `/api/students/bulk` | Importación masiva |
-| `GET` | `/api/students/:id` | Detalle de alumno |
-| `PUT` | `/api/students/:id` | Actualizar alumno |
-| `DELETE` | `/api/students/:id` | Eliminar alumno |
+| `GET/PUT/DELETE` | `/api/students/:id` | Detalle, actualizar, eliminar |
+| `POST` | `/api/students/:id/deploy` | Desplegar empresa en Dolibarr |
+| `POST` | `/api/students/:id/reset-password` | Restablecer contraseña |
+| `GET` | `/api/employees` | Listar empleados |
+| `POST` | `/api/employees` | Crear empleado |
+| `GET/PUT/DELETE` | `/api/employees/:id` | Detalle, actualizar, eliminar |
+| `GET` | `/api/payrolls` | Listar nóminas |
+| `POST` | `/api/payrolls` | Crear nómina |
+| `GET/DELETE` | `/api/payrolls/:id` | Detalle, eliminar |
+| `POST` | `/api/payrolls/:id/sync-dolibarr` | Sincronizar nómina con Dolibarr |
+| `GET` | `/api/ss/payments` | Listar liquidaciones SS |
+| `POST` | `/api/ss/pay-ss` | Asiento pago SS a Tesorería |
+| `POST` | `/api/ss/pay-irpf` | Asiento pago IRPF a Hacienda |
 | `GET` | `/api/stats` | Estadísticas globales |
+| `GET/PUT` | `/api/settings` | Configuración fiscal del panel |
+| `GET` | `/api/activity` | Historial de actividad |
 
 Todos los endpoints excepto `/healthz`, `/auth/login` y `/auth/student-login` requieren cabecera `Authorization: Bearer <token>`.
 
