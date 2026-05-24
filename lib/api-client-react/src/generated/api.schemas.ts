@@ -144,6 +144,28 @@ export interface BulkImportResult {
   errors: BulkImportResultErrorsItem[];
 }
 
+export interface PanelCredentials {
+  password: string;
+}
+
+export interface PanelToken {
+  token: string;
+}
+
+export interface AlumnoCredentials {
+  username: string;
+  password: string;
+}
+
+export interface AlumnoSesion {
+  firstName: string;
+  lastName: string;
+  companyName?: string | null;
+  groupName: string;
+  dolibarrUrl: string;
+  entityId?: number | null;
+}
+
 export type StatsStudentsPerGroupItem = {
   groupId: number;
   groupName: string;

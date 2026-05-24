@@ -73,14 +73,53 @@ success "Repositorio descargado en $INSTALL_DIR"
 if [[ ! -f "$INSTALL_DIR/.env" ]]; then
   cp "$INSTALL_DIR/.env.example" "$INSTALL_DIR/.env"
 
-  # Generar contraseñas aleatorias
+  # Generar contraseñas aleatorias para la base de datos
   ROOT_PASS=$(openssl rand -base64 20 | tr -dc 'a-zA-Z0-9' | head -c 20)
   DB_PASS=$(openssl rand -base64 20 | tr -dc 'a-zA-Z0-9' | head -c 20)
   ADMIN_PASS=$(openssl rand -base64 20 | tr -dc 'a-zA-Z0-9' | head -c 20)
+  SESSION_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 40)
 
-  sed -i "s/cambia_esta_contrasena_root/$ROOT_PASS/" "$INSTALL_DIR/.env"
-  sed -i "s/cambia_esta_contrasena_db/$DB_PASS/"     "$INSTALL_DIR/.env"
+  sed -i "s/cambia_esta_contrasena_root/$ROOT_PASS/"   "$INSTALL_DIR/.env"
+  sed -i "s/cambia_esta_contrasena_db/$DB_PASS/"       "$INSTALL_DIR/.env"
   sed -i "s/cambia_esta_contrasena_admin/$ADMIN_PASS/" "$INSTALL_DIR/.env"
+
+  # ── Contraseña de acceso al panel ─────────────────────
+  echo ""
+  echo "┌─────────────────────────────────────────────────────┐"
+  echo "│              Configuración del panel web             │"
+  echo "└─────────────────────────────────────────────────────┘"
+  echo ""
+  echo "  El panel de gestión (profesores, grupos, alumnos) está"
+  echo "  protegido con contraseña. Elige una contraseña segura."
+  echo ""
+  while true; do
+    read -rsp "  Contraseña del panel: " PANEL_PASS
+    echo ""
+    read -rsp "  Confirmar contraseña:  " PANEL_PASS2
+    echo ""
+    if [[ "$PANEL_PASS" == "$PANEL_PASS2" ]]; then
+      break
+    fi
+    echo -e "  ${RED}Las contraseñas no coinciden. Inténtalo de nuevo.${NC}"
+  done
+
+  PANEL_HASH=$(echo -n "$PANEL_PASS" | openssl dgst -sha256 | awk '{print $2}')
+  sed -i "s|^ADMIN_PASSWORD_HASH=.*|ADMIN_PASSWORD_HASH=$PANEL_HASH|" "$INSTALL_DIR/.env"
+  sed -i "s|^SESSION_SECRET=.*|SESSION_SECRET=$SESSION_SECRET|"       "$INSTALL_DIR/.env"
+
+  # ── URL del servidor Dolibarr ─────────────────────────
+  echo ""
+  echo "┌─────────────────────────────────────────────────────┐"
+  echo "│          URL pública de Dolibarr (para alumnos)      │"
+  echo "└─────────────────────────────────────────────────────┘"
+  echo ""
+  echo "  Introduce la URL pública de tu instancia Dolibarr."
+  echo "  Ejemplo: https://erp.micentro.es"
+  echo "  (Puedes dejarlo vacío ahora y configurarlo después en .env)"
+  echo ""
+  read -rp "  URL de Dolibarr: " DOLI_URL
+  DOLI_URL="${DOLI_URL:-}"
+  sed -i "s|^DOLIBARR_BASE_URL=.*|DOLIBARR_BASE_URL=${DOLI_URL}|" "$INSTALL_DIR/.env"
 
   echo ""
   echo "┌─────────────────────────────────────────────────────┐"
@@ -90,7 +129,7 @@ if [[ ! -f "$INSTALL_DIR/.env" ]]; then
   echo "│  Contraseña admin:       $ADMIN_PASS                 │"
   echo "└─────────────────────────────────────────────────────┘"
   echo ""
-  warn "Edita $INSTALL_DIR/.env para configurar la URL pública (DOLI_URL_ROOT)"
+  warn "La contraseña del panel queda guardada como hash en $INSTALL_DIR/.env"
 fi
 
 # ── Instrucciones finales ─────────────────────────────────
@@ -99,9 +138,8 @@ success "¡Instalación completada!"
 echo ""
 echo "Próximos pasos:"
 echo ""
-echo "  1. Edita la configuración:"
+echo "  1. Revisa la configuración (opcional):"
 echo "     nano $INSTALL_DIR/.env"
-echo "     (cambia DOLI_URL_ROOT por tu dominio de Cloudflare)"
 echo ""
 echo "  2. Arranca los servicios:"
 echo "     cd $INSTALL_DIR && docker compose up -d"

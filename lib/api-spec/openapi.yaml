@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Autenticación de administrador y acceso de alumnos
   - name: teachers
     description: Gestión de profesores
   - name: groups
@@ -20,6 +22,49 @@ tags:
     description: Estadísticas del panel
 
 paths:
+  # ── Auth ──────────────────────────────────────────────
+  /auth/login:
+    post:
+      operationId: adminLogin
+      tags: [auth]
+      summary: Login de administrador del panel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PanelCredentials"
+      responses:
+        "200":
+          description: Token de sesión
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PanelToken"
+        "401":
+          description: Contraseña incorrecta
+
+  /auth/student-login:
+    post:
+      operationId: studentLogin
+      tags: [auth]
+      summary: Login de alumno para acceder a su empresa
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlumnoCredentials"
+      responses:
+        "200":
+          description: Datos del alumno y URL de la empresa en Dolibarr
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlumnoSesion"
+        "401":
+          description: Credenciales incorrectas
+
   /healthz:
     get:
       operationId: healthCheck
@@ -633,6 +678,37 @@ components:
             properties:
               username: { type: string }
               error:    { type: string }
+
+    # ── Auth ─────────────────────────────────────────────
+    PanelCredentials:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string }
+
+    PanelToken:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string }
+
+    AlumnoCredentials:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string }
+
+    AlumnoSesion:
+      type: object
+      required: [firstName, lastName, groupName, dolibarrUrl]
+      properties:
+        firstName:   { type: string }
+        lastName:    { type: string }
+        companyName: { type: string, nullable: true }
+        groupName:   { type: string }
+        dolibarrUrl: { type: string }
+        entityId:    { type: integer, nullable: true }
 
     # ── Stats ────────────────────────────────────────────
     Stats:

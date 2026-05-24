@@ -20,6 +20,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AlumnoCredentials,
+  AlumnoSesion,
   BulkImportResult,
   ErrorResponse,
   Group,
@@ -30,6 +32,8 @@ import type {
   ListGroupsParams,
   ListStudentsParams,
   ListTeachersParams,
+  PanelCredentials,
+  PanelToken,
   Stats,
   Student,
   StudentBulkInput,
@@ -51,6 +55,148 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
+
+export const getAdminLoginUrl = () => {
+
+
+
+
+  return `/api/auth/login`
+}
+
+/**
+ * @summary Login de administrador del panel
+ */
+export const adminLogin = async (panelCredentials: PanelCredentials, options?: RequestInit): Promise<PanelToken> => {
+
+  return customFetch<PanelToken>(getAdminLoginUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      panelCredentials,)
+  }
+);}
+
+
+
+
+export const getAdminLoginMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminLogin>>, TError,{data: BodyType<PanelCredentials>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminLogin>>, TError,{data: BodyType<PanelCredentials>}, TContext> => {
+
+const mutationKey = ['adminLogin'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminLogin>>, {data: BodyType<PanelCredentials>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  adminLogin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminLoginMutationResult = NonNullable<Awaited<ReturnType<typeof adminLogin>>>
+    export type AdminLoginMutationBody = BodyType<PanelCredentials>
+    export type AdminLoginMutationError = ErrorType<void>
+
+    /**
+ * @summary Login de administrador del panel
+ */
+export const useAdminLogin = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminLogin>>, TError,{data: BodyType<PanelCredentials>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof adminLogin>>,
+        TError,
+        {data: BodyType<PanelCredentials>},
+        TContext
+      > => {
+      return useMutation(getAdminLoginMutationOptions(options));
+    }
+
+export const getStudentLoginUrl = () => {
+
+
+
+
+  return `/api/auth/student-login`
+}
+
+/**
+ * @summary Login de alumno para acceder a su empresa
+ */
+export const studentLogin = async (alumnoCredentials: AlumnoCredentials, options?: RequestInit): Promise<AlumnoSesion> => {
+
+  return customFetch<AlumnoSesion>(getStudentLoginUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      alumnoCredentials,)
+  }
+);}
+
+
+
+
+export const getStudentLoginMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof studentLogin>>, TError,{data: BodyType<AlumnoCredentials>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof studentLogin>>, TError,{data: BodyType<AlumnoCredentials>}, TContext> => {
+
+const mutationKey = ['studentLogin'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof studentLogin>>, {data: BodyType<AlumnoCredentials>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  studentLogin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StudentLoginMutationResult = NonNullable<Awaited<ReturnType<typeof studentLogin>>>
+    export type StudentLoginMutationBody = BodyType<AlumnoCredentials>
+    export type StudentLoginMutationError = ErrorType<void>
+
+    /**
+ * @summary Login de alumno para acceder a su empresa
+ */
+export const useStudentLogin = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof studentLogin>>, TError,{data: BodyType<AlumnoCredentials>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof studentLogin>>,
+        TError,
+        {data: BodyType<AlumnoCredentials>},
+        TContext
+      > => {
+      return useMutation(getStudentLoginMutationOptions(options));
+    }
 
 export const getHealthCheckUrl = () => {
 

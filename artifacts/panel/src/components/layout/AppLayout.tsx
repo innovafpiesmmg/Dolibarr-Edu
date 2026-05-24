@@ -1,11 +1,11 @@
 import { Link, useLocation } from "wouter";
-import { 
-  LayoutDashboard, 
-  Users, 
-  BookOpen, 
-  GraduationCap, 
+import {
+  LayoutDashboard,
+  Users,
+  BookOpen,
+  GraduationCap,
   Upload,
-  Menu
+  LogOut,
 } from "lucide-react";
 import {
   Sidebar,
@@ -16,8 +16,10 @@ import {
   SidebarMenuButton,
   SidebarTrigger,
   SidebarProvider,
-  SidebarFooter
+  SidebarFooter,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -29,6 +31,7 @@ const navigation = [
 
 export function AppSidebar() {
   const [location] = useLocation();
+  const { logout } = useAuth();
 
   return (
     <Sidebar className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
@@ -41,7 +44,8 @@ export function AppSidebar() {
       <SidebarContent className="p-4">
         <SidebarMenu>
           {navigation.map((item) => {
-            const isActive = location === item.href || location.startsWith(item.href + "/");
+            const isActive =
+              location === item.href || location.startsWith(item.href + "/");
             return (
               <SidebarMenuItem key={item.name}>
                 <SidebarMenuButton asChild isActive={isActive} tooltip={item.name}>
@@ -55,8 +59,17 @@ export function AppSidebar() {
           })}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-4 border-t border-sidebar-border">
-        <div className="text-xs text-sidebar-foreground/60 text-center">
+      <SidebarFooter className="p-4 border-t border-sidebar-border space-y-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          onClick={() => { logout(); window.location.href = "/"; }}
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Cerrar sesión
+        </Button>
+        <div className="text-xs text-sidebar-foreground/40 text-center">
           Dolibarr EDU v1.0
         </div>
       </SidebarFooter>

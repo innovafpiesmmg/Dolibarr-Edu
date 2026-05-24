@@ -6,6 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './alumnoCredentials';
+export * from './alumnoSesion';
 export * from './bulkImportResult';
 export * from './bulkImportResultErrorsItem';
 export * from './errorResponse';
@@ -17,6 +19,8 @@ export * from './healthStatus';
 export * from './listGroupsParams';
 export * from './listStudentsParams';
 export * from './listTeachersParams';
+export * from './panelCredentials';
+export * from './panelToken';
 export * from './stats';
 export * from './statsStudentsPerGroupItem';
 export * from './student';

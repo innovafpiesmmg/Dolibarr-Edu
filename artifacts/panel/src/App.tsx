@@ -1,9 +1,10 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/landing";
+import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import ProfesoresList from "@/pages/profesores/index";
 import TeacherDetail from "@/pages/profesores/detail";
@@ -13,10 +14,29 @@ import AlumnosList from "@/pages/alumnos/index";
 import StudentDetail from "@/pages/alumnos/detail";
 import ImportarAlumnos from "@/pages/importar/index";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: unknown) => {
+        if (error && typeof error === "object" && "status" in error) {
+          if ((error as { status: number }).status === 401) return false;
+        }
+        return failureCount < 2;
+      },
+    },
+  },
+});
 
-function AdminLayout({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  const [location] = useLocation();
+
+  if (!isAuthenticated) {
+    return <Redirect to={`/login?next=${encodeURIComponent(location)}`} />;
+  }
+
   return <AppLayout>{children}</AppLayout>;
 }
 
@@ -24,37 +44,35 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
+      <Route path="/login" component={LoginPage} />
+
       <Route path="/dashboard">
-        <AdminLayout><Dashboard /></AdminLayout>
+        <ProtectedRoute><Dashboard /></ProtectedRoute>
       </Route>
-      
-      {/* Profesores */}
+
       <Route path="/profesores">
-        <AdminLayout><ProfesoresList /></AdminLayout>
+        <ProtectedRoute><ProfesoresList /></ProtectedRoute>
       </Route>
       <Route path="/profesores/:id">
-        <AdminLayout><TeacherDetail /></AdminLayout>
+        <ProtectedRoute><TeacherDetail /></ProtectedRoute>
       </Route>
 
-      {/* Grupos */}
       <Route path="/grupos">
-        <AdminLayout><GruposList /></AdminLayout>
+        <ProtectedRoute><GruposList /></ProtectedRoute>
       </Route>
       <Route path="/grupos/:id">
-        <AdminLayout><GroupDetail /></AdminLayout>
+        <ProtectedRoute><GroupDetail /></ProtectedRoute>
       </Route>
 
-      {/* Alumnos */}
       <Route path="/alumnos">
-        <AdminLayout><AlumnosList /></AdminLayout>
+        <ProtectedRoute><AlumnosList /></ProtectedRoute>
       </Route>
       <Route path="/alumnos/:id">
-        <AdminLayout><StudentDetail /></AdminLayout>
+        <ProtectedRoute><StudentDetail /></ProtectedRoute>
       </Route>
 
-      {/* Importar */}
       <Route path="/importar">
-        <AdminLayout><ImportarAlumnos /></AdminLayout>
+        <ProtectedRoute><ImportarAlumnos /></ProtectedRoute>
       </Route>
 
       <Route component={NotFound} />
@@ -65,12 +83,14 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

@@ -9,6 +9,36 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Login de administrador del panel
+ */
+export const AdminLoginBody = zod.object({
+  "password": zod.string()
+})
+
+export const AdminLoginResponse = zod.object({
+  "token": zod.string()
+})
+
+
+/**
+ * @summary Login de alumno para acceder a su empresa
+ */
+export const StudentLoginBody = zod.object({
+  "username": zod.string(),
+  "password": zod.string()
+})
+
+export const StudentLoginResponse = zod.object({
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "companyName": zod.string().nullish(),
+  "groupName": zod.string(),
+  "dolibarrUrl": zod.string(),
+  "entityId": zod.number().nullish()
+})
+
+
+/**
  * Returns server health status
  * @summary Health check
  */
