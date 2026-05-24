@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
   BookOpen,
@@ -12,9 +13,18 @@ import {
   Upload,
   ExternalLink,
   LogIn,
+  BarChart3,
+  FileText,
+  Banknote,
+  Settings,
+  CalendarDays,
+  ShieldCheck,
+  Github,
 } from "lucide-react";
 import { useStudentLogin } from "@workspace/api-client-react";
 import type { AlumnoSesion } from "@workspace/api-client-react";
+
+// ── Student portal ────────────────────────────────────────────────────────────
 
 function StudentPortal() {
   const [username, setUsername] = useState("");
@@ -55,7 +65,6 @@ function StudentPortal() {
           <p className="text-primary font-medium mb-1">{session.companyName}</p>
         )}
         <p className="text-sm text-muted-foreground mb-6">Grupo: {session.groupName}</p>
-
         {session.dolibarrUrl ? (
           <Button asChild className="w-full h-12 text-base font-semibold">
             <a href={session.dolibarrUrl} target="_blank" rel="noopener noreferrer">
@@ -67,7 +76,6 @@ function StudentPortal() {
             La URL de Dolibarr aún no está configurada. Consulta con tu profesor.
           </p>
         )}
-
         <button
           onClick={() => { setSession(null); setUsername(""); setPassword(""); }}
           className="mt-4 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
@@ -104,11 +112,7 @@ function StudentPortal() {
         />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button
-        type="submit"
-        className="w-full h-12"
-        disabled={mutation.isPending}
-      >
+      <Button type="submit" className="w-full h-12" disabled={mutation.isPending}>
         {mutation.isPending ? "Comprobando..." : (
           <>Acceder a mi empresa <LogIn className="ml-2 h-4 w-4" /></>
         )}
@@ -117,20 +121,112 @@ function StudentPortal() {
   );
 }
 
+// ── ERP Screenshots tabs ───────────────────────────────────────────────────────
+
+const ERP_TABS = [
+  {
+    id: "dashboard",
+    label: "Panel principal",
+    img: "/images/erp/dolibarr-dashboard.jpg",
+    caption: "Vista general del ERP con estadísticas, tareas pendientes y gráficos de ventas en tiempo real.",
+  },
+  {
+    id: "empresa",
+    label: "Ficha de empresa",
+    img: "/images/erp/dolibarr-invoice.png",
+    caption: "Cada alumno gestiona su propia empresa: contactos, condiciones comerciales, documentos y más.",
+  },
+  {
+    id: "agenda",
+    label: "Agenda y proyectos",
+    img: "/images/erp/dolibarr-calendar.jpg",
+    caption: "Gestión de eventos, reuniones de equipo e hitos de proyecto con vista mensual y semanal.",
+  },
+  {
+    id: "gastos",
+    label: "Contabilidad",
+    img: "/images/erp/dolibarr-list.png",
+    caption: "Notas de gastos, facturas y conciliaciones contables con flujo completo de aprobación.",
+  },
+];
+
+function ErpShowcase() {
+  const [active, setActive] = useState("dashboard");
+  const current = ERP_TABS.find((t) => t.id === active)!;
+
+  return (
+    <div className="space-y-4">
+      {/* Tabs */}
+      <div className="flex flex-wrap gap-2 justify-center">
+        {ERP_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActive(tab.id)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+              active === tab.id
+                ? "bg-primary text-primary-foreground shadow"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Screenshot */}
+      <div className="rounded-xl overflow-hidden border border-border shadow-2xl bg-muted">
+        {/* Browser chrome */}
+        <div className="bg-muted border-b border-border px-4 py-2.5 flex items-center gap-2">
+          <span className="h-3 w-3 rounded-full bg-red-400/70" />
+          <span className="h-3 w-3 rounded-full bg-yellow-400/70" />
+          <span className="h-3 w-3 rounded-full bg-green-400/70" />
+          <div className="ml-3 flex-1 bg-background/60 rounded px-3 py-0.5 text-xs text-muted-foreground font-mono truncate max-w-xs">
+            dolibarr.micentro.es
+          </div>
+        </div>
+        <img
+          key={current.id}
+          src={current.img}
+          alt={current.label}
+          className="w-full object-cover object-top"
+          style={{ maxHeight: "420px" }}
+        />
+      </div>
+
+      {/* Caption */}
+      <p className="text-center text-sm text-muted-foreground px-4">
+        {current.caption}
+      </p>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
+
+      {/* Nav */}
       <nav className="fixed top-0 w-full z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary">
             <BookOpen className="h-6 w-6" />
             <span>Dolibarr EDU</span>
           </div>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" className="hidden md:flex">Soporte</Button>
+          <div className="flex items-center gap-3">
+            <a
+              href="https://github.com/innovafpiesmmg/Dolibarr-Edu"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Github className="h-4 w-4" />
+              GitHub
+            </a>
             <Button asChild>
               <Link href="/login">
-                Acceder al Panel <ArrowRight className="ml-2 h-4 w-4" />
+                Panel de gestión <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
@@ -138,59 +234,157 @@ export default function LandingPage() {
       </nav>
 
       <main className="pt-16">
-        {/* Hero Section */}
-        <section className="relative overflow-hidden pt-24 pb-32">
+
+        {/* ── Hero ─────────────────────────────────────────────────────────── */}
+        <section className="relative overflow-hidden pt-20 pb-16 lg:pt-28 lg:pb-24">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
-          <div className="mx-auto max-w-7xl px-6 relative z-10 flex flex-col lg:flex-row items-center gap-12">
-            <div className="flex-1 text-center lg:text-left">
-              <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary mb-6">
-                <span className="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse" />
-                La plataforma definitiva para FP
-              </div>
-              <h1 className="text-5xl lg:text-7xl font-bold tracking-tight mb-6 text-foreground font-sans">
-                Aprende gestionando <br/>
-                <span className="text-primary">empresas reales.</span>
-              </h1>
-              <p className="text-lg lg:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto lg:mx-0">
-                Dolibarr EDU proporciona un entorno ERP completo para centros de Formación Profesional. Cada alumno administra su propia empresa simulada, guiado por sus profesores.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Button size="lg" className="h-14 px-8 text-lg" asChild>
-                  <a href="#acceso-alumno">
-                    Acceder a mi empresa <ArrowRight className="ml-2 h-5 w-5" />
-                  </a>
-                </Button>
-                <Button size="lg" variant="outline" className="h-14 px-8 text-lg">
-                  Ver documentación
-                </Button>
-              </div>
-            </div>
-            <div className="flex-1 relative w-full max-w-xl lg:max-w-none">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-border/50 shadow-2xl relative">
-                <div className="absolute inset-0 bg-primary/10 mix-blend-overlay" />
-                <img
-                  src="/images/classroom.jpg"
-                  alt="Students in a modern vocational training classroom"
-                  className="object-cover w-full h-full"
-                />
-              </div>
-              <div className="absolute -bottom-6 -left-6 bg-card border border-border shadow-xl rounded-xl p-6 hidden md:block">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Users className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground font-medium">Estudiantes Activos</p>
-                    <p className="text-2xl font-bold font-mono">1,240+</p>
-                  </div>
+          <div className="mx-auto max-w-7xl px-6 relative z-10">
+            <div className="flex flex-col lg:flex-row items-center gap-12">
+
+              {/* Text */}
+              <div className="flex-1 text-center lg:text-left">
+                <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary mb-6">
+                  <span className="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse" />
+                  La plataforma definitiva para FP
+                </div>
+                <h1 className="text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-foreground">
+                  Aprende gestionando <br />
+                  <span className="text-primary">empresas reales.</span>
+                </h1>
+                <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0">
+                  Dolibarr EDU proporciona un entorno ERP completo para centros de Formación Profesional.
+                  Cada alumno administra su propia empresa simulada con el mismo software que usan las pymes reales.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                  <Button size="lg" className="h-13 px-7 text-base" asChild>
+                    <a href="#acceso-alumno">
+                      Acceder a mi empresa <ArrowRight className="ml-2 h-4 w-4" />
+                    </a>
+                  </Button>
+                  <Button size="lg" variant="outline" className="h-13 px-7 text-base" asChild>
+                    <a
+                      href="https://github.com/innovafpiesmmg/Dolibarr-Edu"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Github className="mr-2 h-4 w-4" />
+                      Ver en GitHub
+                    </a>
+                  </Button>
+                </div>
+
+                {/* Stats pills */}
+                <div className="flex flex-wrap gap-3 mt-8 justify-center lg:justify-start">
+                  {[
+                    { label: "Open source", icon: ShieldCheck },
+                    { label: "Multiempresa", icon: Building2 },
+                    { label: "IGIC / IVA", icon: FileText },
+                    { label: "Nóminas integradas", icon: Banknote },
+                  ].map(({ label, icon: Icon }) => (
+                    <span
+                      key={label}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground"
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {label}
+                    </span>
+                  ))}
                 </div>
               </div>
+
+              {/* Hero screenshot */}
+              <div className="flex-1 w-full max-w-2xl lg:max-w-none">
+                <div className="rounded-xl overflow-hidden border border-border shadow-2xl">
+                  <div className="bg-muted border-b border-border px-4 py-2.5 flex items-center gap-2">
+                    <span className="h-3 w-3 rounded-full bg-red-400/70" />
+                    <span className="h-3 w-3 rounded-full bg-yellow-400/70" />
+                    <span className="h-3 w-3 rounded-full bg-green-400/70" />
+                    <div className="ml-3 flex-1 bg-background/60 rounded px-3 py-0.5 text-xs text-muted-foreground font-mono truncate max-w-xs">
+                      dolibarr.micentro.es
+                    </div>
+                  </div>
+                  <img
+                    src="/images/erp/dolibarr-dashboard.jpg"
+                    alt="Dolibarr ERP — Panel principal"
+                    className="w-full object-cover object-top"
+                  />
+                </div>
+                <p className="mt-2 text-xs text-center text-muted-foreground">
+                  Captura real del ERP Dolibarr — interfaz que verá cada alumno
+                </p>
+              </div>
+
             </div>
           </div>
         </section>
 
-        {/* Student Portal Section */}
-        <section id="acceso-alumno" className="py-24 bg-card">
+        {/* ── How it works ──────────────────────────────────────────────────── */}
+        <section className="py-20 bg-card border-y border-border">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl font-bold mb-2">¿Cómo funciona?</h2>
+              <p className="text-muted-foreground">Tres pasos para tener el entorno listo desde el primer día de curso.</p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                {
+                  step: "01",
+                  title: "Instala el servidor",
+                  desc: "Despliega Dolibarr en el servidor del centro con un solo comando. Incluye MariaDB y túnel Cloudflare para acceso seguro sin abrir puertos.",
+                  icon: Settings,
+                },
+                {
+                  step: "02",
+                  title: "Importa los alumnos",
+                  desc: "Sube el CSV del SICE o de tu centro. El panel crea los usuarios, asigna contraseñas y despliega una empresa independiente por alumno en segundos.",
+                  icon: Upload,
+                },
+                {
+                  step: "03",
+                  title: "Los alumnos empiezan",
+                  desc: "Cada estudiante accede desde la landing con sus credenciales y entra directamente en su empresa Dolibarr: facturas, contabilidad, RRHH y más.",
+                  icon: Building2,
+                },
+              ].map(({ step, title, desc, icon: Icon }) => (
+                <div key={step} className="relative flex gap-5">
+                  <div className="flex flex-col items-center">
+                    <div className="h-11 w-11 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center shrink-0">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="w-px flex-1 bg-border mt-3 mb-0 hidden md:block" />
+                  </div>
+                  <div className="pb-6 md:pb-0">
+                    <span className="text-xs font-bold text-primary/60 tracking-widest uppercase">Paso {step}</span>
+                    <h3 className="text-base font-bold mt-1 mb-2">{title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── ERP en acción ─────────────────────────────────────────────────── */}
+        <section className="py-24">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <Badge variant="outline" className="mb-4 text-primary border-primary/30">
+                El ERP real
+              </Badge>
+              <h2 className="text-3xl font-bold mb-4">
+                Así trabajan tus alumnos en Dolibarr
+              </h2>
+              <p className="text-muted-foreground">
+                No es una simulación simplificada. Es Dolibarr ERP/CRM completo, el mismo que usan
+                más de 250 000 empresas en todo el mundo.
+              </p>
+            </div>
+            <ErpShowcase />
+          </div>
+        </section>
+
+        {/* ── Student Portal ────────────────────────────────────────────────── */}
+        <section id="acceso-alumno" className="py-24 bg-card border-y border-border">
           <div className="mx-auto max-w-7xl px-6">
             <div className="grid lg:grid-cols-2 gap-16 items-center">
               <div>
@@ -202,13 +396,15 @@ export default function LandingPage() {
                   Accede a tu empresa
                 </h2>
                 <p className="text-lg text-muted-foreground mb-6">
-                  Introduce tus credenciales para entrar directamente en el ERP de tu empresa simulada. Tu usuario y contraseña los facilita tu profesor al inicio del curso.
+                  Introduce tus credenciales para entrar directamente en el ERP de tu empresa simulada.
+                  Tu usuario y contraseña los facilita tu profesor al inicio del curso.
                 </p>
                 <ul className="space-y-3 text-muted-foreground">
                   {[
-                    "Tu empresa es 100% independiente del resto",
-                    "Trabaja con un ERP real utilizado por empresas",
-                    "Tu progreso queda guardado automáticamente",
+                    "Tu empresa es 100 % independiente del resto de alumnos",
+                    "Trabaja con un ERP real utilizado por miles de pymes",
+                    "Tu progreso queda guardado automáticamente en el servidor",
+                    "Accessible desde cualquier dispositivo con navegador",
                   ].map((item, i) => (
                     <li key={i} className="flex items-center gap-3">
                       <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
@@ -227,119 +423,237 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Features Grid */}
+        {/* ── Features grid ─────────────────────────────────────────────────── */}
         <section className="py-24">
           <div className="mx-auto max-w-7xl px-6">
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl font-bold mb-4">Todo lo necesario para la Formación Profesional</h2>
-              <p className="text-muted-foreground">Un panel de control diseñado específicamente para coordinadores y profesores que necesitan gestionar múltiples grupos y cientos de alumnos.</p>
+              <h2 className="text-3xl font-bold mb-4">
+                Todo lo necesario para la Formación Profesional
+              </h2>
+              <p className="text-muted-foreground">
+                Un panel diseñado específicamente para coordinadores y profesores que gestionan
+                múltiples grupos y cientos de alumnos.
+              </p>
             </div>
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
                 {
                   icon: Building2,
                   title: "1 Alumno = 1 Empresa",
-                  desc: "Automatiza la creación de entidades aisladas en Dolibarr para que cada estudiante opere su propia empresa simulada sin interferencias."
+                  desc: "Cada estudiante opera una entidad Dolibarr completamente aislada. Sin interferencias, sin datos compartidos.",
                 },
                 {
                   icon: Users,
-                  title: "Gestión de Grupos",
-                  desc: "Organiza a los alumnos por años y asignaturas. Asigna profesores responsables a cada grupo con un par de clics."
+                  title: "Gestión de grupos",
+                  desc: "Organiza a los alumnos por curso y asignatura. Asigna profesores responsables a cada grupo con un par de clics.",
                 },
                 {
                   icon: Upload,
-                  title: "Importación Masiva",
-                  desc: "Sube listas de alumnos mediante CSV al inicio del curso. El sistema crea los usuarios, asigna contraseñas y despliega las empresas en segundos."
-                }
+                  title: "Importación masiva",
+                  desc: "Sube el CSV del centro al inicio del curso. El sistema crea usuarios, contraseñas y despliega empresas en segundos.",
+                },
+                {
+                  icon: Banknote,
+                  title: "Nóminas y Seguridad Social",
+                  desc: "Calcula nóminas, genera asientos contables en Dolibarr y registra las liquidaciones de SS e IRPF (Modelo 111).",
+                },
+                {
+                  icon: FileText,
+                  title: "IGIC / IVA configurable",
+                  desc: "Selecciona el régimen fiscal del centro: IGIC para Canarias o IVA para la Península. Se aplica a todas las entidades nuevas.",
+                },
+                {
+                  icon: BarChart3,
+                  title: "Dashboard de estadísticas",
+                  desc: "Vista global de profesores, grupos, alumnos activos y despliegues en Dolibarr. Todo en una sola pantalla.",
+                },
+                {
+                  icon: CalendarDays,
+                  title: "Agenda y proyectos",
+                  desc: "Los alumnos gestionan reuniones, eventos y proyectos con el módulo de agenda integrado en su empresa.",
+                },
+                {
+                  icon: ShieldCheck,
+                  title: "Acceso seguro con Cloudflare",
+                  desc: "El túnel Cloudflare ofrece HTTPS automático sin necesidad de abrir puertos en el cortafuegos del centro.",
+                },
+                {
+                  icon: Settings,
+                  title: "Instalación en un comando",
+                  desc: "Script de instalación automático desde GitHub. Dolibarr, MariaDB y el túnel, listos en menos de cinco minutos.",
+                },
               ].map((feature, i) => (
-                <div key={i} className="bg-card border border-border rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-6">
-                    <feature.icon className="h-6 w-6 text-primary" />
+                <div
+                  key={i}
+                  className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md hover:border-primary/30 transition-all"
+                >
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                    <feature.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
+                  <h3 className="font-bold mb-2">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Image Section */}
-        <section className="py-24 relative overflow-hidden bg-card">
+        {/* ── ERP modules list ──────────────────────────────────────────────── */}
+        <section className="py-20 bg-card border-y border-border">
           <div className="mx-auto max-w-7xl px-6">
             <div className="grid lg:grid-cols-2 gap-16 items-center">
-              <div className="order-2 lg:order-1 relative">
-                <div className="aspect-square rounded-full absolute -top-12 -left-12 w-64 bg-primary/5 blur-3xl" />
-                <div className="aspect-[3/4] rounded-2xl overflow-hidden border border-border shadow-xl">
-                  <img
-                    src="/images/collaboration.jpg"
-                    alt="Students collaborating"
-                    className="object-cover w-full h-full"
-                  />
+              <div>
+                <Badge variant="outline" className="mb-4 text-primary border-primary/30">
+                  Módulos incluidos
+                </Badge>
+                <h2 className="text-3xl font-bold mb-4">
+                  Preparados para el mundo laboral real
+                </h2>
+                <p className="text-muted-foreground mb-8">
+                  Los alumnos trabajan con el mismo ERP que usan las pymes. Desde facturación
+                  hasta recursos humanos, todo el ciclo económico de una empresa en un solo software.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    "Facturación de clientes",
+                    "Compras y proveedores",
+                    "Contabilidad general",
+                    "Gestión de inventario",
+                    "CRM y contactos",
+                    "Proyectos y tareas",
+                    "Recursos humanos",
+                    "Nóminas y SS",
+                    "Banco y tesorería",
+                    "Punto de venta",
+                    "Informes y estadísticas",
+                    "Documentos y ficheros",
+                  ].map((mod) => (
+                    <div key={mod} className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      <span>{mod}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="order-1 lg:order-2">
-                <h2 className="text-3xl lg:text-4xl font-bold mb-6">Preparados para el mundo laboral real</h2>
-                <p className="text-lg text-muted-foreground mb-8">
-                  El salto de la teoría a la práctica es el mayor desafío en la formación profesional. Con Dolibarr EDU, los alumnos se enfrentan a la interfaz real de un ERP líder en el mercado.
-                </p>
-                <ul className="space-y-4 mb-8">
-                  {[
-                    "Facturación y contabilidad real",
-                    "Gestión de inventario y almacenes",
-                    "CRM y relaciones con clientes",
-                    "Recursos humanos y nóminas"
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-primary" />
-                      <span className="font-medium">{item}</span>
-                    </li>
-                  ))}
-                </ul>
+              <div className="space-y-3">
+                <div className="rounded-xl overflow-hidden border border-border shadow-lg">
+                  <div className="bg-muted border-b border-border px-3 py-2 flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
+                    <span className="ml-2 text-xs text-muted-foreground font-mono">Facturación y CRM</span>
+                  </div>
+                  <img
+                    src="/images/erp/dolibarr-invoice.png"
+                    alt="Dolibarr — Ficha de cliente y empresa"
+                    className="w-full object-cover object-top"
+                    style={{ maxHeight: "200px" }}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl overflow-hidden border border-border shadow-lg">
+                    <div className="bg-muted border-b border-border px-3 py-2 flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-red-400/70" />
+                      <span className="h-2 w-2 rounded-full bg-yellow-400/70" />
+                      <span className="h-2 w-2 rounded-full bg-green-400/70" />
+                      <span className="ml-1 text-xs text-muted-foreground font-mono truncate">Agenda</span>
+                    </div>
+                    <img
+                      src="/images/erp/dolibarr-calendar.jpg"
+                      alt="Dolibarr — Agenda"
+                      className="w-full object-cover object-top"
+                      style={{ maxHeight: "130px" }}
+                    />
+                  </div>
+                  <div className="rounded-xl overflow-hidden border border-border shadow-lg">
+                    <div className="bg-muted border-b border-border px-3 py-2 flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-red-400/70" />
+                      <span className="h-2 w-2 rounded-full bg-yellow-400/70" />
+                      <span className="h-2 w-2 rounded-full bg-green-400/70" />
+                      <span className="ml-1 text-xs text-muted-foreground font-mono truncate">Gastos</span>
+                    </div>
+                    <img
+                      src="/images/erp/dolibarr-list.png"
+                      alt="Dolibarr — Gastos"
+                      className="w-full object-cover object-top"
+                      style={{ maxHeight: "130px" }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-32 relative">
-          <div className="absolute inset-0">
-            <img src="/images/building.jpg" alt="Campus" className="w-full h-full object-cover brightness-50" />
-            <div className="absolute inset-0 bg-sidebar/90 mix-blend-multiply" />
-          </div>
-          <div className="mx-auto max-w-4xl px-6 relative z-10 text-center text-sidebar-foreground">
-            <h2 className="text-4xl font-bold mb-6 text-white">¿Listo para transformar tus clases?</h2>
-            <p className="text-xl text-white/80 mb-10">
-              Accede al panel de administración y comienza a configurar el entorno para el próximo curso.
+        {/* ── CTA ───────────────────────────────────────────────────────────── */}
+        <section className="py-28 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/15 via-background to-background" />
+          <div className="mx-auto max-w-3xl px-6 relative z-10 text-center">
+            <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary mb-6">
+              <BookOpen className="h-3.5 w-3.5 mr-2" />
+              Empieza hoy
+            </div>
+            <h2 className="text-4xl font-bold mb-4">
+              ¿Listo para transformar tus clases de Administración?
+            </h2>
+            <p className="text-xl text-muted-foreground mb-10">
+              Accede al panel de gestión y configura el entorno ERP para el próximo curso.
+              Gratis, open source y pensado para centros públicos de FP.
             </p>
-            <Button size="lg" className="h-16 px-10 text-lg font-bold" asChild>
-              <Link href="/login">
-                Acceder al Panel de Gestión
-              </Link>
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="h-14 px-10 text-lg font-bold" asChild>
+                <Link href="/login">
+                  Acceder al Panel de Gestión <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="h-14 px-10 text-lg" asChild>
+                <a
+                  href="https://github.com/innovafpiesmmg/Dolibarr-Edu"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Github className="mr-2 h-5 w-5" />
+                  Ver en GitHub
+                </a>
+              </Button>
+            </div>
           </div>
         </section>
+
       </main>
 
-      <footer className="bg-card border-t border-border py-4">
+      {/* Footer */}
+      <footer className="bg-card border-t border-border py-5">
         <div className="mx-auto max-w-7xl px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-4">
-            <img src="/images/asd-logo.png" alt="ASD" className="h-7 w-auto" />
+            <div className="flex items-center gap-1.5 font-semibold text-sm text-primary">
+              <BookOpen className="h-4 w-4" />
+              Dolibarr EDU
+            </div>
             <span className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} Atreyu Servicios Digitales. Todos los derechos reservados.
+              © {new Date().getFullYear()} Atreyu Servicios Digitales
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Basado en{" "}
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <a
+              href="https://github.com/innovafpiesmmg/Dolibarr-Edu"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 hover:text-foreground transition-colors"
+            >
+              <Github className="h-3.5 w-3.5" />
+              Código fuente
+            </a>
+            <span>·</span>
             <a
               href="https://www.dolibarr.org"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-foreground underline underline-offset-2 transition-colors"
+              className="hover:text-foreground transition-colors"
             >
-              Dolibarr ERP/CRM
+              Basado en Dolibarr ERP/CRM
             </a>
-          </p>
+          </div>
         </div>
       </footer>
     </div>
