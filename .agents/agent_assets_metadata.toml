@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "DVF7JKM7T40q5zwC36n4d"
+uri = "file://dolibarr-edu.tar.gz"
+type = "unspecified"
+title = "Dolibarr EDU — Paquete de instalación completo"

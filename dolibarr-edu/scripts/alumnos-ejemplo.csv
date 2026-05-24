@@ -1,0 +1,8 @@
+# Fichero CSV de alumnos de ejemplo
+# Formato: nombre,apellidos,usuario,email,password,grupo
+# Borra esta línea y rellena con tus alumnos reales
+Carlos,López Martín,carlos.lopez,carlos.lopez@alumnos.centro.es,Alumno2024!,1ADM-A
+María,Sánchez Ruiz,maria.sanchez,maria.sanchez@alumnos.centro.es,Alumno2024!,1ADM-A
+Javier,García Pérez,javier.garcia,javier.garcia@alumnos.centro.es,Alumno2024!,1ADM-A
+Laura,Martínez Torres,laura.martinez,laura.martinez@alumnos.centro.es,Alumno2024!,1ADM-A
+Pedro,Fernández López,pedro.fernandez,pedro.fernandez@alumnos.centro.es,Alumno2024!,1ADM-A

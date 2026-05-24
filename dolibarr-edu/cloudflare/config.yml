@@ -1,0 +1,28 @@
+# ─────────────────────────────────────────────────────────
+#  Cloudflare Tunnel — configuración
+#
+#  1. Instala cloudflared en el servidor:
+#       curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
+#       chmod +x /usr/local/bin/cloudflared
+#
+#  2. Autentícate:
+#       cloudflared tunnel login
+#
+#  3. Crea el túnel:
+#       cloudflared tunnel create dolibarr-edu
+#
+#  4. Copia el fichero <UUID>.json que genera en esta carpeta cloudflare/
+#
+#  5. Sustituye TU_UUID_AQUI por el UUID del túnel
+#     y erp.micentro.es por tu dominio real
+# ─────────────────────────────────────────────────────────
+
+tunnel: TU_UUID_AQUI
+credentials-file: /etc/cloudflared/TU_UUID_AQUI.json
+
+ingress:
+  - hostname: erp.micentro.es
+    service: http://dolibarr:80
+    originRequest:
+      noTLSVerify: false
+  - service: http_status:404
