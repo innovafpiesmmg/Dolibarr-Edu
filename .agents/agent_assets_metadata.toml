@@ -24,3 +24,9 @@ id = "RDXv6I-ZLiwGaulaZKydi"
 uri = "file://artifacts/panel/public/images/building.jpg"
 type = "image"
 title = "professional education center building exterior modern architecture"
+
+[[outputs]]
+id = "XnPKdURYFn0TpdsB8HXsY"
+uri = "file://README.md"
+type = "text"
+title = "README.md — Dolibarr EDU"
