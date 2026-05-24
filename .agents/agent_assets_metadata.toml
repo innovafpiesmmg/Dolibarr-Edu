@@ -6,3 +6,21 @@ id = "DVF7JKM7T40q5zwC36n4d"
 uri = "file://dolibarr-edu.tar.gz"
 type = "unspecified"
 title = "Dolibarr EDU — Paquete de instalación completo"
+
+[[outputs]]
+id = "-vxZQNogK7uxtJwbed3F_"
+uri = "file://artifacts/panel/public/images/classroom.jpg"
+type = "image"
+title = "modern professional classroom vocational training students on laptops"
+
+[[outputs]]
+id = "TN6mdnMilUjzlgO6ldoJt"
+uri = "file://artifacts/panel/public/images/collaboration.jpg"
+type = "image"
+title = "modern business team collaborating over a laptop in a bright office"
+
+[[outputs]]
+id = "RDXv6I-ZLiwGaulaZKydi"
+uri = "file://artifacts/panel/public/images/building.jpg"
+type = "image"
+title = "professional education center building exterior modern architecture"

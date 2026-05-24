@@ -3,13 +3,22 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Dolibarr EDU — API de gestión educativa
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: teachers
+    description: Gestión de profesores
+  - name: groups
+    description: Gestión de grupos de clase
+  - name: students
+    description: Gestión de alumnos
+  - name: stats
+    description: Estadísticas del panel
+
 paths:
   /healthz:
     get:
@@ -24,6 +33,447 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── Teachers ──────────────────────────────────────────
+  /teachers:
+    get:
+      operationId: listTeachers
+      tags: [teachers]
+      summary: Listar profesores
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Lista de profesores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Teacher"
+    post:
+      operationId: createTeacher
+      tags: [teachers]
+      summary: Crear profesor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeacherInput"
+      responses:
+        "201":
+          description: Profesor creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Teacher"
+        "400":
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /teachers/{id}:
+    get:
+      operationId: getTeacher
+      tags: [teachers]
+      summary: Obtener profesor
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Profesor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Teacher"
+        "404":
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateTeacher
+      tags: [teachers]
+      summary: Actualizar profesor
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeacherUpdate"
+      responses:
+        "200":
+          description: Profesor actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Teacher"
+        "404":
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteTeacher
+      tags: [teachers]
+      summary: Eliminar profesor
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Eliminado
+        "404":
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /teachers/{id}/groups:
+    get:
+      operationId: listTeacherGroups
+      tags: [teachers]
+      summary: Grupos de un profesor
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Grupos del profesor
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+
+  # ── Groups ────────────────────────────────────────────
+  /groups:
+    get:
+      operationId: listGroups
+      tags: [groups]
+      summary: Listar grupos
+      parameters:
+        - in: query
+          name: teacherId
+          schema:
+            type: integer
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Lista de grupos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+    post:
+      operationId: createGroup
+      tags: [groups]
+      summary: Crear grupo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupInput"
+      responses:
+        "201":
+          description: Grupo creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "400":
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /groups/{id}:
+    get:
+      operationId: getGroup
+      tags: [groups]
+      summary: Obtener grupo
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Grupo con sus alumnos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupWithStudents"
+        "404":
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateGroup
+      tags: [groups]
+      summary: Actualizar grupo
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupUpdate"
+      responses:
+        "200":
+          description: Grupo actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+    delete:
+      operationId: deleteGroup
+      tags: [groups]
+      summary: Eliminar grupo
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Eliminado
+
+  /groups/{id}/students:
+    get:
+      operationId: listGroupStudents
+      tags: [groups]
+      summary: Alumnos de un grupo
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Alumnos del grupo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Student"
+
+  # ── Students ──────────────────────────────────────────
+  /students:
+    get:
+      operationId: listStudents
+      tags: [students]
+      summary: Listar alumnos
+      parameters:
+        - in: query
+          name: groupId
+          schema:
+            type: integer
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 100
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Lista de alumnos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Student"
+    post:
+      operationId: createStudent
+      tags: [students]
+      summary: Crear alumno
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudentInput"
+      responses:
+        "201":
+          description: Alumno creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Student"
+        "400":
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /students/bulk:
+    post:
+      operationId: createStudentsBulk
+      tags: [students]
+      summary: Alta masiva de alumnos (desde CSV)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudentBulkInput"
+      responses:
+        "200":
+          description: Resultado de la importación masiva
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkImportResult"
+
+  /students/{id}:
+    get:
+      operationId: getStudent
+      tags: [students]
+      summary: Obtener alumno
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Alumno
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Student"
+        "404":
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateStudent
+      tags: [students]
+      summary: Actualizar alumno
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudentUpdate"
+      responses:
+        "200":
+          description: Alumno actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Student"
+    delete:
+      operationId: deleteStudent
+      tags: [students]
+      summary: Eliminar alumno
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Eliminado
+
+  # ── Stats ─────────────────────────────────────────────
+  /stats:
+    get:
+      operationId: getStats
+      tags: [stats]
+      summary: Estadísticas generales del panel
+      responses:
+        "200":
+          description: Totales y métricas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +484,170 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    # ── Teacher ──────────────────────────────────────────
+    Teacher:
+      type: object
+      required: [id, firstName, lastName, email, username, createdAt]
+      properties:
+        id:          { type: integer }
+        firstName:   { type: string }
+        lastName:    { type: string }
+        email:       { type: string }
+        username:    { type: string }
+        phone:       { type: ["string", "null"] }
+        groupCount:  { type: integer }
+        studentCount: { type: integer }
+        createdAt:   { type: string, format: date-time }
+
+    TeacherInput:
+      type: object
+      required: [firstName, lastName, email, username, password]
+      properties:
+        firstName:  { type: string, minLength: 1 }
+        lastName:   { type: string, minLength: 1 }
+        email:      { type: string, format: email }
+        username:   { type: string, minLength: 3 }
+        password:   { type: string, minLength: 8 }
+        phone:      { type: string }
+
+    TeacherUpdate:
+      type: object
+      properties:
+        firstName:  { type: string, minLength: 1 }
+        lastName:   { type: string, minLength: 1 }
+        email:      { type: string, format: email }
+        phone:      { type: string }
+
+    # ── Group ────────────────────────────────────────────
+    Group:
+      type: object
+      required: [id, name, courseYear, teacherId, teacherName, studentCount, createdAt]
+      properties:
+        id:           { type: integer }
+        name:         { type: string }
+        courseYear:   { type: string }
+        description:  { type: ["string", "null"] }
+        teacherId:    { type: integer }
+        teacherName:  { type: string }
+        studentCount: { type: integer }
+        createdAt:    { type: string, format: date-time }
+
+    GroupWithStudents:
+      type: object
+      required: [id, name, courseYear, teacherId, teacherName, studentCount, createdAt, students]
+      properties:
+        id:           { type: integer }
+        name:         { type: string }
+        courseYear:   { type: string }
+        description:  { type: ["string", "null"] }
+        teacherId:    { type: integer }
+        teacherName:  { type: string }
+        studentCount: { type: integer }
+        createdAt:    { type: string, format: date-time }
+        students:
+          type: array
+          items:
+            $ref: "#/components/schemas/Student"
+
+    GroupInput:
+      type: object
+      required: [name, courseYear, teacherId]
+      properties:
+        name:        { type: string, minLength: 1 }
+        courseYear:  { type: string, minLength: 1 }
+        description: { type: string }
+        teacherId:   { type: integer }
+
+    GroupUpdate:
+      type: object
+      properties:
+        name:        { type: string, minLength: 1 }
+        courseYear:  { type: string }
+        description: { type: string }
+        teacherId:   { type: integer }
+
+    # ── Student ──────────────────────────────────────────
+    Student:
+      type: object
+      required: [id, firstName, lastName, email, username, groupId, groupName, dolibarrEntityId, createdAt]
+      properties:
+        id:               { type: integer }
+        firstName:        { type: string }
+        lastName:         { type: string }
+        email:            { type: string }
+        username:         { type: string }
+        groupId:          { type: integer }
+        groupName:        { type: string }
+        dolibarrEntityId: { type: ["integer", "null"] }
+        companyName:      { type: ["string", "null"] }
+        createdAt:        { type: string, format: date-time }
+
+    StudentInput:
+      type: object
+      required: [firstName, lastName, email, username, password, groupId]
+      properties:
+        firstName:   { type: string, minLength: 1 }
+        lastName:    { type: string, minLength: 1 }
+        email:       { type: string, format: email }
+        username:    { type: string, minLength: 3 }
+        password:    { type: string, minLength: 6 }
+        groupId:     { type: integer }
+        companyName: { type: string }
+
+    StudentUpdate:
+      type: object
+      properties:
+        firstName:   { type: string, minLength: 1 }
+        lastName:    { type: string, minLength: 1 }
+        email:       { type: string, format: email }
+        groupId:     { type: integer }
+        companyName: { type: string }
+
+    StudentBulkInput:
+      type: object
+      required: [groupId, students]
+      properties:
+        groupId:  { type: integer }
+        students:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudentInput"
+
+    BulkImportResult:
+      type: object
+      required: [created, errors]
+      properties:
+        created:  { type: integer }
+        errors:
+          type: array
+          items:
+            type: object
+            required: [username, error]
+            properties:
+              username: { type: string }
+              error:    { type: string }
+
+    # ── Stats ────────────────────────────────────────────
+    Stats:
+      type: object
+      required: [totalTeachers, totalGroups, totalStudents, studentsPerGroup]
+      properties:
+        totalTeachers:   { type: integer }
+        totalGroups:     { type: integer }
+        totalStudents:   { type: integer }
+        studentsPerGroup:
+          type: array
+          items:
+            type: object
+            required: [groupId, groupName, count]
+            properties:
+              groupId:   { type: integer }
+              groupName: { type: string }
+              count:     { type: integer }
