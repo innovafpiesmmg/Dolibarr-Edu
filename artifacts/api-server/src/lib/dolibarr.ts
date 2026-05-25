@@ -32,10 +32,10 @@ async function resolveApiKey(baseUrl: string): Promise<string> {
     throw new Error("Dolibarr no configurado: falta DOLIBARR_API_KEY o credenciales de admin (DOLI_ADMIN_LOGIN/DOLI_ADMIN_PASSWORD)");
   }
 
-  const res = await fetch(`${baseUrl}/api/index.php/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ login, password }),
+  const qs = new URLSearchParams({ login, password }).toString();
+  const res = await fetch(`${baseUrl}/api/index.php/login?${qs}`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
   });
 
   if (!res.ok) {

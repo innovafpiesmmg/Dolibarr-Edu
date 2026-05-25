@@ -158,25 +158,17 @@ OFFICE_HOST="${OFFICE_HOST:-${CURRENT_OFFICE:-office.micentro.es}}"
 
 # ── Nextcloud (opcional) ──────────────────────────────────────────────────────
 CURRENT_NC_HOST=$(grep "^NC_HOST=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-CURRENT_PROFILES=$(grep "^COMPOSE_PROFILES=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-
-if [[ "$CURRENT_PROFILES" == *"nextcloud"* ]]; then
-  # Ya está activado — preguntar si conservar o cambiar dominio
-  read -rp "  Dominio de Nextcloud      [${CURRENT_NC_HOST}]: " NC_HOST < /dev/tty
-  NC_HOST="${NC_HOST:-$CURRENT_NC_HOST}"
+DEFAULT_NC_HOST="${CURRENT_NC_HOST:-cloud.micentro.es}"
+echo ""
+echo "  Nextcloud (opcional — déjalo vacío con un espacio para no instalarlo)"
+read -rp "  Dominio de Nextcloud      [${DEFAULT_NC_HOST}]: " NC_HOST < /dev/tty
+NC_HOST="${NC_HOST:-$DEFAULT_NC_HOST}"
+# Espacio en blanco = no instalar
+NC_HOST="$(echo "$NC_HOST" | xargs || true)"
+if [[ -n "$NC_HOST" ]]; then
   INSTALL_NC=true
 else
-  echo ""
-  read -rp "  ¿Instalar Nextcloud (almacenamiento en la nube del centro)? [s/N]: " NC_ANSWER < /dev/tty
-  NC_ANSWER="${NC_ANSWER:-N}"
-  if [[ "${NC_ANSWER,,}" == "s" || "${NC_ANSWER,,}" == "si" || "${NC_ANSWER,,}" == "sí" ]]; then
-    read -rp "  Dominio de Nextcloud      [cloud.micentro.es]: " NC_HOST < /dev/tty
-    NC_HOST="${NC_HOST:-cloud.micentro.es}"
-    INSTALL_NC=true
-  else
-    NC_HOST=""
-    INSTALL_NC=false
-  fi
+  INSTALL_NC=false
 fi
 
 # Actualizar .env — URLs principales
