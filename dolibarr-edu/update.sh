@@ -216,6 +216,29 @@ if [[ "$DOLI_READY" == "true" ]]; then
     warn "No se pudo activar el módulo REST API (actívalo desde Dolibarr → Configuración → Módulos)"
   fi
 
+  # ── Asegurar módulo MultiCompany instalado y activo ──────────────────────
+  info "Verificando módulo MultiCompany (entidad por alumno)..."
+  HTDOCS=$(docker compose exec -T dolibarr sh -c \
+    'for p in /var/www/html/htdocs /var/www/html /var/www/htdocs; do [ -d "$p/core" ] && echo "$p" && break; done' \
+    < /dev/null 2>/dev/null | tr -d '\r')
+  if [[ -n "$HTDOCS" ]]; then
+    docker compose exec -T dolibarr sh -c \
+      'command -v git >/dev/null 2>&1 || (apt-get update >/dev/null 2>&1 && apt-get install -y git >/dev/null 2>&1) || apk add --no-cache git >/dev/null 2>&1' \
+      < /dev/null > /dev/null 2>&1 || true
+    if docker compose exec -T dolibarr sh -c \
+         "mkdir -p $HTDOCS/custom && cd $HTDOCS/custom && [ -d multicompany ] || git clone --depth=1 -q https://github.com/Dolibarr/dolibarr-module-multicompany.git multicompany; chown -R www-data:www-data multicompany 2>/dev/null || true" \
+         < /dev/null > /dev/null 2>&1; then
+      docker compose exec -T db sh -c \
+        'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "INSERT INTO llx_const (name,entity,value,type,visible) VALUES (\"MAIN_MODULE_MULTICOMPANY\",0,\"1\",\"chaine\",0) ON DUPLICATE KEY UPDATE value=\"1\"; INSERT INTO llx_const (name,entity,value,type,visible) VALUES (\"MAIN_MODULE_MULTICOMPANY_TRANSVERSE_MODE\",0,\"1\",\"chaine\",0) ON DUPLICATE KEY UPDATE value=\"1\";"' \
+        < /dev/null > /dev/null 2>&1 || true
+      success "Módulo MultiCompany asegurado"
+      docker compose restart dolibarr > /dev/null 2>&1 || true
+      sleep 8
+    else
+      warn "No se pudo instalar/actualizar MultiCompany automáticamente."
+    fi
+  fi
+
   # Reiniciar panel_api para que recoja todo limpio
   docker compose restart panel_api > /dev/null 2>&1 || true
   success "panel_api reiniciado"

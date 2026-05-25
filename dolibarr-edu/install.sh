@@ -335,6 +335,35 @@ if [[ "${START_NOW,,}" != "n" && "${START_NOW,,}" != "no" ]]; then
       warn "No se pudo activar el módulo REST API (actívalo desde Dolibarr → Inicio → Configuración → Módulos → Web Services REST)"
     fi
 
+    # ── Instalar y activar módulo MultiCompany ────────────────────────────
+    # Necesario para que cada alumno tenga su propia entidad/empresa independiente.
+    # No viene incluido en la imagen oficial de Dolibarr; lo clonamos desde GitHub.
+    info "Instalando módulo MultiCompany (alumno = entidad propia)..."
+    HTDOCS=$(docker compose exec -T dolibarr sh -c \
+      'for p in /var/www/html/htdocs /var/www/html /var/www/htdocs; do [ -d "$p/core" ] && echo "$p" && break; done' \
+      < /dev/null 2>/dev/null | tr -d '\r')
+    if [[ -n "$HTDOCS" ]]; then
+      # Instalar git silenciosamente (apt-get para debian, apk para alpine)
+      docker compose exec -T dolibarr sh -c \
+        'command -v git >/dev/null 2>&1 || (apt-get update >/dev/null 2>&1 && apt-get install -y git >/dev/null 2>&1) || apk add --no-cache git >/dev/null 2>&1' \
+        < /dev/null > /dev/null 2>&1 || true
+      if docker compose exec -T dolibarr sh -c \
+           "mkdir -p $HTDOCS/custom && cd $HTDOCS/custom && [ -d multicompany ] || git clone --depth=1 -q https://github.com/Dolibarr/dolibarr-module-multicompany.git multicompany; chown -R www-data:www-data multicompany 2>/dev/null || true" \
+           < /dev/null > /dev/null 2>&1; then
+        # Activar el módulo y modo transversal (necesario para multi-entidad)
+        docker compose exec -T db sh -c \
+          'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "INSERT INTO llx_const (name,entity,value,type,visible) VALUES (\"MAIN_MODULE_MULTICOMPANY\",0,\"1\",\"chaine\",0) ON DUPLICATE KEY UPDATE value=\"1\"; INSERT INTO llx_const (name,entity,value,type,visible) VALUES (\"MAIN_MODULE_MULTICOMPANY_TRANSVERSE_MODE\",0,\"1\",\"chaine\",0) ON DUPLICATE KEY UPDATE value=\"1\";"' \
+          < /dev/null > /dev/null 2>&1 || true
+        success "Módulo MultiCompany instalado y activado"
+        info "Reiniciando Dolibarr para cargar el módulo..."
+        docker compose restart dolibarr > /dev/null 2>&1 || true
+      else
+        warn "No se pudo instalar MultiCompany automáticamente. Instálalo manualmente desde Dolibarr → Configuración → Módulos."
+      fi
+    else
+      warn "No se localizó htdocs/ en el contenedor Dolibarr. MultiCompany requiere instalación manual."
+    fi
+
     # Reiniciar panel_api para que recoja el estado actualizado
     docker compose restart panel_api > /dev/null 2>&1 || true
   else
