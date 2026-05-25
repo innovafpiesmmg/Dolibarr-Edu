@@ -51,7 +51,7 @@ export function AppSidebar() {
       <SidebarHeader className="h-16 flex items-center px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-sidebar-primary">
           <BookOpen className="h-6 w-6 text-sidebar-primary" />
-          <span>Dolibarr EDU</span>
+          <span>ERP EDU</span>
         </div>
       </SidebarHeader>
       <SidebarContent className="p-4">
@@ -122,7 +122,7 @@ export function AppSidebar() {
             Cerrar sesión
           </Button>
           <div className="text-xs text-sidebar-foreground/40 text-center">
-            Dolibarr EDU v1.0
+            ERP EDU v1.0
           </div>
         </div>
       </SidebarFooter>

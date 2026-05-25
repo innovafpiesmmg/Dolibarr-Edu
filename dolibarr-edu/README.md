@@ -1,4 +1,4 @@
-# Dolibarr EDU — Entorno de Empresa Simulada para FP
+# ERP EDU — Entorno de Empresa Simulada para FP
 
 Sistema ERP **Dolibarr** adaptado para aulas de Formación Profesional de Administración de Empresas.
 

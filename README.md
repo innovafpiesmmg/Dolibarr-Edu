@@ -1,4 +1,4 @@
-# Dolibarr EDU
+# ERP EDU
 
 Plataforma de gestión educativa para centros de **Formación Profesional de Administración de Empresas**. Proporciona a cada alumno una empresa ERP real e independiente, con profesores gestionando grupos y alumnos desde un panel centralizado.
 
@@ -38,7 +38,7 @@ Desarrollado por **Atreyu Servicios Digitales (ASD)** · [GitHub](https://github
 
 ## Descripción general
 
-Dolibarr EDU resuelve el principal reto de la FP de Administración: proporcionar a cada alumno un entorno de trabajo profesional real e independiente, sin licencias comerciales ni infraestructura compleja.
+ERP EDU resuelve el principal reto de la FP de Administración: proporcionar a cada alumno un entorno de trabajo profesional real e independiente, sin licencias comerciales ni infraestructura compleja.
 
 Cada alumno recibe en un único servidor:
 - **Su empresa en Dolibarr ERP** — facturación, contabilidad, RRHH, inventario, CRM
@@ -51,7 +51,7 @@ El profesorado gestiona grupos, alumnos, accesos y nóminas desde un panel web c
 
 ## Ecosistema de herramientas
 
-Dolibarr EDU despliega tres herramientas de nivel profesional en el mismo servidor, accesibles cada una desde su propio subdominio mediante un túnel Cloudflare:
+ERP EDU despliega tres herramientas de nivel profesional en el mismo servidor, accesibles cada una desde su propio subdominio mediante un túnel Cloudflare:
 
 | Herramienta | Subdominio | Función |
 |-------------|------------|---------|
@@ -197,7 +197,7 @@ Servidor del centro (Ubuntu/Debian)
 
 ### Paso 0 — Preparar el servidor Ubuntu
 
-Antes de instalar Dolibarr EDU, actualiza el sistema e instala las herramientas básicas:
+Antes de instalar ERP EDU, actualiza el sistema e instala las herramientas básicas:
 
 ```bash
 # 1. Actualizar la lista de paquetes y el sistema completo

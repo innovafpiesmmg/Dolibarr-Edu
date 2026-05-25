@@ -45,7 +45,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Panel de Control</h1>
-        <p className="text-muted-foreground">Resumen general del estado de Dolibarr EDU.</p>
+        <p className="text-muted-foreground">Resumen general del estado de ERP EDU.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">

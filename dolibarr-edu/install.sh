@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────
-#  install.sh — Dolibarr EDU
-#  Descarga e instala Dolibarr EDU desde GitHub
+#  install.sh — ERP EDU
+#  Descarga e instala ERP EDU desde GitHub
 #  Repositorio: https://github.com/innovafpiesmmg/Dolibarr-Edu
 #
 #  Uso de un solo comando:
@@ -30,7 +30,7 @@ error()   { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║              Dolibarr EDU — Instalación                      ║"
+echo "║                  ERP EDU — Instalación                      ║"
 echo "║  ERP + OpenProject + LibreOffice para FP de Administración   ║"
 echo "║  https://github.com/innovafpiesmmg/Dolibarr-Edu              ║"
 echo "╚══════════════════════════════════════════════════════════════╝"

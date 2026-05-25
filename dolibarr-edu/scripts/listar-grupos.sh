@@ -24,7 +24,7 @@ call_api() {
 }
 
 echo "======================================================"
-echo "  Dolibarr EDU — Grupos y alumnos"
+echo "  ERP EDU — Grupos y alumnos"
 echo "======================================================"
 
 ENTITIES=$(call_api GET "/multicompany/entity?limit=500")

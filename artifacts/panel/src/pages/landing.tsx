@@ -215,7 +215,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary">
             <BookOpen className="h-6 w-6" />
-            <span>Dolibarr EDU</span>
+            <span>ERP EDU</span>
           </div>
           <div className="flex items-center gap-3">
             <a
@@ -255,7 +255,7 @@ export default function LandingPage() {
                   <span className="text-primary">empresas reales.</span>
                 </h1>
                 <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0">
-                  Dolibarr EDU proporciona un entorno ERP completo para centros de Formación Profesional.
+                  ERP EDU proporciona un entorno ERP completo para centros de Formación Profesional.
                   Cada alumno administra su propia empresa simulada con el mismo software que usan las pymes reales.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
@@ -601,7 +601,7 @@ export default function LandingPage() {
                 Tres herramientas, un solo servidor
               </h2>
               <p className="text-muted-foreground">
-                Dolibarr EDU integra en el mismo despliegue Docker el ERP, la gestión de proyectos
+                ERP EDU integra en el mismo despliegue Docker el ERP, la gestión de proyectos
                 y la suite ofimática. Todo accesible desde el centro, sin depender de servicios en la nube.
               </p>
             </div>
@@ -772,7 +772,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5 font-semibold text-sm text-primary">
               <BookOpen className="h-4 w-4" />
-              Dolibarr EDU
+              ERP EDU
             </div>
             <span className="text-xs text-muted-foreground">
               © {new Date().getFullYear()} Atreyu Servicios Digitales

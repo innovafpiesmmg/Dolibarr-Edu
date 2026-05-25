@@ -23,7 +23,7 @@ class modNominasEdu extends DolibarrModules
         $this->familyinfo = array('hr' => array('position' => '55', 'label' => $langs->trans("HumanResources")));
 
         $this->name = preg_replace('/^mod/i', '', get_class($this));
-        $this->description = "Módulo de nóminas educativo integrado para Dolibarr EDU";
+        $this->description = "Módulo de nóminas educativo integrado para ERP EDU";
         $this->descriptionlong = "Permite gestionar nóminas, empleados y liquidaciones de SS/IRPF directamente dentro del ERP Dolibarr, diseñado para la FP de Administración de Empresas.";
 
         $this->editor_name = 'Atreyu Servicios Digitales (ASD)';

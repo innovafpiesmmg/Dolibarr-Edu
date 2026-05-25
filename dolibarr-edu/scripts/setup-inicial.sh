@@ -41,7 +41,7 @@ call_api() {
 }
 
 echo "======================================================"
-echo "  Dolibarr EDU — Configuración inicial"
+echo "  ERP EDU — Configuración inicial"
 echo "======================================================"
 
 # Comprobación de conectividad

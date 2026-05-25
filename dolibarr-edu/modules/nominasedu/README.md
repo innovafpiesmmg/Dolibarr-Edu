@@ -33,7 +33,7 @@ Módulo PHP nativo para Dolibarr que añade un completo sistema de gestión de n
 
 ## Instalación
 
-El módulo se instala automáticamente con el despliegue de Dolibarr EDU, ya que `docker-compose.yml` monta la carpeta `modules/` en `/var/www/html/custom/`.
+El módulo se instala automáticamente con el despliegue de ERP EDU, ya que `docker-compose.yml` monta la carpeta `modules/` en `/var/www/html/custom/`.
 
 Si necesitas instalarlo manualmente en un Dolibarr existente:
 
@@ -52,7 +52,7 @@ Tras activarlo, Dolibarr crea automáticamente las tres tablas necesarias:
 
 ## Activación automática en Docker
 
-El `docker-compose.yml` de Dolibarr EDU incluye el módulo en `DOLI_MODULES` para que se active en el primer arranque. Sin embargo, los módulos custom no se auto-activan por esta variable — **hay que activarlo manualmente** desde el panel admin una vez arrancado Dolibarr:
+El `docker-compose.yml` de ERP EDU incluye el módulo en `DOLI_MODULES` para que se active en el primer arranque. Sin embargo, los módulos custom no se auto-activan por esta variable — **hay que activarlo manualmente** desde el panel admin una vez arrancado Dolibarr:
 
 > **Configuración → Módulos/Aplicaciones → pestaña "Recursos humanos" → NominasEDU → Activar**
 

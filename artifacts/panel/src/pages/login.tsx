@@ -39,7 +39,7 @@ export default function LoginPage() {
             <BookOpen className="h-8 w-8 text-primary" />
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-bold">Dolibarr EDU</h1>
+            <h1 className="text-2xl font-bold">ERP EDU</h1>
             <p className="text-muted-foreground text-sm mt-1">Panel de gestión</p>
           </div>
         </div>

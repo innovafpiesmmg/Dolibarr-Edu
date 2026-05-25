@@ -1,4 +1,4 @@
-# Dolibarr EDU
+# ERP EDU
 
 Plataforma de gestión para centros de FP de Administración de Empresas. Permite que cada alumno tenga su propia empresa simulada en Dolibarr ERP, con profesores gestionando sus grupos de manera independiente.
 

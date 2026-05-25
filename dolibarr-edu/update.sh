@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────
-#  update.sh — Dolibarr EDU
-#  Actualiza Dolibarr EDU desde GitHub sin perder datos
+#  update.sh — ERP EDU
+#  Actualiza ERP EDU desde GitHub sin perder datos
 #  Repositorio: https://github.com/innovafpiesmmg/Dolibarr-Edu
 #
 #  Uso:
@@ -24,7 +24,7 @@ error()   { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║              Dolibarr EDU — Actualización                    ║"
+echo "║                  ERP EDU — Actualización                     ║"
 echo "║  https://github.com/innovafpiesmmg/Dolibarr-Edu              ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
