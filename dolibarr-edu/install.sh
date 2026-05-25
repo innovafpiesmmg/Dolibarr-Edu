@@ -115,8 +115,8 @@ if [[ ! -f "$INSTALL_DIR/.env" ]]; then
   echo "  protegido con contraseña. Elige una contraseña segura."
   echo ""
   while true; do
-    read -rsp "  Contraseña del panel: " PANEL_PASS; echo ""
-    read -rsp "  Confirmar contraseña:  " PANEL_PASS2; echo ""
+    read -rsp "  Contraseña del panel: " PANEL_PASS < /dev/tty; echo ""
+    read -rsp "  Confirmar contraseña:  " PANEL_PASS2 < /dev/tty; echo ""
     [[ "$PANEL_PASS" == "$PANEL_PASS2" ]] && break
     echo -e "  ${RED}Las contraseñas no coinciden. Inténtalo de nuevo.${NC}"
   done
@@ -133,14 +133,14 @@ if [[ ! -f "$INSTALL_DIR/.env" ]]; then
   echo "  Puedes dejarlos vacíos ahora y configurarlos después en .env"
   echo "  y en cloudflare/config.yml"
   echo ""
-  read -rp "  URL de Dolibarr ERP     [https://erp.micentro.es]: " DOLI_URL
+  read -rp "  URL de Dolibarr ERP     [https://erp.micentro.es]: " DOLI_URL < /dev/tty
   DOLI_URL="${DOLI_URL:-https://erp.micentro.es}"
   DOLI_DOMAIN=$(echo "$DOLI_URL" | sed 's|https\?://||' | cut -d'/' -f1)
 
-  read -rp "  Dominio de OpenProject  [proyectos.micentro.es]: "   OP_HOST
+  read -rp "  Dominio de OpenProject  [proyectos.micentro.es]: " OP_HOST < /dev/tty
   OP_HOST="${OP_HOST:-proyectos.micentro.es}"
 
-  read -rp "  Dominio de LibreOffice  [office.micentro.es]: "      OFFICE_HOST
+  read -rp "  Dominio de LibreOffice  [office.micentro.es]: " OFFICE_HOST < /dev/tty
   OFFICE_HOST="${OFFICE_HOST:-office.micentro.es}"
 
   sed -i "s|^DOLI_URL_ROOT=.*|DOLI_URL_ROOT=$DOLI_URL|"                    "$INSTALL_DIR/.env"
