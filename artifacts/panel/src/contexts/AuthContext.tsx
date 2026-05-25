@@ -13,9 +13,11 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() =>
-    localStorage.getItem(STORAGE_KEY),
-  );
+  const [token, setToken] = useState<string | null>(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) setAuthTokenGetter(() => stored);
+    return stored;
+  });
 
   const login = useCallback((newToken: string) => {
     localStorage.setItem(STORAGE_KEY, newToken);
