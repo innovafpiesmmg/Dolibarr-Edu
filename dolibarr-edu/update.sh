@@ -37,6 +37,39 @@ echo ""
 mkdir -p "$BACKUP_DIR"
 TIMESTAMP=$(date +%Y%m%d_%H%M)
 
+# ── Backfill de variables nuevas en .env ──────────────────────────────────────
+# Garantiza que el .env de instalaciones antiguas tenga las claves nuevas
+# que el panel_api necesita (login a Dolibarr, etc.).
+if [[ -f "$WORK_DIR/.env" ]]; then
+  info "Comprobando variables de entorno..."
+  _env_get() { grep "^${1}=" "$WORK_DIR/.env" 2>/dev/null | head -n1 | cut -d'=' -f2- || true; }
+  _env_set() {
+    local k="$1" v="$2"
+    if grep -q "^${k}=" "$WORK_DIR/.env"; then
+      sed -i "s|^${k}=.*|${k}=${v}|" "$WORK_DIR/.env"
+    else
+      echo "${k}=${v}" >> "$WORK_DIR/.env"
+    fi
+  }
+
+  ADDED=0
+  if [[ -z "$(_env_get DOLI_ADMIN_LOGIN)" ]]; then
+    _env_set DOLI_ADMIN_LOGIN admin; ADDED=$((ADDED+1))
+  fi
+  if [[ -z "$(_env_get DOLI_ADMIN_PASSWORD)" ]]; then
+    NEW_PASS=$(gen_pass 16)
+    _env_set DOLI_ADMIN_PASSWORD "$NEW_PASS"
+    warn "DOLI_ADMIN_PASSWORD faltaba en .env — generada nueva: $NEW_PASS"
+    warn "Esta contraseña DEBE coincidir con la del admin existente en Dolibarr."
+    warn "Si Dolibarr ya tiene otra contraseña para 'admin', edita .env manualmente y pon la correcta."
+    ADDED=$((ADDED+1))
+  fi
+  if [[ -z "$(_env_get DOLIBARR_BASE_URL)" ]]; then
+    _env_set DOLIBARR_BASE_URL "$(_env_get DOLI_URL_ROOT)"; ADDED=$((ADDED+1))
+  fi
+  [[ $ADDED -gt 0 ]] && success "Añadidas $ADDED variables nuevas al .env" || success "Variables OK"
+fi
+
 # ── Backup previo ─────────────────────────────────────────────────────────────
 cd "$WORK_DIR"
 

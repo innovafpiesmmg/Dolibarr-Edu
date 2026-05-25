@@ -6,6 +6,7 @@ import {
   createDolibarrUser,
   generateDolibarrPassword,
   isDolibarrConfigured,
+  describeDolibarrConfig,
 } from "../lib/dolibarr";
 import { getTaxSystem } from "./settings";
 import { logActivity } from "../lib/activity";
@@ -20,7 +21,7 @@ router.post("/students/:id/deploy", async (req, res) => {
   }
 
   if (!isDolibarrConfigured()) {
-    res.status(503).json({ error: "Dolibarr no está configurado. Define DOLIBARR_API_URL y DOLIBARR_API_KEY." });
+    res.status(503).json({ error: `Dolibarr no está configurado. ${describeDolibarrConfig()}` });
     return;
   }
 
@@ -124,7 +125,7 @@ router.post("/groups/:id/deploy-all", async (req, res) => {
   }
 
   if (!isDolibarrConfigured()) {
-    res.status(503).json({ error: "Dolibarr no está configurado. Define DOLIBARR_API_URL y DOLIBARR_API_KEY." });
+    res.status(503).json({ error: `Dolibarr no está configurado. ${describeDolibarrConfig()}` });
     return;
   }
 

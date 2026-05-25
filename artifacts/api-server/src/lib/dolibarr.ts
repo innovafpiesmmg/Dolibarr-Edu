@@ -20,6 +20,17 @@ export function isDolibarrConfigured(): boolean {
   return hasUrl && (hasKey || hasCreds);
 }
 
+export function describeDolibarrConfig(): string {
+  const missing: string[] = [];
+  if (!getBaseUrl()) missing.push("DOLIBARR_BASE_URL");
+  if (!process.env.DOLIBARR_API_KEY) {
+    if (!process.env.DOLI_ADMIN_LOGIN) missing.push("DOLI_ADMIN_LOGIN");
+    if (!process.env.DOLI_ADMIN_PASSWORD) missing.push("DOLI_ADMIN_PASSWORD");
+  }
+  if (missing.length === 0) return "Configuración OK.";
+  return `Faltan variables de entorno en panel_api: ${missing.join(", ")}. Revisa el fichero .env del servidor y ejecuta update.sh.`;
+}
+
 async function resolveApiKey(baseUrl: string): Promise<string> {
   const staticKey = process.env.DOLIBARR_API_KEY;
   if (staticKey) return staticKey;
