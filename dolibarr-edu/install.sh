@@ -37,17 +37,20 @@ echo "╚═══════════════════════�
 echo ""
 
 # ── Comprobaciones previas ────────────────────────────────────────────────────
-[[ $EUID -eq 0 ]] && error "No ejecutes este script como root. Usa un usuario con sudo."
-command -v sudo >/dev/null 2>&1 || error "sudo no está disponible en este sistema."
+if [[ $EUID -eq 0 ]]; then
+  warn "Estás ejecutando como root. Se recomienda usar un usuario con sudo, pero se continuará."
+fi
+# sudo solo si no somos root
+_sudo() { [[ $EUID -eq 0 ]] && "$@" || sudo "$@"; }
 
 # ── Actualizar lista de paquetes e instalar dependencias base ─────────────────
 info "Actualizando lista de paquetes del sistema..."
-sudo apt-get update -qq
+_sudo apt-get update -qq
 
 for PKG in curl git openssl; do
   if ! command -v "$PKG" &>/dev/null; then
     info "Instalando $PKG..."
-    sudo apt-get install -y "$PKG"
+    _sudo apt-get install -y "$PKG"
     success "$PKG instalado"
   else
     success "$PKG ya disponible"
@@ -58,8 +61,8 @@ done
 DOCKER_JUST_INSTALLED=false
 if ! command -v docker &>/dev/null; then
   info "Docker no encontrado. Instalando Docker Engine..."
-  curl -fsSL https://get.docker.com | sudo sh
-  sudo usermod -aG docker "$USER"
+  curl -fsSL https://get.docker.com | _sudo sh
+  _sudo usermod -aG docker "$USER"
   success "Docker instalado correctamente."
   warn "IMPORTANTE: Cierra sesión y vuelve a entrar para que los cambios de grupo (docker) surtan efecto."
   DOCKER_JUST_INSTALLED=true
@@ -75,8 +78,8 @@ if [[ -d "$INSTALL_DIR/.git" ]]; then
 fi
 
 info "Clonando repositorio desde $REPO..."
-sudo git clone --depth 1 --branch "$BRANCH" "$REPO" "$INSTALL_DIR"
-sudo chown -R "$USER:$USER" "$INSTALL_DIR"
+_sudo git clone --depth 1 --branch "$BRANCH" "$REPO" "$INSTALL_DIR"
+_sudo chown -R "$USER:$USER" "$INSTALL_DIR"
 success "Repositorio descargado en $INSTALL_DIR"
 
 # ── Crear fichero .env ────────────────────────────────────────────────────────
