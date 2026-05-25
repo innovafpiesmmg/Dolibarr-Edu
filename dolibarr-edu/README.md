@@ -159,6 +159,40 @@ curl -sI http://localhost:8071 | head -1   # nextcloud
 
 ## Configurar Nextcloud
 
+### Activar Nextcloud en una instalación ya existente
+
+Si ya tienes ERP EDU instalado y quieres añadir Nextcloud:
+
+```bash
+cd /opt/dolibarr-edu/dolibarr-edu
+
+# 1. Actualizar docker-compose.yml desde GitHub
+git -C /opt/dolibarr-edu pull
+
+# 2. Añadir las variables NC al .env
+nano .env
+```
+
+Añade o edita estas líneas en `.env`:
+
+```bash
+COMPOSE_PROFILES=nextcloud
+NC_HOST=cloud.micentro.es          # tu dominio real
+NC_PORT=8071
+NC_DB_ROOT_PASSWORD=<contraseña aleatoria>
+NC_DB_PASSWORD=<contraseña aleatoria>
+NC_ADMIN_USER=admin
+NC_ADMIN_PASSWORD=<contraseña aleatoria>
+NEXTCLOUD_URL=http://nextcloud:80
+```
+
+```bash
+# 3. Arrancar los nuevos contenedores (los demás no se ven afectados)
+docker compose up -d nextcloud_db nextcloud
+```
+
+---
+
 ### Paso 1 — Establecer el dominio en `.env`
 
 ```bash

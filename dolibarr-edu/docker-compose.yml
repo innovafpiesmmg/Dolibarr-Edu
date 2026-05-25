@@ -119,7 +119,9 @@ services:
       - MKNOD
 
   # ── Base de datos Nextcloud (MariaDB) ────────────────────────────────────────
+  # Solo arranca cuando COMPOSE_PROFILES=nextcloud está en .env
   nextcloud_db:
+    profiles: ["nextcloud"]
     image: mariadb:10.11
     container_name: dolibarr_nc_db
     restart: unless-stopped
@@ -139,7 +141,9 @@ services:
       retries: 5
 
   # ── Nextcloud — Almacenamiento en la nube ─────────────────────────────────────
+  # Solo arranca cuando COMPOSE_PROFILES=nextcloud está en .env
   nextcloud:
+    profiles: ["nextcloud"]
     image: nextcloud:29
     container_name: dolibarr_nextcloud
     restart: unless-stopped

@@ -157,8 +157,16 @@ read -rp "  Dominio de Collabora      [${CURRENT_OFFICE:-office.micentro.es}]: "
 OFFICE_HOST="${OFFICE_HOST:-${CURRENT_OFFICE:-office.micentro.es}}"
 
 CURRENT_NC_HOST=$(grep "^NC_HOST=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-read -rp "  Dominio de Nextcloud      [${CURRENT_NC_HOST:-cloud.micentro.es}]: " NC_HOST < /dev/tty
-NC_HOST="${NC_HOST:-${CURRENT_NC_HOST:-cloud.micentro.es}}"
+echo "  (opcional — deja en blanco para no instalar Nextcloud)"
+read -rp "  Dominio de Nextcloud      [${CURRENT_NC_HOST:-ninguno}]: " NC_HOST_INPUT < /dev/tty
+# Si el usuario pulsa Enter: conservar el valor actual; si escribe "-" → desactivar
+if [[ "$NC_HOST_INPUT" == "-" ]]; then
+  NC_HOST=""
+elif [[ -n "$NC_HOST_INPUT" ]]; then
+  NC_HOST="$NC_HOST_INPUT"
+else
+  NC_HOST="$CURRENT_NC_HOST"
+fi
 
 # Actualizar .env
 sed -i "s|^DOLI_URL_ROOT=.*|DOLI_URL_ROOT=$DOLI_URL|"             "$WORK_DIR/.env"
@@ -174,12 +182,27 @@ else
   echo "OFFICE_HOST=$OFFICE_HOST"                                >> "$WORK_DIR/.env"
 fi
 
-# Asegurarse de que NC_HOST está en .env
+# NC_HOST y activación del perfil Nextcloud
 if grep -q "^NC_HOST=" "$WORK_DIR/.env"; then
   sed -i "s|^NC_HOST=.*|NC_HOST=$NC_HOST|"                         "$WORK_DIR/.env"
 else
   echo "NC_HOST=$NC_HOST"                                        >> "$WORK_DIR/.env"
 fi
+
+# COMPOSE_PROFILES: activa el perfil nextcloud solo si NC_HOST tiene valor
+if [[ -n "$NC_HOST" ]]; then
+  if grep -q "^COMPOSE_PROFILES=" "$WORK_DIR/.env"; then
+    sed -i "s|^COMPOSE_PROFILES=.*|COMPOSE_PROFILES=nextcloud|"   "$WORK_DIR/.env"
+  else
+    echo "COMPOSE_PROFILES=nextcloud"                            >> "$WORK_DIR/.env"
+  fi
+  info "Nextcloud activado para el dominio: $NC_HOST"
+else
+  # Desactivar el perfil si NC_HOST está vacío
+  sed -i "s|^COMPOSE_PROFILES=.*|COMPOSE_PROFILES=|"              "$WORK_DIR/.env" 2>/dev/null || true
+  info "Nextcloud desactivado (NC_HOST no configurado)"
+fi
+
 success "URLs configuradas"
 
 # ── Cloudflare Tunnel token (opcional) ────────────────────────────────────────
