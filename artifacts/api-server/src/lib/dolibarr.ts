@@ -5,15 +5,65 @@ export interface DolibarrConfig {
   apiKey: string;
 }
 
-function getConfig(): DolibarrConfig | null {
-  const apiUrl = process.env.DOLIBARR_API_URL;
-  const apiKey = process.env.DOLIBARR_API_KEY;
-  if (!apiUrl || !apiKey) return null;
-  return { apiUrl: apiUrl.replace(/\/$/, ""), apiKey };
+let cachedToken: string | null = null;
+let tokenExpiry = 0;
+
+function getBaseUrl(): string | null {
+  const url = process.env.DOLIBARR_API_URL ?? process.env.DOLIBARR_BASE_URL ?? null;
+  return url ? url.replace(/\/$/, "") : null;
 }
 
 export function isDolibarrConfigured(): boolean {
-  return getConfig() !== null;
+  const hasUrl = !!getBaseUrl();
+  const hasKey = !!process.env.DOLIBARR_API_KEY;
+  const hasCreds = !!(process.env.DOLI_ADMIN_LOGIN && process.env.DOLI_ADMIN_PASSWORD);
+  return hasUrl && (hasKey || hasCreds);
+}
+
+async function resolveApiKey(baseUrl: string): Promise<string> {
+  const staticKey = process.env.DOLIBARR_API_KEY;
+  if (staticKey) return staticKey;
+
+  if (cachedToken && Date.now() < tokenExpiry) return cachedToken;
+
+  const login = process.env.DOLI_ADMIN_LOGIN;
+  const password = process.env.DOLI_ADMIN_PASSWORD;
+  if (!login || !password) {
+    throw new Error("Dolibarr no configurado: falta DOLIBARR_API_KEY o credenciales de admin (DOLI_ADMIN_LOGIN/DOLI_ADMIN_PASSWORD)");
+  }
+
+  const res = await fetch(`${baseUrl}/api/index.php/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ login, password }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Login Dolibarr fallido: ${res.status} — ${text.slice(0, 200)}`);
+  }
+
+  const data = await res.json() as { token?: string; success?: { token?: string } };
+  const token = data.token ?? data.success?.token;
+  if (!token) throw new Error("Dolibarr login: no se recibió token en la respuesta");
+
+  cachedToken = token;
+  tokenExpiry = Date.now() + 3_600_000;
+  logger.info("Token de Dolibarr obtenido y cacheado");
+  return token;
+}
+
+async function getConfig(): Promise<DolibarrConfig | null> {
+  const apiUrl = getBaseUrl();
+  if (!apiUrl) return null;
+
+  try {
+    const apiKey = await resolveApiKey(apiUrl);
+    return { apiUrl, apiKey };
+  } catch (err) {
+    logger.error({ err }, "No se pudo obtener configuración de Dolibarr");
+    return null;
+  }
 }
 
 async function dolibarrFetch(
@@ -53,11 +103,9 @@ export async function createEntity(
   username: string,
   taxSystem: TaxSystem = "igic",
 ): Promise<{ entityId: number }> {
-  const config = getConfig();
-  if (!config) throw new Error("Dolibarr no está configurado (falta DOLIBARR_API_URL o DOLIBARR_API_KEY)");
+  const config = await getConfig();
+  if (!config) throw new Error("No se pudo conectar con Dolibarr. Comprueba la URL y las credenciales en Configuración.");
 
-  // IGIC (Canarias): sin IVA, con impuesto local 1
-  // IVA  (peninsular): con IVA, sin impuesto local
   const taxFields =
     taxSystem === "igic"
       ? { tva_assuj: 0, localtax1_assuj: 1, localtax2_assuj: 0 }
@@ -68,7 +116,7 @@ export async function createEntity(
     body: JSON.stringify({
       label: companyName || `Empresa de ${username}`,
       description: `Empresa simulada FP — alumno: ${username}`,
-      country_id: 4,   // España
+      country_id: 4,
       active: 1,
       currency_code: "EUR",
       lang: "es_ES",
@@ -83,8 +131,8 @@ export async function createDolibarrUser(
   entityId: number,
   opts: { username: string; password: string; firstName: string; lastName: string; email: string },
 ): Promise<{ userId: number }> {
-  const config = getConfig();
-  if (!config) throw new Error("Dolibarr no está configurado");
+  const config = await getConfig();
+  if (!config) throw new Error("No se pudo conectar con Dolibarr");
 
   const res = await dolibarrFetch(config, "/users", {
     method: "POST",
@@ -109,8 +157,8 @@ export async function updateDolibarrUserPassword(
   entityId: number,
   newPassword: string,
 ): Promise<void> {
-  const config = getConfig();
-  if (!config) throw new Error("Dolibarr no está configurado");
+  const config = await getConfig();
+  if (!config) throw new Error("No se pudo conectar con Dolibarr");
 
   await dolibarrFetch(config, `/users/${userId}`, {
     method: "PUT",
@@ -139,10 +187,9 @@ export async function createDolibarrEmployee(
     dni?: string | null;
   },
 ): Promise<{ employeeId: number }> {
-  const config = getConfig();
-  if (!config) throw new Error("Dolibarr no está configurado");
+  const config = await getConfig();
+  if (!config) throw new Error("No se pudo conectar con Dolibarr");
 
-  // Endpoint del módulo HRM de Dolibarr
   const res = await dolibarrFetch(config, "/hrm/employees", {
     method: "POST",
     entityId,
@@ -150,7 +197,6 @@ export async function createDolibarrEmployee(
       firstname: opts.firstName,
       lastname: opts.lastName,
       job: opts.jobTitle,
-      // type: 1=indefinido, 2=temporal
       contract_type: opts.contractType === "indefinido" ? 1 : 2,
       salary: opts.salaryBase,
       ref_number: opts.dni ?? "",
@@ -176,8 +222,8 @@ export async function createDolibarrSalary(
     liquidoPercibir: number;
   },
 ): Promise<{ salaryId: number }> {
-  const config = getConfig();
-  if (!config) throw new Error("Dolibarr no está configurado");
+  const config = await getConfig();
+  if (!config) throw new Error("No se pudo conectar con Dolibarr");
 
   const dateStr = `${opts.periodYear}-${String(opts.periodMonth).padStart(2, "0")}-01`;
 
@@ -190,7 +236,6 @@ export async function createDolibarrSalary(
       datesp: dateStr,
       dateep: dateStr,
       amount: opts.liquidoPercibir,
-      // campos adicionales para mostrar en Dolibarr
       note_public: `Devengos: ${opts.totalDevengos} € | Deducciones: ${opts.totalDeducciones} € | Líquido: ${opts.liquidoPercibir} €`,
     }),
   });
@@ -199,24 +244,13 @@ export async function createDolibarrSalary(
 }
 
 // ── Accounting entry ──────────────────────────────────────────────────────────
-// Crea los apuntes contables de nómina en el plan contable del alumno.
-// Cuentas según PGC español:
-//   640  Sueldos y salarios (debe) — bruto
-//   642  SS a cargo de la empresa (debe)
-//   465  Remuneraciones pendientes de pago (haber) — líquido
-//   476  Organismos SS acreedores (haber) — SS total + retención IRPF
-//   4751 HP acreedora retenciones IRPF (haber)
-
-// ── SS / IRPF payment to bank ─────────────────────────────────────────────────
-// SS payment:   476 Organismos SS acreedores → 572 Banco c/c
-// IRPF payment: 4751 HP acreedora retenciones IRPF → 572 Banco c/c
 
 export async function paySSToBank(
   entityId: number,
   opts: { periodMonth: number; periodYear: number; total: number },
 ): Promise<{ accountingId: number }> {
-  const config = getConfig();
-  if (!config) throw new Error("Dolibarr no está configurado");
+  const config = await getConfig();
+  if (!config) throw new Error("No se pudo conectar con Dolibarr");
 
   const dateStr = `${opts.periodYear}-${String(opts.periodMonth).padStart(2, "0")}-28`;
   const label = `Pago SS Tesorería — ${String(opts.periodMonth).padStart(2, "0")}/${opts.periodYear}`;
@@ -242,8 +276,8 @@ export async function payIRPFToBank(
   entityId: number,
   opts: { periodMonth: number; periodYear: number; total: number },
 ): Promise<{ accountingId: number }> {
-  const config = getConfig();
-  if (!config) throw new Error("Dolibarr no está configurado");
+  const config = await getConfig();
+  if (!config) throw new Error("No se pudo conectar con Dolibarr");
 
   const dateStr = `${opts.periodYear}-${String(opts.periodMonth).padStart(2, "0")}-20`;
   const label = `Pago IRPF Modelo 111 — ${String(opts.periodMonth).padStart(2, "0")}/${opts.periodYear}`;
@@ -278,8 +312,8 @@ export async function createPayrollAccountingEntry(
     irpfAmount: number;
   },
 ): Promise<{ accountingId: number }> {
-  const config = getConfig();
-  if (!config) throw new Error("Dolibarr no está configurado");
+  const config = await getConfig();
+  if (!config) throw new Error("No se pudo conectar con Dolibarr");
 
   const dateStr = `${opts.periodYear}-${String(opts.periodMonth).padStart(2, "0")}-28`;
   const label = `Nómina ${opts.employeeName} — ${String(opts.periodMonth).padStart(2, "0")}/${opts.periodYear}`;
