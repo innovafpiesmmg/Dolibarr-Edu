@@ -1,6 +1,10 @@
 # ERP EDU
 
+![ERP EDU Logo](artifacts/panel/public/images/logo.png)
+
 Plataforma de gestión educativa para centros de **Formación Profesional de Administración de Empresas**. Proporciona a cada alumno una empresa ERP real e independiente, con profesores gestionando grupos y alumnos desde un panel centralizado.
+
+Un proyecto del **Departamento de Administración de empresas del IES Manuel Martín González**.
 
 Desarrollado por **Atreyu Servicios Digitales (ASD)** · [GitHub](https://github.com/innovafpiesmmg/Dolibarr-Edu)
 

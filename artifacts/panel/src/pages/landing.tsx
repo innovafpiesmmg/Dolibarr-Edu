@@ -773,23 +773,26 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-card border-t border-border py-5">
-        <div className="mx-auto max-w-7xl px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5 font-semibold text-sm text-primary">
-              <BookOpen className="h-4 w-4" />
+      <footer className="bg-black border-t border-white/10 py-6">
+        <div className="mx-auto max-w-7xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col items-center sm:items-start gap-1">
+            <div className="flex items-center gap-2 font-semibold text-sm text-white">
+              <img src="/images/logo.png" alt="ERP EDU" className="h-5 w-auto" />
               ERP EDU
             </div>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-white/50">
               © {new Date().getFullYear()} Atreyu Servicios Digitales
             </span>
+            <span className="text-xs text-white/40 text-center sm:text-left">
+              Un proyecto del Departamento de Administración de empresas del IES Manuel Martín González
+            </span>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground justify-center sm:justify-end">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-white/50 justify-center sm:justify-end">
             <a
               href="https://github.com/innovafpiesmmg/Dolibarr-Edu"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 hover:text-foreground transition-colors"
+              className="flex items-center gap-1 hover:text-white transition-colors"
             >
               <Github className="h-3.5 w-3.5" />
               GitHub
@@ -799,7 +802,7 @@ export default function LandingPage() {
               href="https://www.dolibarr.org"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 hover:text-foreground transition-colors"
+              className="flex items-center gap-1 hover:text-white transition-colors"
             >
               <Building2 className="h-3.5 w-3.5" />
               Dolibarr ERP
@@ -809,7 +812,7 @@ export default function LandingPage() {
               href="https://www.openproject.org"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 hover:text-foreground transition-colors"
+              className="flex items-center gap-1 hover:text-white transition-colors"
             >
               <FolderKanban className="h-3.5 w-3.5" />
               OpenProject
@@ -819,7 +822,7 @@ export default function LandingPage() {
               href="https://www.collaboraoffice.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 hover:text-foreground transition-colors"
+              className="flex items-center gap-1 hover:text-white transition-colors"
             >
               <FileSpreadsheet className="h-3.5 w-3.5" />
               LibreOffice Online
