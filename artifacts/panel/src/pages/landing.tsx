@@ -23,6 +23,7 @@ import {
   FolderKanban,
   FileSpreadsheet,
   Globe,
+  Play,
 } from "lucide-react";
 import { useStudentLogin } from "@workspace/api-client-react";
 import type { AlumnoSesion } from "@workspace/api-client-react";
@@ -731,6 +732,80 @@ export default function LandingPage() {
               </div>
               <span className="hidden sm:inline text-border">·</span>
               <span className="text-xs">Un único servidor · Cloudflare Tunnel · HTTPS automático</span>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Videotutoriales ───────────────────────────────────────────────── */}
+        <section className="py-24 bg-card border-y border-border">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="flex flex-col lg:flex-row items-center gap-12">
+
+              {/* Texto */}
+              <div className="flex-1 text-center lg:text-left">
+                <Badge variant="outline" className="mb-4 text-primary border-primary/30">
+                  Aprende a tu ritmo
+                </Badge>
+                <h2 className="text-3xl font-bold mb-4">
+                  Videotutoriales del ERP
+                </h2>
+                <p className="text-muted-foreground mb-6 max-w-lg mx-auto lg:mx-0">
+                  Lista de reproducción completa con los tutoriales del ERP Dolibarr: desde los primeros pasos
+                  hasta facturación, contabilidad, RRHH y nóminas. Perfecta para complementar las clases presenciales.
+                </p>
+                <ul className="space-y-2 text-sm text-muted-foreground mb-8 max-w-sm mx-auto lg:mx-0">
+                  {[
+                    "Configuración inicial del ERP",
+                    "Clientes, proveedores y productos",
+                    "Facturación y albaranes",
+                    "Contabilidad y asientos",
+                    "RRHH, empleados y nóminas",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <Button size="lg" className="h-13 px-7 text-base" asChild>
+                  <a
+                    href="https://www.youtube.com/playlist?list=PL8z093C9OYl0X-cxZcUfz2ior_9y-yjao"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Play className="mr-2 h-5 w-5 fill-current" />
+                    Ver lista de reproducción
+                  </a>
+                </Button>
+              </div>
+
+              {/* Miniatura clicable */}
+              <div className="flex-1 flex justify-center lg:justify-end">
+                <a
+                  href="https://www.youtube.com/playlist?list=PL8z093C9OYl0X-cxZcUfz2ior_9y-yjao"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative block w-full max-w-md rounded-2xl overflow-hidden border border-border shadow-lg hover:shadow-xl transition-shadow"
+                >
+                  <img
+                    src="https://i.ytimg.com/vi/Qroo4w8ybHU/hqdefault.jpg"
+                    alt="Tutoriales ERP Dolibarr — lista de reproducción"
+                    className="w-full object-cover"
+                  />
+                  {/* Overlay con botón play */}
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/20 transition-colors">
+                    <div className="h-16 w-16 rounded-full bg-red-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <Play className="h-7 w-7 text-white fill-white ml-1" />
+                    </div>
+                  </div>
+                  {/* Pie de la tarjeta */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-5 py-4">
+                    <p className="text-white font-semibold text-sm">Tutoriales ERP Dolibarr</p>
+                    <p className="text-white/70 text-xs mt-0.5">Lista de reproducción completa · YouTube</p>
+                  </div>
+                </a>
+              </div>
+
             </div>
           </div>
         </section>
