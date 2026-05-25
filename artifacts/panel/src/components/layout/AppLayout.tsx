@@ -11,6 +11,9 @@ import {
   Settings,
   ServerCog,
   Activity,
+  FolderKanban,
+  FileSpreadsheet,
+  ExternalLink,
 } from "lucide-react";
 import {
   Sidebar,
@@ -70,17 +73,57 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-4 border-t border-sidebar-border space-y-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-          onClick={() => { logout(); window.location.href = "/"; }}
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Cerrar sesión
-        </Button>
-        <div className="text-xs text-sidebar-foreground/40 text-center">
-          Dolibarr EDU v1.0
+        {/* Herramientas externas */}
+        <div className="space-y-1">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/30 px-1 mb-2">
+            Herramientas
+          </p>
+          <a
+            href="/api/settings/dolibarr-url"
+            onClick={(e) => {
+              e.preventDefault();
+              // abre la URL del ERP almacenada en configuración, fallback a #
+              const url = (window as any).__DOLI_URL__ || "#";
+              if (url !== "#") window.open(url, "_blank");
+            }}
+            className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+          >
+            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+            Dolibarr ERP
+          </a>
+          <a
+            href="https://proyectos.micentro.es"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+          >
+            <FolderKanban className="h-3.5 w-3.5 shrink-0" />
+            OpenProject
+          </a>
+          <a
+            href="https://office.micentro.es"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5 shrink-0" />
+            LibreOffice Online
+          </a>
+        </div>
+
+        <div className="border-t border-sidebar-border pt-3 space-y-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+            onClick={() => { logout(); window.location.href = "/"; }}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Cerrar sesión
+          </Button>
+          <div className="text-xs text-sidebar-foreground/40 text-center">
+            Dolibarr EDU v1.0
+          </div>
         </div>
       </SidebarFooter>
     </Sidebar>
