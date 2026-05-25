@@ -24,6 +24,7 @@ import {
   FileSpreadsheet,
   Globe,
   Play,
+  Cloud,
 } from "lucide-react";
 import { useStudentLogin } from "@workspace/api-client-react";
 import type { AlumnoSesion } from "@workspace/api-client-react";
@@ -304,7 +305,8 @@ export default function LandingPage() {
                     { label: "IGIC / IVA", icon: FileText },
                     { label: "Nóminas integradas", icon: Banknote },
                     { label: "OpenProject", icon: FolderKanban },
-                    { label: "LibreOffice Online", icon: FileSpreadsheet },
+                    { label: "Collabora Online", icon: FileSpreadsheet },
+                    { label: "Nextcloud", icon: Cloud },
                   ].map(({ label, icon: Icon }) => (
                     <span
                       key={label}
@@ -618,11 +620,11 @@ export default function LandingPage() {
                 Ecosistema completo
               </Badge>
               <h2 className="text-3xl font-bold mb-4">
-                Tres herramientas, un solo servidor
+                Cuatro herramientas, un solo servidor
               </h2>
               <p className="text-muted-foreground">
-                ERP EDU integra en el mismo despliegue Docker el ERP, la gestión de proyectos
-                y la suite ofimática. Todo accesible desde el centro, sin depender de servicios en la nube.
+                ERP EDU integra en el mismo despliegue Docker el ERP, la gestión de proyectos,
+                la suite ofimática y el almacenamiento en la nube. Todo accesible desde el centro, sin depender de servicios externos.
               </p>
             </div>
 
@@ -698,12 +700,12 @@ export default function LandingPage() {
                   <FileSpreadsheet className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-lg font-bold">LibreOffice Online</h3>
+                  <h3 className="text-lg font-bold">Collabora Online</h3>
                   <Badge variant="secondary" className="text-xs">Ofimática</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed flex-1 mb-5">
-                  Suite ofimática completa en el navegador gracias a Collabora Online.
-                  Los alumnos crean y editan documentos, hojas de cálculo y presentaciones
+                  Suite ofimática completa en el navegador. Los alumnos crean y editan
+                  documentos, hojas de cálculo y presentaciones con formato LibreOffice
                   sin instalar nada, desde cualquier dispositivo.
                 </p>
                 <ul className="space-y-1.5 text-xs text-muted-foreground mb-6">
@@ -725,6 +727,39 @@ export default function LandingPage() {
                 </a>
               </div>
 
+              {/* Nextcloud */}
+              <div className="bg-card border border-border rounded-2xl p-8 shadow-sm hover:shadow-md hover:border-primary/30 transition-all flex flex-col">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5">
+                  <Cloud className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-bold">Nextcloud</h3>
+                  <Badge variant="secondary" className="text-xs">Nube privada</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed flex-1 mb-5">
+                  Almacenamiento y colaboración en la nube del propio centro. Cada alumno
+                  y profesor dispone de su espacio privado para guardar, compartir y trabajar
+                  con archivos sin salir del servidor del instituto.
+                </p>
+                <ul className="space-y-1.5 text-xs text-muted-foreground mb-6">
+                  {["5 GB por cuenta, sin límite de usuarios", "Cuenta automática al dar de alta al alumno", "Acceso web y apps móviles nativas", "100 % en el servidor del centro"].map(f => (
+                    <li key={f} className="flex items-center gap-2">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href="https://nextcloud.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
+                >
+                  <Globe className="h-3.5 w-3.5" />
+                  nextcloud.com
+                </a>
+              </div>
+
             </div>
 
             {/* Arquitectura simplificada */}
@@ -741,7 +776,7 @@ export default function LandingPage() {
               <span className="text-border">·</span>
               <div className="flex items-center gap-2 font-medium text-foreground">
                 <FileSpreadsheet className="h-4 w-4 text-primary" />
-                office.micentro.es
+                collabora.micentro.es
               </div>
               <span className="hidden sm:inline text-border">·</span>
               <span className="text-xs">Un único servidor · Cloudflare Tunnel · HTTPS automático</span>
