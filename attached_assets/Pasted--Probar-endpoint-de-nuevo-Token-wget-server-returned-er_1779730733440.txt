@@ -1,0 +1,37 @@
+=== Probar endpoint de nuevo ===
+Token: ...
+wget: server returned error: HTTP/1.1 501 API not found (failed to include API file)
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu && git pull && ./update.sh
+remote: Enumerating objects: 82, done.
+remote: Counting objects: 100% (82/82), done.
+remote: Compressing objects: 100% (12/12), done.
+remote: Total 46 (delta 33), reused 46 (delta 33), pack-reused 0 (from 0)
+Unpacking objects: 100% (46/46), 8.65 KiB | 210.00 KiB/s, done.
+From https://github.com/innovafpiesmmg/Dolibarr-Edu
+   8997317..6c9f76c  main       -> origin/main
+Updating 8997317..6c9f76c
+Fast-forward
+ artifacts/api-server/src/lib/dolibarr.ts                                      |  79 +++++++++++++++++++++---------------
+ artifacts/api-server/src/routes/auth.ts                                       |   2 +-
+ artifacts/api-server/src/routes/deploy.ts                                     |   7 +++-
+ artifacts/api-server/src/routes/payrolls.ts                                   |  12 +++++-
+ artifacts/api-server/src/routes/ss.ts                                         |   8 +++-
+ artifacts/panel/src/pages/alumnos/detail.tsx                                  |   8 ++--
+ artifacts/panel/src/pages/alumnos/index.tsx                                   |   4 +-
+ artifacts/panel/src/pages/grupos/detail.tsx                                   |   2 +-
+ ...-root-erpedu-opt-dolibarr-edu-dolibarr-edu-cd-opt-doliba_1779729404488.txt |  79 ++++++++++++++++++++++++++++++++++++
+ attached_assets/image_1779729463305.png                                       | Bin 0 -> 10691 bytes
+ dolibarr-edu/Dockerfile.dolibarr                                              |  42 -------------------
+ dolibarr-edu/docker-compose.yml                                               |  15 ++-----
+ dolibarr-edu/install.sh                                                       |  17 ++------
+ dolibarr-edu/update.sh                                                        |  24 ++++-------
+ lib/api-client-react/src/generated/api.schemas.ts                             |  11 ++++-
+ lib/api-spec/openapi.yaml                                                     |   6 +--
+ lib/api-zod/src/generated/api.ts                                              |  14 +++----
+ replit.md                                                                     |   8 ++--
+ 18 files changed, 192 insertions(+), 146 deletions(-)
+ create mode 100644 attached_assets/Pasted-root-erpedu-opt-dolibarr-edu-dolibarr-edu-cd-opt-doliba_1779729404488.txt
+ create mode 100644 attached_assets/image_1779729463305.png
+ delete mode 100644 dolibarr-edu/Dockerfile.dolibarr
+-bash: ./update.sh: Permission denied
+root@erpedu:/opt/dolibarr-edu# 
