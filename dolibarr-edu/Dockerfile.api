@@ -22,8 +22,8 @@ RUN pnpm run typecheck:libs
 # Build del API server
 RUN pnpm --filter @workspace/api-server run build
 
-# ── Imagen de producción ──────────────────────────────────────────────────────
-FROM node:24-alpine
+# ── Imagen de producción (API server) ────────────────────────────────────────
+FROM node:24-alpine AS api
 WORKDIR /app
 
 COPY --from=builder /workspace/artifacts/api-server/dist ./dist
@@ -33,3 +33,17 @@ ENV PORT=8080
 ENV BASE_PATH=/api
 
 CMD ["node", "--enable-source-maps", "./dist/index.mjs"]
+
+# ── Imagen del migrador (aplica schema a la BD del panel) ─────────────────────
+FROM node:24-alpine AS migrator
+WORKDIR /workspace
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+COPY --from=builder /workspace/package.json /workspace/pnpm-lock.yaml /workspace/pnpm-workspace.yaml ./
+COPY --from=builder /workspace/tsconfig*.json ./
+COPY --from=builder /workspace/lib/ ./lib/
+
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+CMD ["pnpm", "--filter", "@workspace/db", "run", "push"]

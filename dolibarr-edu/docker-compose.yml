@@ -192,7 +192,8 @@ services:
   panel_migrator:
     build:
       context: ../
-      dockerfile: dolibarr-edu/Dockerfile.migrator
+      dockerfile: dolibarr-edu/Dockerfile.api
+      target: migrator
     image: dolibarr-edu-panel-migrator
     container_name: dolibarr_panel_migrator
     restart: on-failure
@@ -209,6 +210,7 @@ services:
     build:
       context: ../
       dockerfile: dolibarr-edu/Dockerfile.api
+      target: api
     image: dolibarr-edu-panel-api
     container_name: dolibarr_panel_api
     restart: unless-stopped
