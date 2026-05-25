@@ -88,6 +88,17 @@ Plataforma de gestión para centros de FP de Administración de Empresas. Permit
 - Despliegue destino: servidor local del centro + túnel Cloudflare para acceso externo
 - Repo GitHub: https://github.com/innovafpiesmmg/Dolibarr-Edu
 
+## Cloudflare Tunnel — Public Hostnames
+
+Conectores a configurar en el túnel Cloudflare del centro. Solo son obligatorios los dos primeros; los demás dependen de los servicios instalados.
+
+| Subdominio | Servicio Docker | ¿Obligatorio? |
+|---|---|---|
+| `panel.iesmmg.es` | `http://panel_web:80` | Sí — acceso al panel de gestión |
+| `erp1.iesmmg.es` | `http://dolibarr:80` | Sí — Dolibarr ERP |
+| `proyectos.iesmmg.es` | `http://openproject:80` | Solo si se usa OpenProject |
+| `office.iesmmg.es` | `http://collabora:9980` | Solo si se usa Collabora Online |
+
 ## Gotchas
 
 - Ejecutar `pnpm --filter @workspace/api-spec run codegen` después de cualquier cambio en el spec OpenAPI
