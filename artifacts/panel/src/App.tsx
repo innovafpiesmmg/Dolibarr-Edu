@@ -21,6 +21,7 @@ import LiquidacionSS from "@/pages/nominas/ss";
 import Configuracion from "@/pages/configuracion/index";
 import EstadoSincronizacion from "@/pages/estado/index";
 import Actividad from "@/pages/actividad/index";
+import Herramientas from "@/pages/herramientas/index";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
@@ -109,6 +110,10 @@ function Router() {
 
       <Route path="/actividad">
         <ProtectedRoute><Actividad /></ProtectedRoute>
+      </Route>
+
+      <Route path="/herramientas">
+        <ProtectedRoute><Herramientas /></ProtectedRoute>
       </Route>
 
       <Route component={NotFound} />

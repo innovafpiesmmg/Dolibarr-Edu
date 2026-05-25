@@ -14,6 +14,7 @@ import {
   FolderKanban,
   FileSpreadsheet,
   ExternalLink,
+  AppWindow,
 } from "lucide-react";
 import {
   Sidebar,
@@ -36,6 +37,7 @@ const navigation = [
   { name: "Alumnos", href: "/alumnos", icon: GraduationCap },
   { name: "Nóminas y SS", href: "/nominas", icon: Banknote },
   { name: "Liquidaciones SS", href: "/nominas/ss", icon: Landmark },
+  { name: "Herramientas", href: "/herramientas", icon: AppWindow },
   { name: "Estado Dolibarr", href: "/estado", icon: ServerCog },
   { name: "Actividad", href: "/actividad", icon: Activity },
   { name: "Importar", href: "/importar", icon: Upload },
