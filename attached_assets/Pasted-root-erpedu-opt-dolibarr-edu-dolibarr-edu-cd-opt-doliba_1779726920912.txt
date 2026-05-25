@@ -1,0 +1,113 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu/dolibarr-edu && \
+echo "=== ¿Existen archivos del módulo MultiCompany? ===" && \
+docker compose exec -T dolibarr sh -c 'ls -la /var/www/html/htdocs/custom/multicompany/ 2>&1 | head -10' && \
+echo "" && \
+echo "=== ¿Está activado en BD? ===" && \
+DB_ROOT=$(grep "^MYSQL_ROOT_PASSWORD=" .env | cut -d= -f2-) && \
+docker compose exec -T db mariadb -uroot -p"$DB_ROOT" dolibarr -e \
+  "SELECT name, value FROM llx_const WHERE name LIKE '%MULTICOMPANY%' OR name='MAIN_MODULE_API';" 2>&1
+=== ¿Existen archivos del módulo MultiCompany? ===
+ls: cannot access '/var/www/html/htdocs/custom/multicompany/': No such file or directory
+
+=== ¿Está activado en BD? ===
+name    value
+MAIN_MODULE_API 1
+MAIN_MODULE_MULTICOMPANY        1
+MAIN_MODULE_MULTICOMPANY_TRANSVERSE_MODE        1
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu/dolibarr-edu
+
+# 1. Verifica la ruta htdocs real del contenedor
+echo "=== Estructura htdocs ===" 
+docker compose exec -T dolibarr sh -c 'ls /var/www/html/ && echo "---" && ls /var/www/html/htdocs/ 2>/dev/null | head -5'
+=== Estructura htdocs ===
+accountancy
+adherents
+admin
+ai
+api
+asset
+asterisk
+barcode
+blockedlog
+bom
+bookcal
+bookmarks
+categories
+collab
+comm
+commande
+compta
+conf
+contact
+contrat
+core
+cron
+custom
+datapolicy
+dav
+debugbar
+delivery
+document.php
+don
+ecm
+emailcollector
+eventorganization
+expedition
+expensereport
+exports
+favicon.ico
+fichinter
+filefunc.inc.php
+fourn
+ftp
+holiday
+hrm
+imports
+includes
+index.php
+install
+intracommreport
+knowledgemanagement
+langs
+loan
+mailmanspip
+main.inc.php
+margin
+master.inc.php
+modulebuilder
+mrp
+multicurrency
+opensurvey
+partnership
+paybox
+paypal
+printing
+product
+projet
+public
+reception
+recruitment
+resource
+robots.txt
+salaries
+security.txt
+societe
+stripe
+subtotals
+supplier_proposal
+takepos
+theme
+ticket
+user
+variants
+version.inc.php
+viewimage.php
+waf.inc.php
+webhook
+webportal
+webservices
+website
+workstation
+zapier
+---
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 

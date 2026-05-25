@@ -218,8 +218,10 @@ if [[ "$DOLI_READY" == "true" ]]; then
 
   # ── Asegurar módulo MultiCompany instalado y activo ──────────────────────
   info "Verificando módulo MultiCompany (entidad por alumno)..."
+  # En la imagen oficial dolibarr/dolibarr, htdocs vive en /var/www/html directamente.
+  # En instalaciones bare-metal suele ser /var/www/html/htdocs. Probamos ambas.
   HTDOCS=$(docker compose exec -T dolibarr sh -c \
-    'for p in /var/www/html/htdocs /var/www/html /var/www/htdocs; do [ -d "$p/core" ] && echo "$p" && break; done' \
+    'for p in /var/www/html /var/www/html/htdocs /var/www/htdocs; do [ -d "$p/core" ] && [ -d "$p/admin" ] && echo "$p" && break; done' \
     < /dev/null 2>/dev/null | tr -d '\r')
   if [[ -n "$HTDOCS" ]]; then
     docker compose exec -T dolibarr sh -c \
