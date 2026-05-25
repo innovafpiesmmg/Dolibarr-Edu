@@ -60,6 +60,25 @@ Servidor Ubuntu/Debian — red Docker interna (dolibarr_net)
 
 ---
 
+## Preparar el servidor
+
+Antes de instalar ERP EDU, actualiza el sistema e instala las herramientas básicas. Conéctate al servidor por SSH y ejecuta:
+
+```bash
+# 1. Actualizar el sistema
+sudo apt update && sudo apt upgrade -y
+
+# 2. Instalar git, curl y openssl (necesarios para el instalador)
+sudo apt install -y git curl openssl
+
+# 3. Reiniciar si hubo actualizaciones del kernel (recomendado)
+sudo reboot
+```
+
+Tras el reinicio, vuelve a conectarte por SSH. El instalador se encargará de instalar Docker automáticamente si no está presente.
+
+---
+
 ## Instalación
 
 ### Opción A — Instalador automático (recomendado)
