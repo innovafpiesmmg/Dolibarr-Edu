@@ -156,51 +156,70 @@ CURRENT_OFFICE=$(grep "^OFFICE_HOST=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -
 read -rp "  Dominio de Collabora      [${CURRENT_OFFICE:-office.micentro.es}]: " OFFICE_HOST < /dev/tty
 OFFICE_HOST="${OFFICE_HOST:-${CURRENT_OFFICE:-office.micentro.es}}"
 
+# ── Nextcloud (opcional) ──────────────────────────────────────────────────────
 CURRENT_NC_HOST=$(grep "^NC_HOST=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-echo "  (opcional — deja en blanco para no instalar Nextcloud)"
-read -rp "  Dominio de Nextcloud      [${CURRENT_NC_HOST:-ninguno}]: " NC_HOST_INPUT < /dev/tty
-# Si el usuario pulsa Enter: conservar el valor actual; si escribe "-" → desactivar
-if [[ "$NC_HOST_INPUT" == "-" ]]; then
-  NC_HOST=""
-elif [[ -n "$NC_HOST_INPUT" ]]; then
-  NC_HOST="$NC_HOST_INPUT"
+CURRENT_PROFILES=$(grep "^COMPOSE_PROFILES=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
+
+if [[ "$CURRENT_PROFILES" == *"nextcloud"* ]]; then
+  # Ya está activado — preguntar si conservar o cambiar dominio
+  read -rp "  Dominio de Nextcloud      [${CURRENT_NC_HOST}]: " NC_HOST < /dev/tty
+  NC_HOST="${NC_HOST:-$CURRENT_NC_HOST}"
+  INSTALL_NC=true
 else
-  NC_HOST="$CURRENT_NC_HOST"
+  echo ""
+  read -rp "  ¿Instalar Nextcloud (almacenamiento en la nube del centro)? [s/N]: " NC_ANSWER < /dev/tty
+  NC_ANSWER="${NC_ANSWER:-N}"
+  if [[ "${NC_ANSWER,,}" == "s" || "${NC_ANSWER,,}" == "si" || "${NC_ANSWER,,}" == "sí" ]]; then
+    read -rp "  Dominio de Nextcloud      [cloud.micentro.es]: " NC_HOST < /dev/tty
+    NC_HOST="${NC_HOST:-cloud.micentro.es}"
+    INSTALL_NC=true
+  else
+    NC_HOST=""
+    INSTALL_NC=false
+  fi
 fi
 
-# Actualizar .env
+# Actualizar .env — URLs principales
 sed -i "s|^DOLI_URL_ROOT=.*|DOLI_URL_ROOT=$DOLI_URL|"             "$WORK_DIR/.env"
 sed -i "s|^DOLI_DOMAIN=.*|DOLI_DOMAIN=$DOLI_DOMAIN|"               "$WORK_DIR/.env"
 sed -i "s|^DOLIBARR_BASE_URL=.*|DOLIBARR_BASE_URL=$DOLI_URL|"     "$WORK_DIR/.env"
 sed -i "s|^OP_HOST=.*|OP_HOST=$OP_HOST|"                           "$WORK_DIR/.env"
 sed -i "s|^PANEL_URL=.*|PANEL_URL=$PANEL_URL|"                     "$WORK_DIR/.env"
 
-# Asegurarse de que OFFICE_HOST está en .env
-if grep -q "^OFFICE_HOST=" "$WORK_DIR/.env"; then
-  sed -i "s|^OFFICE_HOST=.*|OFFICE_HOST=$OFFICE_HOST|"             "$WORK_DIR/.env"
-else
-  echo "OFFICE_HOST=$OFFICE_HOST"                                >> "$WORK_DIR/.env"
-fi
-
-# NC_HOST y activación del perfil Nextcloud
-if grep -q "^NC_HOST=" "$WORK_DIR/.env"; then
-  sed -i "s|^NC_HOST=.*|NC_HOST=$NC_HOST|"                         "$WORK_DIR/.env"
-else
-  echo "NC_HOST=$NC_HOST"                                        >> "$WORK_DIR/.env"
-fi
-
-# COMPOSE_PROFILES: activa el perfil nextcloud solo si NC_HOST tiene valor
-if [[ -n "$NC_HOST" ]]; then
-  if grep -q "^COMPOSE_PROFILES=" "$WORK_DIR/.env"; then
-    sed -i "s|^COMPOSE_PROFILES=.*|COMPOSE_PROFILES=nextcloud|"   "$WORK_DIR/.env"
+_env_set() { # _env_set KEY VALUE
+  local key="$1" val="$2"
+  if grep -q "^${key}=" "$WORK_DIR/.env"; then
+    sed -i "s|^${key}=.*|${key}=${val}|" "$WORK_DIR/.env"
   else
-    echo "COMPOSE_PROFILES=nextcloud"                            >> "$WORK_DIR/.env"
+    echo "${key}=${val}" >> "$WORK_DIR/.env"
   fi
-  info "Nextcloud activado para el dominio: $NC_HOST"
+}
+
+_env_set "OFFICE_HOST" "$OFFICE_HOST"
+
+if [[ "$INSTALL_NC" == true ]]; then
+  _env_set "NC_HOST"  "$NC_HOST"
+  # Generar contraseñas NC si son placeholder o faltan
+  _nc_pass() {
+    local key="$1"
+    local cur; cur=$(grep "^${key}=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
+    if [[ -z "$cur" || "$cur" == cambia_* ]]; then
+      _env_set "$key" "$(gen_pass 24)"
+    fi
+  }
+  _nc_pass NC_DB_ROOT_PASSWORD
+  _nc_pass NC_DB_PASSWORD
+  _nc_pass NC_ADMIN_PASSWORD
+  # Asegurar resto de vars NC con valores por defecto si faltan
+  grep -q "^NC_PORT="          "$WORK_DIR/.env" || echo "NC_PORT=8071"                  >> "$WORK_DIR/.env"
+  grep -q "^NC_ADMIN_USER="    "$WORK_DIR/.env" || echo "NC_ADMIN_USER=admin"            >> "$WORK_DIR/.env"
+  grep -q "^NEXTCLOUD_URL="    "$WORK_DIR/.env" || echo "NEXTCLOUD_URL=http://nextcloud:80" >> "$WORK_DIR/.env"
+  _env_set "COMPOSE_PROFILES" "nextcloud"
+  success "Nextcloud activado → $NC_HOST"
 else
-  # Desactivar el perfil si NC_HOST está vacío
-  sed -i "s|^COMPOSE_PROFILES=.*|COMPOSE_PROFILES=|"              "$WORK_DIR/.env" 2>/dev/null || true
-  info "Nextcloud desactivado (NC_HOST no configurado)"
+  _env_set "NC_HOST" ""
+  _env_set "COMPOSE_PROFILES" ""
+  info "Nextcloud no instalado (puedes activarlo más adelante con install.sh)"
 fi
 
 success "URLs configuradas"
