@@ -66,7 +66,8 @@ Plataforma de gestión para centros de FP de Administración de Empresas. Permit
 
 ## Architecture decisions
 
-- Multi-empresa Dolibarr mediante el módulo nativo `modMultiCompany` — cada alumno tiene una entidad independiente
+- Multi-empresa Dolibarr mediante el módulo `modMultiCompany` — cada alumno tiene una entidad independiente
+- **Imagen Dolibarr custom** (`dolibarr-edu/Dockerfile.dolibarr`): se construye desde el fork `hregis/dolibarr_multicompany` (rama `21.0-mc`) porque MultiCompany no se distribuye libremente como zip ni repo de módulo independiente. La imagen oficial `dolibarr/dolibarr` se usa como base y se sustituye su `htdocs` por el del fork. `update.sh` rebuild con `--build-arg CACHE_BUST=$(date +%s)` para traer parches nuevos del fork
 - Hash de contraseñas con SHA-256 (adecuado para sincronización con ERP, no para auth de usuario)
 - El API del panel usa PostgreSQL como fuente de verdad y sincroniza con Dolibarr vía su API REST
 - Cloudflare Tunnel para HTTPS sin abrir puertos en el cortafuegos del centro

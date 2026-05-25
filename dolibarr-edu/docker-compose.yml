@@ -21,9 +21,18 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── Dolibarr ERP ─────────────────────────────────────────────────────────────
+  # ── Dolibarr ERP (con MultiCompany integrado vía fork hregis) ───────────────
+  # Imagen propia: la oficial dolibarr/dolibarr no trae MultiCompany y el módulo
+  # no se distribuye libremente como zip ni repo independiente. Construimos
+  # desde Dockerfile.dolibarr que parte de la oficial y sustituye htdocs por
+  # el del fork hregis/dolibarr_multicompany (rama 21.0-mc).
   dolibarr:
-    image: dolibarr/dolibarr:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.dolibarr
+      args:
+        MC_BRANCH: 21.0-mc
+    image: dolibarr-edu-dolibarr-mc
     container_name: dolibarr_app
     restart: unless-stopped
     depends_on:

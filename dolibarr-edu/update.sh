@@ -173,6 +173,11 @@ info "Reconstruyendo imágenes del panel sin caché (garantiza código actualiza
 # haya cambiado en GitHub, dejando el panel con una versión vieja del backend.
 docker compose build --no-cache panel_migrator panel_api panel_web
 
+info "Reconstruyendo imagen Dolibarr (con MultiCompany del fork hregis)..."
+# CACHE_BUST con timestamp fuerza re-clonado del fork hregis para traer parches nuevos
+# del módulo MultiCompany. Sin esto, la capa del git clone se reutilizaría siempre.
+docker compose build --build-arg CACHE_BUST="$(date +%s)" dolibarr
+
 info "Reiniciando servicios..."
 docker compose up -d --remove-orphans
 
@@ -216,32 +221,17 @@ if [[ "$DOLI_READY" == "true" ]]; then
     warn "No se pudo activar el módulo REST API (actívalo desde Dolibarr → Configuración → Módulos)"
   fi
 
-  # ── Asegurar módulo MultiCompany instalado y activo ──────────────────────
-  info "Verificando módulo MultiCompany (entidad por alumno)..."
-  # En la imagen oficial dolibarr/dolibarr, htdocs vive en /var/www/html directamente.
-  # En instalaciones bare-metal suele ser /var/www/html/htdocs. Probamos ambas.
-  HTDOCS=$(docker compose exec -T dolibarr sh -c \
-    'for p in /var/www/html /var/www/html/htdocs /var/www/htdocs; do [ -d "$p/core" ] && [ -d "$p/admin" ] && echo "$p" && break; done' \
-    < /dev/null 2>/dev/null | tr -d '\r')
-  if [[ -n "$HTDOCS" ]]; then
-    docker compose exec -T dolibarr sh -c \
-      'command -v git >/dev/null 2>&1 || (apt-get update >/dev/null 2>&1 && apt-get install -y git >/dev/null 2>&1) || apk add --no-cache git >/dev/null 2>&1' \
-      < /dev/null > /dev/null 2>&1 || true
-    # GIT_TERMINAL_PROMPT=0 evita que git se cuelgue pidiendo credenciales si el repo falla.
-    # URL: ATM-Consulting mantiene el módulo MultiCompany para Dolibarr.
-    if docker compose exec -T dolibarr sh -c \
-         "mkdir -p $HTDOCS/custom && cd $HTDOCS/custom && [ -d multicompany ] || GIT_TERMINAL_PROMPT=0 git clone --depth=1 -q https://github.com/ATM-Consulting/dolibarr_module_multicompany.git multicompany; chown -R www-data:www-data multicompany 2>/dev/null || true" \
-         < /dev/null > /dev/null 2>&1 && \
-       docker compose exec -T dolibarr sh -c "[ -f $HTDOCS/custom/multicompany/core/modules/modMultiCompany.class.php ]" < /dev/null > /dev/null 2>&1; then
-      docker compose exec -T db sh -c \
-        'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "INSERT INTO llx_const (name,entity,value,type,visible) VALUES (\"MAIN_MODULE_MULTICOMPANY\",0,\"1\",\"chaine\",0) ON DUPLICATE KEY UPDATE value=\"1\"; INSERT INTO llx_const (name,entity,value,type,visible) VALUES (\"MAIN_MODULE_MULTICOMPANY_TRANSVERSE_MODE\",0,\"1\",\"chaine\",0) ON DUPLICATE KEY UPDATE value=\"1\";"' \
-        < /dev/null > /dev/null 2>&1 || true
-      success "Módulo MultiCompany asegurado"
-      docker compose restart dolibarr > /dev/null 2>&1 || true
-      sleep 8
-    else
-      warn "No se pudo instalar/actualizar MultiCompany automáticamente."
-    fi
+  # ── Asegurar módulo MultiCompany activo ─────────────────────────────────
+  # Los archivos del módulo ya vienen integrados en la imagen Dolibarr de este
+  # proyecto (construida desde fork hregis/dolibarr_multicompany).
+  # Solo activamos los constants en BD por idempotencia.
+  info "Asegurando MultiCompany activo (constants en BD)..."
+  if docker compose exec -T db sh -c \
+       'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "INSERT INTO llx_const (name,entity,value,type,visible) VALUES (\"MAIN_MODULE_MULTICOMPANY\",0,\"1\",\"chaine\",0) ON DUPLICATE KEY UPDATE value=\"1\"; INSERT INTO llx_const (name,entity,value,type,visible) VALUES (\"MAIN_MODULE_MULTICOMPANY_TRANSVERSE_MODE\",0,\"1\",\"chaine\",0) ON DUPLICATE KEY UPDATE value=\"1\";"' \
+       < /dev/null > /dev/null 2>&1; then
+    success "MultiCompany activo"
+  else
+    warn "No se pudo activar MultiCompany por BD."
   fi
 
   # Reiniciar panel_api para que recoja todo limpio
