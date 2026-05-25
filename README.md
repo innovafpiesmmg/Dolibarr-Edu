@@ -166,6 +166,25 @@ Servidor del centro (Ubuntu/Debian) — todos los servicios en Docker
 
 ---
 
+### Paso 0 — Preparar el servidor
+
+Conéctate al servidor por SSH y ejecuta:
+
+```bash
+# Actualizar el sistema
+sudo apt update && sudo apt upgrade -y
+
+# Instalar git, curl y openssl (necesarios para el instalador)
+sudo apt install -y git curl openssl
+
+# Reiniciar si hubo actualizaciones del kernel (recomendado)
+sudo reboot
+```
+
+Tras el reinicio, vuelve a conectarte por SSH. El instalador se encargará de instalar Docker automáticamente.
+
+---
+
 ### Paso 1 — Instalación con un comando
 
 ```bash
