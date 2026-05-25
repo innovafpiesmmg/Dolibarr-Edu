@@ -1,0 +1,29 @@
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# # ¿Responde Dolibarr localmente?
+curl -I http://localhost:8069
+
+# ¿Qué puerto tiene mapeado?
+docker compose port dolibarr 80
+HTTP/1.1 200 OK
+Date: Mon, 25 May 2026 09:31:52 GMT
+Server: Apache
+Set-Cookie: DOLSESSID_9a96599003f015a153d9d6a89c2a7f2276f5f83f=896k7ap72hcd98tofrud678es6; path=/; HttpOnly; SameSite=Lax
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: Public, must-revalidate
+Pragma: no-cache
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Referrer-Policy: same-origin
+Content-Type: text/html; charset=UTF-8
+
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+127.0.0.1:8069
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# docker compose ps
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+NAME                   IMAGE                           COMMAND                  SERVICE          CREATED         STATUS                          PORTS
+dolibarr_app           dolibarr/dolibarr:latest        "docker-run.sh apach…"   dolibarr         2 hours ago     Up 2 hours                      127.0.0.1:8069->80/tcp
+dolibarr_collabora     collabora/code:latest           "/start-collabora-on…"   collabora        2 hours ago     Up 2 hours                      127.0.0.1:9980->9980/tcp
+dolibarr_db            mariadb:10.11                   "docker-entrypoint.s…"   db               8 hours ago     Up 8 hours (healthy)            3306/tcp
+dolibarr_op_db         postgres:16-alpine              "docker-entrypoint.s…"   openproject_db   8 hours ago     Up 8 hours (healthy)            5432/tcp
+dolibarr_openproject   openproject/openproject:15      "./docker/prod/entry…"   openproject      2 hours ago     Restarting (1) 15 seconds ago   
+dolibarr_tunnel        cloudflare/cloudflared:latest   "cloudflared --no-au…"   cloudflared      5 minutes ago   Up 5 minutes                    
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# 
