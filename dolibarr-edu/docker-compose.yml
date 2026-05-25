@@ -188,6 +188,22 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── Migrador de BD del Panel (corre y termina) ────────────────────────────────
+  panel_migrator:
+    build:
+      context: ../
+      dockerfile: dolibarr-edu/Dockerfile.migrator
+    image: dolibarr-edu-panel-migrator
+    container_name: dolibarr_panel_migrator
+    restart: on-failure
+    depends_on:
+      panel_db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://panel:${PANEL_DB_PASSWORD}@panel_db:5432/panel
+    networks:
+      - dolibarr_net
+
   # ── Panel API (Node.js / Express) ─────────────────────────────────────────────
   panel_api:
     build:
@@ -199,6 +215,8 @@ services:
     depends_on:
       panel_db:
         condition: service_healthy
+      panel_migrator:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: production
       PORT: "8080"

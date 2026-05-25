@@ -45,10 +45,17 @@ app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
     ?? (err as { status?: number; statusCode?: number })?.statusCode
     ?? 500;
 
-  const message =
-    (err as { message?: string })?.message ?? "Error interno del servidor";
-
+  // Log the full error internally but never expose DB internals to the client
   req.log?.error({ err }, "Unhandled error");
+
+  const rawMessage = (err as { message?: string })?.message ?? "";
+  // Detect DB / driver errors (contain SQL keywords or pg error codes)
+  const isDbError =
+    /select |insert |update |delete |column |relation |syntax error|duplicate key|violates/i.test(
+      rawMessage,
+    );
+
+  const message = isDbError ? "Error interno del servidor" : (rawMessage || "Error interno del servidor");
 
   res.status(status).json({ error: message });
 });

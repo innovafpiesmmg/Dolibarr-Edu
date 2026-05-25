@@ -133,7 +133,7 @@ info "Descargando nuevas imágenes Docker (puede tardar varios minutos)..."
 docker compose pull --ignore-buildable
 
 info "Reconstruyendo imágenes del panel..."
-docker compose build panel_api panel_web
+docker compose build panel_migrator panel_api panel_web
 
 info "Reiniciando servicios..."
 docker compose up -d --remove-orphans

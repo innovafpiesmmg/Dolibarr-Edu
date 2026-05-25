@@ -289,18 +289,10 @@ if [[ "${START_NOW,,}" != "n" && "${START_NOW,,}" != "no" ]]; then
   cd "$WORK_DIR"
 
   info "Construyendo imágenes del panel (esto tarda unos minutos)..."
-  docker compose build panel_api panel_web
+  docker compose build panel_migrator panel_api panel_web
 
   info "Arrancando todos los servicios..."
   docker compose up -d
-
-  info "Esperando a que la base de datos del panel esté lista..."
-  sleep 15
-
-  info "Aplicando schema de base de datos del panel..."
-  docker compose run --rm panel_api sh -c \
-    "DATABASE_URL=postgresql://panel:\${PANEL_DB_PASSWORD}@panel_db:5432/panel node -e 'console.log(\"ok\")'" \
-    2>/dev/null || true
 
   echo ""
   docker compose ps
@@ -311,8 +303,6 @@ if [[ "${START_NOW,,}" != "n" && "${START_NOW,,}" != "no" ]]; then
   echo "  Dolibarr ERP:     $DOLI_URL"
   echo ""
   echo "  Si el panel da error al cargar, espera 1-2 min y recarga."
-  echo "  Para aplicar el schema inicial de la BD del panel:"
-  echo "    cd $WORK_DIR && docker compose exec panel_api sh"
 else
   echo ""
   success "Configuración completada."
@@ -320,7 +310,7 @@ else
   echo "Próximos pasos:"
   echo ""
   echo "  1. Construir las imágenes del panel (una sola vez, ~5 min):"
-  echo "     cd $WORK_DIR && docker compose build panel_api panel_web"
+  echo "     cd $WORK_DIR && docker compose build panel_migrator panel_api panel_web"
   echo ""
   echo "  2. Arrancar todos los servicios:"
   echo "     cd $WORK_DIR && docker compose up -d"
