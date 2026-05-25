@@ -124,6 +124,8 @@ router.get("/groups/:id", async (req, res) => {
       groupId: studentsTable.groupId,
       groupName: sql<string>`${groupsTable.name}`,
       dolibarrEntityId: studentsTable.dolibarrEntityId,
+      dolibarrSyncStatus: studentsTable.dolibarrSyncStatus,
+      dolibarrSyncError: studentsTable.dolibarrSyncError,
       companyName: studentsTable.companyName,
       createdAt: studentsTable.createdAt,
     })

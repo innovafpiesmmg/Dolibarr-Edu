@@ -54,8 +54,9 @@ export default function AlumnosList() {
         setStudentToDelete(null);
         toast({ title: "Alumno eliminado", description: "El alumno ha sido eliminado correctamente." });
       },
-      onError: () => {
-        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el alumno." });
+      onError: (err: unknown) => {
+        const msg = (err as any)?.data?.error ?? (err as any)?.message ?? "No se pudo eliminar el alumno.";
+        toast({ variant: "destructive", title: "Error al eliminar", description: msg });
       }
     });
   };

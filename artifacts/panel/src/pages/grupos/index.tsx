@@ -59,8 +59,9 @@ export default function GruposList() {
         form.reset();
         toast({ title: "Grupo creado", description: "El grupo ha sido registrado correctamente." });
       },
-      onError: () => {
-        toast({ variant: "destructive", title: "Error", description: "No se pudo crear el grupo." });
+      onError: (err: unknown) => {
+        const msg = (err as any)?.data?.error ?? (err as any)?.message ?? "No se pudo crear el grupo.";
+        toast({ variant: "destructive", title: "Error al crear el grupo", description: msg });
       }
     });
   };
@@ -73,8 +74,9 @@ export default function GruposList() {
         setGroupToDelete(null);
         toast({ title: "Grupo eliminado", description: "El grupo ha sido eliminado correctamente." });
       },
-      onError: () => {
-        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el grupo." });
+      onError: (err: unknown) => {
+        const msg = (err as any)?.data?.error ?? (err as any)?.message ?? "No se pudo eliminar el grupo.";
+        toast({ variant: "destructive", title: "Error al eliminar", description: msg });
       }
     });
   };

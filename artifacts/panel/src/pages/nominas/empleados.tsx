@@ -100,7 +100,10 @@ export default function NominasEmpleados() {
           setForm(defaultForm());
           toast({ title: "Trabajador creado correctamente" });
         },
-        onError: () => toast({ variant: "destructive", title: "Error al crear el trabajador" }),
+        onError: (err: unknown) => {
+          const msg = (err as any)?.data?.error ?? (err as any)?.message ?? "No se pudo crear el trabajador.";
+          toast({ variant: "destructive", title: "Error al crear el trabajador", description: msg });
+        },
       },
     );
   };
@@ -115,7 +118,10 @@ export default function NominasEmpleados() {
           setToDelete(null);
           toast({ title: "Trabajador eliminado" });
         },
-        onError: () => toast({ variant: "destructive", title: "Error al eliminar el trabajador" }),
+        onError: (err: unknown) => {
+          const msg = (err as any)?.data?.error ?? (err as any)?.message ?? "No se pudo eliminar el trabajador.";
+          toast({ variant: "destructive", title: "Error al eliminar el trabajador", description: msg });
+        },
       },
     );
   };
