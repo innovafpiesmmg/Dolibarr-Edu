@@ -1,0 +1,98 @@
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu/dolibarr-edu
+
+# Estado de contenedores
+docker compose ps
+
+# Logs de OpenProject (últimas 80 líneas)
+docker compose logs --tail=80 openproject
+NAME                   IMAGE                           COMMAND                  SERVICE          CREATED             STATUS                          PORTS
+dolibarr_app           dolibarr/dolibarr:latest        "docker-run.sh apach…"   dolibarr         About an hour ago   Up About an hour                127.0.0.1:8069->80/tcp
+dolibarr_collabora     collabora/code:latest           "/start-collabora-on…"   collabora        3 hours ago         Up 3 hours                      127.0.0.1:9980->9980/tcp
+dolibarr_db            mariadb:10.11                   "docker-entrypoint.s…"   db               10 hours ago        Up 10 hours (healthy)           3306/tcp
+dolibarr_op_db         postgres:16-alpine              "docker-entrypoint.s…"   openproject_db   10 hours ago        Up 10 hours (healthy)           5432/tcp
+dolibarr_openproject   openproject/openproject:15      "./docker/prod/entry…"   openproject      3 hours ago         Restarting (1) 22 seconds ago   
+dolibarr_panel_api     dolibarr-edu-panel-api          "docker-entrypoint.s…"   panel_api        10 minutes ago      Up 10 minutes                   
+dolibarr_panel_db      postgres:16-alpine              "docker-entrypoint.s…"   panel_db         42 minutes ago      Up 42 minutes (healthy)         5432/tcp
+dolibarr_panel_web     dolibarr-edu-panel-web          "/docker-entrypoint.…"   panel_web        10 minutes ago      Up 10 minutes                   127.0.0.1:8068->80/tcp
+dolibarr_tunnel        cloudflare/cloudflared:latest   "cloudflared --no-au…"   cloudflared      About an hour ago   Up About an hour                
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/cli/exec.rb:59:in 'Kernel.load'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/cli/exec.rb:59:in 'Bundler::CLI::Exec#kernel_load'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/cli/exec.rb:23:in 'Bundler::CLI::Exec#run'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/cli.rb:452:in 'Bundler::CLI#exec'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/vendor/thor/lib/thor/command.rb:28:in 'Bundler::Thor::Command#run'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/vendor/thor/lib/thor/invocation.rb:127:in 'Bundler::Thor::Invocation#invoke_command'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/vendor/thor/lib/thor.rb:538:in 'Bundler::Thor.dispatch'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/cli.rb:35:in 'Bundler::CLI.dispatch'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/vendor/thor/lib/thor/base.rb:584:in 'Bundler::Thor::Base::ClassMethods#start'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/cli.rb:29:in 'Bundler::CLI.start'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/exe/bundle:28:in 'block in <top (required)>'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/friendly_errors.rb:117:in 'Bundler.with_friendly_errors'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/exe/bundle:20:in '<top (required)>'
+dolibarr_openproject  |        /usr/local/bundle/bin/bundle:25:in 'Kernel#load'
+dolibarr_openproject  |        /usr/local/bundle/bin/bundle:25:in '<main>'
+dolibarr_openproject  |        (See full trace by running task with --trace)
+dolibarr_openproject  | -----> Setting PGVERSION=13 PGBIN=/usr/lib/postgresql/13/bin PGCONF_FILE=/etc/postgresql/13/main/postgresql.conf
+dolibarr_openproject  | -----> Starting the all-in-one OpenProject setup at /app/docker/prod/supervisord...
+dolibarr_openproject  | -----> You're using an external database. Not initializing a local database cluster.
+dolibarr_openproject  |        Trying to contact PostgreSQL server instance or waiting for it to come online.
+dolibarr_openproject  |        Starting memcached: memcached.
+dolibarr_openproject  | -----> Running migrations...
+dolibarr_openproject  |        rake aborted!
+dolibarr_openproject  |        URI::InvalidURIError: the scheme postgresql does not accept registry part: openproject:ERQLXTDON94VsCqfkRMYvZAb@openproject_db (or bad hostname?) (URI::InvalidURIError)
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/uri-1.0.3/lib/uri/generic.rb:207:in 'URI::Generic#initialize'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/uri-1.0.3/lib/uri/common.rb:159:in 'Class#new'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/uri-1.0.3/lib/uri/common.rb:159:in 'URI.for'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/uri-1.0.3/lib/uri/rfc2396_parser.rb:210:in 'URI::RFC2396_Parser#parse'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/database_configurations/connection_url_resolver.rb:27:in 'ActiveRecord::DatabaseConfigurations::ConnectionUrlResolver#initialize'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/database_configurations/url_config.rb:73:in 'Class#new'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/database_configurations/url_config.rb:73:in 'ActiveRecord::DatabaseConfigurations::UrlConfig#build_url_hash'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/database_configurations/url_config.rb:44:in 'ActiveRecord::DatabaseConfigurations::UrlConfig#initialize'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/database_configurations.rb:299:in 'Class#new'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/database_configurations.rb:299:in 'ActiveRecord::DatabaseConfigurations#environment_url_config'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/database_configurations.rb:213:in 'ActiveRecord::DatabaseConfigurations#build_configs'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/database_configurations.rb:74:in 'ActiveRecord::DatabaseConfigurations#initialize'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/core.rb:72:in 'Class#new'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/core.rb:72:in 'ActiveRecord::Base.configurations='
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/core.rb:74:in 'block in <module:Core>'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activesupport-8.0.2/lib/active_support/concern.rb:138:in 'Module#class_eval'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activesupport-8.0.2/lib/active_support/concern.rb:138:in 'ActiveSupport::Concern#append_features'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/base.rb:299:in 'Module#include'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/base.rb:299:in '<class:Base>'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/base.rb:282:in '<module:ActiveRecord>'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/activerecord-8.0.2/lib/active_record/base.rb:15:in '<top (required)>'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/zeitwerk-2.7.2/lib/zeitwerk/core_ext/kernel.rb:34:in 'Kernel#require'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/stringex-2.8.6/lib/stringex/acts_as_url/adapter/active_record.rb:18:in 'Stringex::ActsAsUrl::Adapter::ActiveRecord.orm_class'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/stringex-2.8.6/lib/stringex/acts_as_url/adapter/base.rb:52:in 'Stringex::ActsAsUrl::Adapter::Base.loadable?'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/stringex-2.8.6/lib/stringex/acts_as_url/adapter.rb:17:in 'block in Stringex::ActsAsUrl::Adapter.load_available'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/stringex-2.8.6/lib/stringex/acts_as_url/adapter.rb:15:in 'Array#each'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/stringex-2.8.6/lib/stringex/acts_as_url/adapter.rb:15:in 'Stringex::ActsAsUrl::Adapter.load_available'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/stringex-2.8.6/lib/stringex.rb:13:in '<top (required)>'
+dolibarr_openproject  |        <internal:/usr/local/lib/ruby/3.4.0/rubygems/core_ext/kernel_require.rb>:37:in 'Kernel#require'
+dolibarr_openproject  |        <internal:/usr/local/lib/ruby/3.4.0/rubygems/core_ext/kernel_require.rb>:37:in 'Kernel#require'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/zeitwerk-2.7.2/lib/zeitwerk/core_ext/kernel.rb:34:in 'Kernel.require'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/runtime.rb:63:in 'block (2 levels) in Bundler::Runtime#require'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/runtime.rb:58:in 'Array#each'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/runtime.rb:58:in 'block in Bundler::Runtime#require'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/runtime.rb:52:in 'Array#each'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/runtime.rb:52:in 'Bundler::Runtime#require'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler.rb:215:in 'Bundler.require'
+dolibarr_openproject  |        /app/config/application.rb:40:in '<top (required)>'
+dolibarr_openproject  |        /app/Rakefile:33:in '<top (required)>'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/rake-13.2.1/exe/rake:27:in '<top (required)>'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/cli/exec.rb:59:in 'Kernel.load'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/cli/exec.rb:59:in 'Bundler::CLI::Exec#kernel_load'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/cli/exec.rb:23:in 'Bundler::CLI::Exec#run'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/cli.rb:452:in 'Bundler::CLI#exec'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/vendor/thor/lib/thor/command.rb:28:in 'Bundler::Thor::Command#run'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/vendor/thor/lib/thor/invocation.rb:127:in 'Bundler::Thor::Invocation#invoke_command'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/vendor/thor/lib/thor.rb:538:in 'Bundler::Thor.dispatch'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/cli.rb:35:in 'Bundler::CLI.dispatch'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/vendor/thor/lib/thor/base.rb:584:in 'Bundler::Thor::Base::ClassMethods#start'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/cli.rb:29:in 'Bundler::CLI.start'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/exe/bundle:28:in 'block in <top (required)>'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/lib/bundler/friendly_errors.rb:117:in 'Bundler.with_friendly_errors'
+dolibarr_openproject  |        /app/vendor/bundle/ruby/3.4.0/gems/bundler-2.6.4/exe/bundle:20:in '<top (required)>'
+dolibarr_openproject  |        /usr/local/bundle/bin/bundle:25:in 'Kernel#load'
+dolibarr_openproject  |        /usr/local/bundle/bin/bundle:25:in '<main>'
+dolibarr_openproject  |        (See full trace by running task with --trace)
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# 
