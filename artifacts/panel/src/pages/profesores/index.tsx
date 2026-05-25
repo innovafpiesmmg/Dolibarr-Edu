@@ -55,8 +55,9 @@ export default function ProfesoresList() {
         form.reset();
         toast({ title: "Profesor creado", description: "El profesor ha sido registrado correctamente." });
       },
-      onError: () => {
-        toast({ variant: "destructive", title: "Error", description: "No se pudo crear el profesor." });
+      onError: (err: unknown) => {
+        const msg = (err as any)?.data?.error ?? (err as any)?.message ?? "No se pudo crear el profesor.";
+        toast({ variant: "destructive", title: "Error al crear el profesor", description: msg });
       }
     });
   };
