@@ -1,0 +1,36 @@
+# Verificar que quedó bien
+grep "tunnel:" cloudflare/config.yml
+tunnel: badf153b-c9e5-4624-bac9-1373c6d05a69
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# docker compose up -d cloudflared
+sleep 3
+docker compose logs cloudflared --tail=20
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+[+] up 6/6
+ ✔ Container dolibarr_collabora   Running                                                                                                               0.0s
+ ✔ Container dolibarr_db          Healthy                                                                                                               0.6s
+ ✔ Container dolibarr_app         Running                                                                                                               0.0s
+ ✔ Container dolibarr_op_db       Healthy                                                                                                               0.6s
+ ✔ Container dolibarr_openproject Running                                                                                                               0.0s
+ ✔ Container dolibarr_tunnel      Running                                                                                                               0.0s
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+dolibarr_tunnel  | error parsing tunnel ID: Error locating origin cert: client didn't specify origincert path
+dolibarr_tunnel  | 2026-05-25T08:00:31Z ERR Cannot determine default origin certificate path. No file cert.pem in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp /etc/cloudflared /usr/local/etc/cloudflared]. You need to specify the origin certificate path by specifying the origincert option in the configuration file, or set TUNNEL_ORIGIN_CERT environment variable originCertPath=
+dolibarr_tunnel  | error parsing tunnel ID: Error locating origin cert: client didn't specify origincert path
+dolibarr_tunnel  | 2026-05-25T08:01:32Z ERR Cannot determine default origin certificate path. No file cert.pem in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp /etc/cloudflared /usr/local/etc/cloudflared]. You need to specify the origin certificate path by specifying the origincert option in the configuration file, or set TUNNEL_ORIGIN_CERT environment variable originCertPath=
+dolibarr_tunnel  | error parsing tunnel ID: Error locating origin cert: client didn't specify origincert path
+dolibarr_tunnel  | 2026-05-25T08:02:33Z ERR Cannot determine default origin certificate path. No file cert.pem in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp /etc/cloudflared /usr/local/etc/cloudflared]. You need to specify the origin certificate path by specifying the origincert option in the configuration file, or set TUNNEL_ORIGIN_CERT environment variable originCertPath=
+dolibarr_tunnel  | error parsing tunnel ID: Error locating origin cert: client didn't specify origincert path
+dolibarr_tunnel  | 2026-05-25T08:03:34Z ERR Cannot determine default origin certificate path. No file cert.pem in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp /etc/cloudflared /usr/local/etc/cloudflared]. You need to specify the origin certificate path by specifying the origincert option in the configuration file, or set TUNNEL_ORIGIN_CERT environment variable originCertPath=
+dolibarr_tunnel  | error parsing tunnel ID: Error locating origin cert: client didn't specify origincert path
+dolibarr_tunnel  | 2026-05-25T08:04:34Z ERR Cannot determine default origin certificate path. No file cert.pem in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp /etc/cloudflared /usr/local/etc/cloudflared]. You need to specify the origin certificate path by specifying the origincert option in the configuration file, or set TUNNEL_ORIGIN_CERT environment variable originCertPath=
+dolibarr_tunnel  | error parsing tunnel ID: Error locating origin cert: client didn't specify origincert path
+dolibarr_tunnel  | 2026-05-25T08:05:35Z ERR Cannot determine default origin certificate path. No file cert.pem in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp /etc/cloudflared /usr/local/etc/cloudflared]. You need to specify the origin certificate path by specifying the origincert option in the configuration file, or set TUNNEL_ORIGIN_CERT environment variable originCertPath=
+dolibarr_tunnel  | error parsing tunnel ID: Error locating origin cert: client didn't specify origincert path
+dolibarr_tunnel  | 2026-05-25T08:06:36Z ERR Cannot determine default origin certificate path. No file cert.pem in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp /etc/cloudflared /usr/local/etc/cloudflared]. You need to specify the origin certificate path by specifying the origincert option in the configuration file, or set TUNNEL_ORIGIN_CERT environment variable originCertPath=
+dolibarr_tunnel  | error parsing tunnel ID: Error locating origin cert: client didn't specify origincert path
+dolibarr_tunnel  | 2026-05-25T08:07:37Z ERR Cannot determine default origin certificate path. No file cert.pem in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp /etc/cloudflared /usr/local/etc/cloudflared]. You need to specify the origin certificate path by specifying the origincert option in the configuration file, or set TUNNEL_ORIGIN_CERT environment variable originCertPath=
+dolibarr_tunnel  | error parsing tunnel ID: Error locating origin cert: client didn't specify origincert path
+dolibarr_tunnel  | 2026-05-25T08:08:38Z ERR Cannot determine default origin certificate path. No file cert.pem in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp /etc/cloudflared /usr/local/etc/cloudflared]. You need to specify the origin certificate path by specifying the origincert option in the configuration file, or set TUNNEL_ORIGIN_CERT environment variable originCertPath=
+dolibarr_tunnel  | error parsing tunnel ID: Error locating origin cert: client didn't specify origincert path
+dolibarr_tunnel  | Tunnel credentials file '/etc/cloudflared/badf153b-c9e5-4624-bac9-1373c6d05a69.json' doesn't exist or is not a file
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# 
