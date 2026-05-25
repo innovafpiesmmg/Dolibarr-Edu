@@ -215,7 +215,20 @@ export default function LandingPage() {
       <nav className="fixed top-0 w-full z-50 border-b border-white/10 bg-black">
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img src="/images/logo.png" alt="ERP EDU" className="h-8 w-auto" />
+            <div
+              className="h-8 w-8 shrink-0"
+              style={{
+                backgroundColor: "hsl(45, 100%, 50%)",
+                maskImage: "url('/images/logo.png')",
+                maskSize: "contain",
+                maskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskImage: "url('/images/logo.png')",
+                WebkitMaskSize: "contain",
+                WebkitMaskRepeat: "no-repeat",
+                WebkitMaskPosition: "center",
+              }}
+            />
             <span className="font-bold text-xl tracking-tight text-white">ERP EDU</span>
           </div>
           <div className="flex items-center gap-3">
@@ -852,7 +865,20 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-col items-center sm:items-start gap-1">
             <div className="flex items-center gap-2 font-semibold text-sm text-white">
-              <img src="/images/logo.png" alt="ERP EDU" className="h-5 w-auto" />
+              <div
+                className="h-5 w-5 shrink-0"
+                style={{
+                  backgroundColor: "hsl(45, 100%, 50%)",
+                  maskImage: "url('/images/logo.png')",
+                  maskSize: "contain",
+                  maskRepeat: "no-repeat",
+                  maskPosition: "center",
+                  WebkitMaskImage: "url('/images/logo.png')",
+                  WebkitMaskSize: "contain",
+                  WebkitMaskRepeat: "no-repeat",
+                  WebkitMaskPosition: "center",
+                }}
+              />
               ERP EDU
             </div>
             <span className="text-xs text-white/50">
