@@ -1,8 +1,8 @@
 # Dolibarr EDU
 
-Plataforma de gestión educativa para centros de **Formación Profesional de Administración de Empresas**. Permite que cada alumno tenga su propia empresa simulada en Dolibarr ERP, gestionada por sus profesores de forma centralizada.
+Plataforma de gestión educativa para centros de **Formación Profesional de Administración de Empresas**. Proporciona a cada alumno una empresa ERP real e independiente, con profesores gestionando grupos y alumnos desde un panel centralizado.
 
-Desarrollado por **Atreyu Servicios Digitales (ASD)**.
+Desarrollado por **Atreyu Servicios Digitales (ASD)** · [GitHub](https://github.com/innovafpiesmmg/Dolibarr-Edu)
 
 ---
 
@@ -19,31 +19,65 @@ Desarrollado por **Atreyu Servicios Digitales (ASD)**.
 ## Índice
 
 1. [Descripción general](#descripción-general)
-2. [Características](#características)
-3. [Arquitectura](#arquitectura)
-4. [Instalación en servidor del centro](#instalación-en-servidor-del-centro)
-5. [Actualización](#actualización)
-6. [Configuración](#configuración)
-7. [Panel de gestión — guía de uso](#panel-de-gestión--guía-de-uso)
-8. [Portal del alumno](#portal-del-alumno)
-9. [Desarrollo local](#desarrollo-local)
-10. [Estructura del proyecto](#estructura-del-proyecto)
-11. [API](#api)
-12. [Seguridad](#seguridad)
-13. [Tecnologías](#tecnologías)
+2. [Ecosistema de herramientas](#ecosistema-de-herramientas)
+3. [Características](#características)
+4. [Módulo NominasEDU (Dolibarr nativo)](#módulo-nominasedu-dolibarr-nativo)
+5. [Arquitectura](#arquitectura)
+6. [Instalación en servidor del centro](#instalación-en-servidor-del-centro)
+7. [Actualización](#actualización)
+8. [Configuración](#configuración)
+9. [Panel de gestión — guía de uso](#panel-de-gestión--guía-de-uso)
+10. [Portal del alumno](#portal-del-alumno)
+11. [Desarrollo local](#desarrollo-local)
+12. [Estructura del proyecto](#estructura-del-proyecto)
+13. [API](#api)
+14. [Seguridad](#seguridad)
+15. [Tecnologías](#tecnologías)
 
 ---
 
 ## Descripción general
 
-Dolibarr EDU resuelve el principal reto de la FP de Administración: proporcionar a cada alumno un entorno ERP real e independiente sin necesidad de licencias comerciales ni infraestructura compleja.
+Dolibarr EDU resuelve el principal reto de la FP de Administración: proporcionar a cada alumno un entorno de trabajo profesional real e independiente, sin licencias comerciales ni infraestructura compleja.
 
-Cada alumno recibe:
-- Su propio usuario y contraseña
-- Una empresa aislada en Dolibarr (entidad multi-empresa)
-- Acceso directo desde la landing page del centro
+Cada alumno recibe en un único servidor:
+- **Su empresa en Dolibarr ERP** — facturación, contabilidad, RRHH, inventario, CRM
+- **Espacio en OpenProject** — gestión de proyectos con Gantt, tareas y registro de horas
+- **Suite ofimática en el navegador** — Writer, Calc e Impress a través de Collabora Online
 
 El profesorado gestiona grupos, alumnos, accesos y nóminas desde un panel web centralizado protegido con contraseña.
+
+---
+
+## Ecosistema de herramientas
+
+Dolibarr EDU despliega tres herramientas de nivel profesional en el mismo servidor, accesibles cada una desde su propio subdominio mediante un túnel Cloudflare:
+
+| Herramienta | Subdominio | Función |
+|-------------|------------|---------|
+| **Dolibarr ERP/CRM** | `erp.micentro.es` | ERP multiempresa — una empresa por alumno |
+| **OpenProject** | `proyectos.micentro.es` | Gestión de proyectos: Gantt, tareas, horas |
+| **LibreOffice Online** | `office.micentro.es` | Suite ofimática en el navegador (Collabora) |
+
+### Dolibarr ERP/CRM
+El núcleo del sistema. Cada alumno opera una entidad Dolibarr completamente aislada con el mismo software que usan más de 250 000 pymes en todo el mundo. Incluye el **módulo PHP nativo NominasEDU** para prácticas de nóminas y Seguridad Social directamente dentro del ERP.
+
+### OpenProject
+Gestión de proyectos al nivel de herramientas profesionales como Jira o Monday. Los alumnos planifican tareas, registran horas y visualizan el progreso en diagramas de Gantt. Edición Community — completamente gratuita.
+
+**Funcionalidades principales:**
+- Diagramas de Gantt y tableros de tareas
+- Registro y seguimiento de horas
+- Gestión de miembros con roles diferenciados
+- Roadmaps y seguimiento de versiones
+
+### LibreOffice Online (Collabora)
+Suite ofimática completa en el navegador sin necesidad de instalar nada. Compatible con formatos .docx, .xlsx y .pptx. Integrable directamente con Dolibarr para abrir documentos adjuntos en el navegador, y con OpenProject para editar documentos de los proyectos.
+
+**Aplicaciones incluidas:**
+- **Writer** — procesador de textos
+- **Calc** — hoja de cálculo
+- **Impress** — presentaciones
 
 ---
 
@@ -54,42 +88,72 @@ El profesorado gestiona grupos, alumnos, accesos y nóminas desde un panel web c
 - **Gestión de profesores** — alta, edición y baja con conteo de grupos y alumnos asignados
 - **Gestión de grupos** — CRUD completo con asignación de profesor responsable
 - **Gestión de alumnos** — búsqueda, filtrado por grupo, alta, edición y baja
-- **Exportar CSV** — descarga el listado completo de alumnos (con estado de sincronización) en formato Excel-compatible
+- **Exportar CSV** — descarga el listado completo de alumnos en formato Excel-compatible
 - **Importación masiva** — carga de alumnos por CSV con resumen de errores
 - **Restablecer contraseña** — genera una nueva contraseña para cualquier alumno y la sincroniza con Dolibarr
-- **Acceso protegido** — contraseña configurada en la instalación, sesión persistente en navegador
 
-### Módulo de nóminas
+### Módulo de nóminas (panel Node.js)
 - **Empleados** — vincula empleados del centro a alumnos para las prácticas de nóminas
-- **Nueva nómina** — cálculo completo de nómina mensual (salario bruto, IRPF, cuotas SS obrero/empresa)
+- **Nueva nómina** — cálculo completo (salario bruto, IRPF, cuotas SS obrero/empresa con tipos 2024)
 - **Detalle de nómina** — consulta y sincronización del asiento contable 640/642/465/476/4751 con Dolibarr HRM
-- **Liquidaciones SS** — generación de RNT y RLC, asientos de pago a Tesorería (476→572) y a Hacienda — Modelo 111 (4751→572)
+- **Liquidaciones SS** — generación de RNT y RLC, asientos pago a Tesorería (476→572) y a Hacienda — Modelo 111 (4751→572)
 
 ### Sincronización con Dolibarr
-- **Estado de sincronización** (`/estado`) — vista global del despliegue de alumnos con filtros por estado (desplegado / error / pendiente), botón de reintento por alumno e indicador de errores activos
-- **Despliegue automático** — crea entidad empresa, usuario ERP y configura régimen fiscal (IGIC por defecto para Canarias, IVA para Península)
+- **Estado de sincronización** (`/estado`) — vista global con filtros por estado, botón de reintento e indicador de errores
+- **Despliegue automático** — crea entidad empresa, usuario ERP y configura régimen fiscal (IGIC/IVA)
 
 ### Administración
-- **Historial de actividad** (`/actividad`) — registro cronológico de todas las acciones del panel: altas, bajas, despliegues, cambios de contraseña, etc., con filtros por tipo de entidad
-- **Configuración fiscal** (`/configuracion`) — régimen fiscal (IGIC/IVA), moneda y idioma aplicados al crear entidades en Dolibarr
+- **Historial de actividad** (`/actividad`) — registro cronológico de todas las acciones del panel
+- **Configuración fiscal** (`/configuracion`) — régimen IGIC/IVA, moneda e idioma aplicados al crear entidades
 
 ### Portal del alumno (landing page)
 - Formulario de acceso con usuario y contraseña en la página pública
-- Muestra el nombre del alumno y su empresa al autenticarse
-- Botón directo a la empresa en Dolibarr (entidad asignada)
+- Muestra nombre, empresa y grupo al autenticarse
+- Acceso directo a la empresa en Dolibarr, a OpenProject y a LibreOffice Online
 
-### Módulo PHP nativo — NominasEDU
-- **Módulo real de Dolibarr** — aparece en el menú del ERP igual que Facturas, Contabilidad o RRHH
-- Usa la interfaz y el estilo visual de Dolibarr (sin iframe, sin redirección)
-- Tablas propias en MariaDB con el prefijo `llx_nominasedu_*`
-- Permisos de Dolibarr configurables por usuario: lectura / escritura / borrado
-- Tipos SS 2024 aplicados correctamente (obrero 6,47% / empresa 30,48%)
+---
 
-### Despliegue en servidor escolar
-- Instalación con un único comando `curl`
-- Docker Compose con Dolibarr + MariaDB + Cloudflare Tunnel — el módulo NominasEDU se monta automáticamente
-- Scripts CLI para gestión avanzada desde terminal
-- Script de actualización con backup automático
+## Módulo NominasEDU (Dolibarr nativo)
+
+**NominasEDU** es un módulo PHP real para Dolibarr. Aparece en el menú principal del ERP como cualquier otro módulo oficial (junto a Facturas, Contabilidad, RRHH…) y utiliza la interfaz y el estilo visual nativos de Dolibarr.
+
+### Páginas del módulo
+
+| Página | Descripción |
+|--------|-------------|
+| **Lista de nóminas** | Nóminas del período seleccionado con totales de masa salarial, SS y coste empresa |
+| **Nueva nómina** | Formulario con cálculo en tiempo real de IRPF, SS y neto al teclear |
+| **Detalle de nómina** | Desglose completo con tabla de tipos SS 2024 partida a partida |
+| **Empleados** | Alta, edición y baja de empleados vinculados a usuarios Dolibarr |
+| **Liquidación SS/IRPF** | Totales mensuales y registro de fechas de pago a Tesorería y Hacienda |
+
+### Tipos SS aplicados (Régimen General 2024)
+
+| Concepto | Obrero | Empresa |
+|----------|--------|---------|
+| Contingencias comunes | 4,70% | 23,60% |
+| Desempleo | 1,55% | 5,50% |
+| Formación profesional | 0,10% | 0,60% |
+| FOGASA | — | 0,20% |
+| MEI | 0,12% | 0,58% |
+| **Total** | **6,47%** | **30,48%** |
+
+### Instalación del módulo
+
+El módulo se instala automáticamente con el despliegue: `docker-compose.yml` monta `dolibarr-edu/modules/` en `/var/www/html/custom/` del contenedor.
+
+Para activarlo (una sola vez tras el primer arranque):
+> **Dolibarr → Configuración → Módulos/Aplicaciones → pestaña Recursos humanos → NominasEDU → Activar**
+
+Dolibarr crea automáticamente las tres tablas necesarias: `llx_nominasedu_employee`, `llx_nominasedu_payroll`, `llx_nominasedu_ss_payment`.
+
+### Permisos del módulo
+
+| Permiso | Descripción | Por defecto |
+|---------|-------------|-------------|
+| `nominasedu.read` | Consultar nóminas y empleados | Activado |
+| `nominasedu.write` | Crear y editar nóminas y empleados | Desactivado |
+| `nominasedu.delete` | Eliminar registros | Desactivado |
 
 ---
 
@@ -101,16 +165,23 @@ Internet
    ▼
 Cloudflare Tunnel (HTTPS sin abrir puertos)
    │
-   ▼
+   ├── erp.micentro.es        → Dolibarr ERP (puerto 8069)
+   ├── proyectos.micentro.es  → OpenProject   (puerto 8070)
+   └── office.micentro.es     → Collabora     (puerto 9980)
+          │
+          ▼
 Servidor del centro (Ubuntu/Debian)
-   ├── Dolibarr ERP (Docker)        ← una entidad por alumno
-   ├── MariaDB (Docker)             ← base de datos de Dolibarr
-   └── Panel EDU (Node.js + PostgreSQL)
-          ├── API REST (/api)       ← Express + Drizzle ORM
-          └── Frontend (/)          ← React + Vite
+   ├── dolibarr     — Dolibarr ERP/CRM (módulo NominasEDU incluido)
+   ├── db           — MariaDB (base de datos de Dolibarr)
+   ├── openproject  — Gestión de proyectos
+   ├── openproject_db — PostgreSQL (base de datos de OpenProject)
+   ├── collabora    — Collabora Online / LibreOffice en el navegador
+   └── Panel EDU    — Node.js + PostgreSQL
+          ├── API REST (/api)   ← Express + Drizzle ORM
+          └── Frontend (/)      ← React + Vite
 ```
 
-**Modelo multi-empresa:** Se utiliza el módulo nativo `modMultiCompany` de Dolibarr. Cada alumno es una entidad independiente, completamente aislada del resto.
+**Modelo multi-empresa:** El módulo nativo `modMultiCompany` de Dolibarr aísla completamente cada empresa de alumno. Ningún alumno puede ver los datos de otro.
 
 ---
 
@@ -120,6 +191,7 @@ Servidor del centro (Ubuntu/Debian)
 - Ubuntu 22.04 / Debian 12 (o compatible)
 - Usuario con `sudo` (no ejecutar como root)
 - Conexión a internet
+- Mínimo 4 GB de RAM recomendados (OpenProject es el servicio más exigente)
 
 ### Instalación con un comando
 
@@ -130,26 +202,40 @@ curl -fsSL https://raw.githubusercontent.com/innovafpiesmmg/Dolibarr-Edu/main/in
 El script realiza automáticamente:
 1. Instala Docker si no está presente
 2. Clona el repositorio en `/opt/dolibarr-edu`
-3. Genera contraseñas aleatorias para la base de datos
+3. Genera contraseñas aleatorias para todas las bases de datos
 4. **Solicita la contraseña del panel** (dos veces para confirmar)
 5. **Solicita la URL pública de Dolibarr** (ej: `https://erp.micentro.es`)
-6. Muestra las credenciales de administrador de Dolibarr
+6. Muestra las credenciales iniciales de administrador
 
 ### Pasos post-instalación
 
 ```bash
-# 1. Revisa la configuración (si necesitas ajustar algo)
+# 1. Revisa y ajusta la configuración
 nano /opt/dolibarr-edu/.env
 
-# 2. Arranca los servicios
+# 2. Arranca todos los servicios
 cd /opt/dolibarr-edu && docker compose up -d
 
 # 3. Configura el túnel Cloudflare
-#    Edita cloudflare/config.yml con tu token de túnel
+#    Edita cloudflare/config.yml con tu UUID de túnel y dominios reales
+#    (ver sección de Configuración más abajo)
 
-# 4. Configura el entorno educativo (crear primer grupo, etc.)
+# 4. Sigue los logs de OpenProject hasta que esté listo (~2-3 min)
+docker compose logs -f openproject
+
+# 5. Configuración inicial del entorno educativo
 cd /opt/dolibarr-edu && ./scripts/setup-inicial.sh
 ```
+
+### Dominios DNS necesarios (Cloudflare)
+
+Crea tres registros CNAME en tu zona DNS de Cloudflare, todos apuntando al mismo UUID del túnel:
+
+| Subdominio | CNAME |
+|------------|-------|
+| `erp.micentro.es` | `TU_UUID.cfargotunnel.com` |
+| `proyectos.micentro.es` | `TU_UUID.cfargotunnel.com` |
+| `office.micentro.es` | `TU_UUID.cfargotunnel.com` |
 
 ### Scripts CLI disponibles
 
@@ -178,17 +264,48 @@ El script de actualización:
 
 ## Configuración
 
-El archivo `.env` (en `/opt/dolibarr-edu/.env` en producción) contiene todas las variables de configuración:
+El archivo `.env` en `/opt/dolibarr-edu/.env` contiene todas las variables:
+
+### Dolibarr y base de datos
+
+| Variable | Descripción |
+|----------|-------------|
+| `MYSQL_ROOT_PASSWORD` | Contraseña root de MariaDB |
+| `MYSQL_DATABASE` | Nombre de la base de datos de Dolibarr |
+| `MYSQL_USER` / `MYSQL_PASSWORD` | Usuario de la base de datos |
+| `DOLI_URL_ROOT` | URL pública de Dolibarr (ej: `https://erp.micentro.es`) |
+| `DOLI_DOMAIN` | Dominio sin protocolo (ej: `erp.micentro.es`) |
+| `DOLI_ADMIN_LOGIN` / `DOLI_ADMIN_PASSWORD` | Cuenta de superadmin de Dolibarr |
+| `DOLI_ADMIN_EMAIL` | Email del superadmin |
+| `DOLI_COMPANY_NAME` | Nombre del centro (aparece en la cabecera del ERP) |
+| `APP_PORT` | Puerto local de Dolibarr (por defecto `8069`) |
+
+### OpenProject
+
+| Variable | Descripción |
+|----------|-------------|
+| `OP_HOST` | Dominio público de OpenProject (ej: `proyectos.micentro.es`) |
+| `OP_DB_PASSWORD` | Contraseña de la base de datos PostgreSQL de OpenProject |
+| `OP_SECRET_KEY` | Clave secreta Rails (genera con `openssl rand -hex 64`) |
+| `OP_PORT` | Puerto local (por defecto `8070`) |
+
+### Collabora Online
+
+| Variable | Descripción |
+|----------|-------------|
+| `COLLABORA_ADMIN` | Usuario del panel de admin de Collabora |
+| `COLLABORA_PASSWORD` | Contraseña del panel de admin de Collabora |
+| `COLLABORA_PORT` | Puerto local (por defecto `9980`) |
+
+### Panel EDU (Node.js)
 
 | Variable | Descripción |
 |----------|-------------|
 | `ADMIN_PASSWORD_HASH` | Hash SHA-256 de la contraseña del panel |
 | `SESSION_SECRET` | Clave secreta para firmar tokens de sesión |
-| `DOLIBARR_BASE_URL` | URL pública de Dolibarr (ej: `https://erp.micentro.es`) |
+| `DOLIBARR_BASE_URL` | URL pública de Dolibarr (misma que `DOLI_URL_ROOT`) |
 | `DOLIBARR_API_KEY` | Clave API del administrador de Dolibarr |
 | `DATABASE_URL` | Cadena de conexión PostgreSQL del panel EDU |
-| `DOLI_DB_PASSWORD` | Contraseña de la base de datos de Dolibarr |
-| `DOLI_ADMIN_PASSWORD` | Contraseña del administrador de Dolibarr |
 
 ### Cambiar la contraseña del panel
 
@@ -196,18 +313,14 @@ El archivo `.env` (en `/opt/dolibarr-edu/.env` en producción) contiene todas la
 # Genera el nuevo hash SHA-256
 echo -n "NuevaContraseña" | openssl dgst -sha256 | awk '{print $2}'
 
-# Actualiza el .env
+# Actualiza el .env y reinicia el panel
 nano /opt/dolibarr-edu/.env
-# Cambia ADMIN_PASSWORD_HASH=<hash_nuevo>
-
-# Reinicia el panel
 docker compose restart panel
 ```
 
 ### Configuración fiscal
 
-Desde el panel, en **Configuración**, se puede cambiar el régimen fiscal aplicado al crear nuevas entidades:
-
+Desde el panel, en **Configuración**, puedes cambiar el régimen fiscal aplicado al crear nuevas entidades:
 - **IGIC** (por defecto) — para centros de Canarias
 - **IVA** — para centros de la Península y resto del territorio
 
@@ -218,17 +331,19 @@ El régimen se aplica únicamente al crear nuevas entidades; las existentes no s
 ## Panel de gestión — guía de uso
 
 ### Acceso
-1. Navega a la URL del centro (ej: `https://panel.micentro.es`)
-2. Pulsa **"Acceder al Panel"** o ve directamente a `/login`
+1. Navega a la URL del centro (ej: `https://panel.micentro.es` o la raíz `/`)
+2. Pulsa **"Panel de gestión"** o ve directamente a `/login`
 3. Introduce la contraseña configurada en la instalación
 
-### Flujo de trabajo recomendado al inicio de curso
+### Flujo de trabajo al inicio de curso
 
-1. **Configura el régimen fiscal** — Ve a *Configuración* y comprueba que IGIC o IVA es el correcto para tu centro
+1. **Configura el régimen fiscal** — Ve a *Configuración* y comprueba IGIC o IVA
 2. **Crea los profesores** — Ve a *Profesores → Nuevo profesor*
 3. **Crea los grupos** — Ve a *Grupos → Nuevo grupo*, asigna un profesor
 4. **Importa los alumnos** — Ve a *Importar* y pega el CSV del listado oficial
-5. **Despliega las empresas** — En la ficha de cada alumno (o desde *Estado Dolibarr*) pulsa *Desplegar*
+5. **Despliega las empresas** — En *Estado Dolibarr* pulsa *Desplegar* por alumno o en lote
+6. **Activa NominasEDU** — En Dolibarr admin, activa el módulo (solo una vez)
+7. **Crea empleados en NominasEDU** — Vincula usuarios Dolibarr como empleados para las prácticas de nóminas
 
 ### Formato CSV para importación masiva
 
@@ -238,27 +353,29 @@ Carlos,López Martín,carlos.lopez@alumnos.es,carlos.lopez,MiContraseña1!,Comer
 María,Sánchez Ruiz,maria.sanchez@alumnos.es,maria.sanchez,MiContraseña2!,Asesoría Sánchez
 ```
 
-Los campos mínimos requeridos son `nombre`, `apellidos`, `usuario` y `contraseña`. El campo `empresa` es opcional.
+Los campos mínimos son `nombre`, `apellidos`, `usuario` y `contraseña`. El campo `empresa` es opcional.
 
 ### Restablecer contraseña de un alumno
 
 1. Ve a *Alumnos* y abre la ficha del alumno
 2. Pulsa **Restablecer contraseña** en la tarjeta *Entorno de Simulación*
-3. Se genera una nueva contraseña aleatoria y se actualiza tanto en la BD como en Dolibarr (si el alumno está desplegado)
-4. Anota la nueva contraseña del cuadro que aparece — no se puede recuperar después de cerrarlo
+3. Se genera una nueva contraseña aleatoria, se actualiza en la BD y en Dolibarr
+4. Anota la nueva contraseña — no se puede recuperar después de cerrarlo
 
 ---
 
 ## Portal del alumno
 
-Los alumnos acceden a su empresa directamente desde la landing page del centro:
+Los alumnos acceden desde la landing page del centro:
 
 1. El alumno visita la URL del centro
-2. En la sección **"Accede a tu empresa"** introduce su usuario y contraseña
-3. El sistema muestra su nombre y empresa
+2. En **"Accede a tu empresa"** introduce su usuario y contraseña
+3. El sistema muestra su nombre, empresa y grupo
 4. El botón **"Acceder a mi empresa"** abre directamente su entidad en Dolibarr
 
-> Las credenciales del alumno (usuario y contraseña) las facilita el profesor al inicio del curso. La contraseña se guarda como hash SHA-256 y nunca en texto plano.
+Desde el pie de la landing y la barra lateral del panel, el alumno también tiene acceso directo a **OpenProject** (`proyectos.micentro.es`) y **LibreOffice Online** (`office.micentro.es`).
+
+> Las credenciales del alumno (usuario y contraseña) las facilita el profesor al inicio del curso. La contraseña se almacena como hash SHA-256, nunca en texto plano.
 
 ---
 
@@ -298,8 +415,6 @@ pnpm --filter @workspace/panel run dev
 
 ### Contraseña del panel en desarrollo
 
-La variable `ADMIN_PASSWORD_HASH` debe contener el hash SHA-256 de tu contraseña de prueba:
-
 ```bash
 # Hash para la contraseña "admin123"
 echo -n "admin123" | openssl dgst -sha256
@@ -322,63 +437,72 @@ pnpm --filter @workspace/api-spec run codegen    # Regenerar hooks y schemas Zod
 ## Estructura del proyecto
 
 ```
-dolibarr-edu/                   # Paquete de despliegue Docker (servidor escolar)
-│   ├── docker-compose.yml      # Dolibarr + MariaDB + Cloudflare Tunnel
-│   ├── .env.example            # Plantilla de configuración
-│   ├── install.sh              # Instalador de un comando
-│   ├── update.sh               # Script de actualización
-│   ├── cloudflare/config.yml   # Configuración del túnel Cloudflare
-│   └── scripts/                # CLI: setup-inicial, crear-grupo, etc.
+dolibarr-edu/                        # Paquete de despliegue Docker
+│   ├── docker-compose.yml           # Dolibarr + MariaDB + OpenProject +
+│   │                                # PostgreSQL + Collabora + Cloudflare Tunnel
+│   ├── .env.example                 # Plantilla de configuración completa
+│   ├── install.sh                   # Instalador de un comando
+│   ├── update.sh                    # Script de actualización con backup
+│   ├── cloudflare/config.yml        # Túnel: erp / proyectos / office
+│   ├── scripts/                     # CLI: setup-inicial, crear-grupo, etc.
+│   └── modules/nominasedu/          # Módulo PHP nativo para Dolibarr
+│       ├── core/modules/            # Descriptor del módulo (menús, permisos)
+│       ├── langs/es_ES/             # Cadenas en español
+│       ├── sql/                     # Tablas llx_nominasedu_*
+│       ├── lib/                     # Helpers: cálculo nómina, BD, badges
+│       ├── index.php                # Lista de nóminas del período
+│       ├── nomina_card.php          # Crear / ver / validar nómina
+│       ├── empleados.php            # CRUD empleados
+│       └── ss.php                   # Liquidación SS/IRPF
 │
 lib/
-│   ├── api-spec/openapi.yaml   # Contrato OpenAPI (fuente de verdad)
-│   ├── api-client-react/       # Hooks React Query generados por Orval
-│   ├── api-zod/                # Schemas Zod generados por Orval
-│   └── db/src/schema/          # Tablas Drizzle ORM
-│       ├── teachers.ts         # Profesores
-│       ├── groups.ts           # Grupos
-│       ├── students.ts         # Alumnos + estado sincronización Dolibarr
-│       ├── employees.ts        # Empleados para nóminas
-│       ├── payrolls.ts         # Nóminas mensuales
-│       ├── ss-payments.ts      # Liquidaciones SS/IRPF por período
-│       ├── settings.ts         # Configuración del panel (clave/valor)
-│       └── activity-logs.ts    # Historial de actividad
+│   ├── api-spec/openapi.yaml        # Contrato OpenAPI (fuente de verdad)
+│   ├── api-client-react/            # Hooks React Query generados por Orval
+│   ├── api-zod/                     # Schemas Zod generados por Orval
+│   └── db/src/schema/               # Tablas Drizzle ORM
+│       ├── teachers.ts
+│       ├── groups.ts
+│       ├── students.ts
+│       ├── employees.ts
+│       ├── payrolls.ts
+│       ├── ss-payments.ts
+│       ├── settings.ts
+│       └── activity-logs.ts
 │
 artifacts/
 │   ├── api-server/src/
-│   │   ├── routes/             # teachers, groups, students, stats, auth,
-│   │   │                       # deploy, employees, payrolls, ss,
-│   │   │                       # settings, reset-password, activity
-│   │   ├── middleware/         # requireAuth
-│   │   └── lib/                # dolibarr.ts, activity.ts, auth.ts, logger
+│   │   ├── routes/                  # teachers, groups, students, stats, auth,
+│   │   │                            # deploy, employees, payrolls, ss,
+│   │   │                            # settings, reset-password, activity
+│   │   ├── middleware/              # requireAuth
+│   │   └── lib/                    # dolibarr.ts, activity.ts, auth.ts, logger
 │   └── panel/src/
 │       ├── pages/
-│       │   ├── landing.tsx     # Portal público del alumno
-│       │   ├── login.tsx       # Login del profesorado
-│       │   ├── dashboard/      # Estadísticas generales
-│       │   ├── profesores/     # CRUD profesores
-│       │   ├── grupos/         # CRUD grupos
-│       │   ├── alumnos/        # CRUD alumnos + exportar CSV + reset password
-│       │   ├── importar/       # Importación masiva CSV
-│       │   ├── nominas/        # Nóminas, empleados, SS/IRPF
-│       │   ├── estado/         # Estado sincronización Dolibarr
-│       │   ├── actividad/      # Historial de actividad
-│       │   └── configuracion/  # Régimen fiscal, moneda, idioma
-│       ├── components/         # AppLayout (sidebar), shadcn/ui
-│       └── contexts/           # AuthContext
+│       │   ├── landing.tsx          # Portal público + acceso a las 3 herramientas
+│       │   ├── login.tsx
+│       │   ├── dashboard/
+│       │   ├── profesores/
+│       │   ├── grupos/
+│       │   ├── alumnos/             # CRUD + exportar CSV + reset password
+│       │   ├── importar/
+│       │   ├── nominas/             # Nóminas, empleados, SS/IRPF
+│       │   ├── estado/              # Estado sincronización Dolibarr
+│       │   ├── actividad/
+│       │   └── configuracion/
+│       ├── components/
+│       │   └── layout/AppLayout.tsx # Sidebar con enlaces a las 3 herramientas
+│       └── contexts/AuthContext.tsx
 │
 screenshots/
-│   ├── landing.jpg             # Página pública de inicio
-│   └── login.jpg               # Login del panel de gestión
+│   ├── landing.jpg
+│   └── login.jpg
 ```
 
 ---
 
 ## API
 
-Base URL: `/api`
-
-La especificación completa está en `lib/api-spec/openapi.yaml`.
+Base URL: `/api` · Especificación completa: `lib/api-spec/openapi.yaml`
 
 ### Endpoints principales
 
@@ -393,7 +517,7 @@ La especificación completa está en `lib/api-spec/openapi.yaml`.
 | `GET` | `/api/groups` | Listar grupos |
 | `POST` | `/api/groups` | Crear grupo |
 | `GET/PUT/DELETE` | `/api/groups/:id` | Detalle, actualizar, eliminar |
-| `GET` | `/api/students` | Listar alumnos (búsqueda + filtro por grupo) |
+| `GET` | `/api/students` | Listar alumnos (búsqueda + filtro) |
 | `POST` | `/api/students` | Crear alumno |
 | `POST` | `/api/students/bulk` | Importación masiva |
 | `GET/PUT/DELETE` | `/api/students/:id` | Detalle, actualizar, eliminar |
@@ -413,17 +537,18 @@ La especificación completa está en `lib/api-spec/openapi.yaml`.
 | `GET/PUT` | `/api/settings` | Configuración fiscal del panel |
 | `GET` | `/api/activity` | Historial de actividad |
 
-Todos los endpoints excepto `/healthz`, `/auth/login` y `/auth/student-login` requieren cabecera `Authorization: Bearer <token>`.
+Todos los endpoints excepto `/healthz`, `/auth/login` y `/auth/student-login` requieren `Authorization: Bearer <token>`.
 
 ---
 
 ## Seguridad
 
-- **Contraseña del panel:** almacenada como hash SHA-256, nunca en texto plano. El token de sesión se genera con HMAC-SHA256 firmado con `SESSION_SECRET`.
+- **Contraseña del panel:** almacenada como hash SHA-256. El token de sesión se genera con HMAC-SHA256 firmado con `SESSION_SECRET`.
 - **Contraseñas de alumnos:** almacenadas como hash SHA-256 (compatibles con la API de Dolibarr).
-- **Comparación segura:** se usa `timingSafeEqual` para evitar ataques de temporización.
-- **Cloudflare Tunnel:** el servidor escolar no abre ningún puerto a internet; todo el tráfico pasa por el túnel cifrado de Cloudflare.
+- **Comparación segura:** `timingSafeEqual` para evitar ataques de temporización.
+- **Cloudflare Tunnel:** el servidor no abre ningún puerto a internet; todo el tráfico pasa por el túnel cifrado de Cloudflare.
 - **Sin root:** el instalador rechaza ejecutarse como root y usa `sudo` solo donde es necesario.
+- **Redes Docker:** todos los servicios se comunican en una red interna (`dolibarr_net`) sin exposición directa al exterior.
 
 ---
 
@@ -431,11 +556,13 @@ Todos los endpoints excepto `/healthz`, `/auth/login` y `/auth/student-login` re
 
 | Capa | Tecnología |
 |------|-----------|
-| ERP | Dolibarr 18+ (módulo multi-empresa) |
+| ERP | Dolibarr 18+ (módulo multi-empresa) + módulo PHP NominasEDU |
+| Proyectos | OpenProject 15 Community |
+| Ofimática | Collabora Online / LibreOffice Online |
 | Contenedores | Docker + Docker Compose |
 | Túnel HTTPS | Cloudflare Tunnel |
 | API | Node.js 24, Express 5, TypeScript |
-| Base de datos | PostgreSQL + Drizzle ORM |
+| Base de datos | PostgreSQL + Drizzle ORM (panel) · MariaDB (Dolibarr) · PostgreSQL (OpenProject) |
 | Validación | Zod v4, drizzle-zod |
 | Codegen | Orval (OpenAPI → hooks + Zod) |
 | Frontend | React 19, Vite 7, Tailwind CSS, shadcn/ui |
@@ -454,4 +581,7 @@ Todos los endpoints excepto `/healthz`, `/auth/login` y `/auth/student-login` re
 
 Desarrollado por **Atreyu Servicios Digitales (ASD)**.
 
-Basado en [Dolibarr ERP/CRM](https://www.dolibarr.org), software libre bajo licencia GPLv3.
+Basado en software libre:
+- [Dolibarr ERP/CRM](https://www.dolibarr.org) — GPLv3
+- [OpenProject](https://www.openproject.org) — GPLv3
+- [Collabora Online](https://www.collaboraoffice.com) — MPLv2
