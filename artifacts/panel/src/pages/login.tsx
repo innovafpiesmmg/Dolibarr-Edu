@@ -35,8 +35,20 @@ export default function LoginPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center gap-3 mb-8">
-          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center p-2">
-            <img src="/images/logo.png" alt="ERP EDU" className="h-full w-full object-contain" />
+          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center p-3">
+            <div
+              className="h-full w-full bg-primary"
+              style={{
+                maskImage: "url('/images/logo.png')",
+                maskSize: "contain",
+                maskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskImage: "url('/images/logo.png')",
+                WebkitMaskSize: "contain",
+                WebkitMaskRepeat: "no-repeat",
+                WebkitMaskPosition: "center",
+              }}
+            />
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold">ERP EDU</h1>
