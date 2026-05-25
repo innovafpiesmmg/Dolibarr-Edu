@@ -1,28 +1,50 @@
-# ─────────────────────────────────────────────────────────
-#  Cloudflare Tunnel — configuración
+# ─────────────────────────────────────────────────────────────────────────────
+#  Cloudflare Tunnel — configuración multi-servicio
 #
-#  1. Instala cloudflared en el servidor:
-#       curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
-#       chmod +x /usr/local/bin/cloudflared
+#  CONFIGURACIÓN INICIAL (una sola vez por servidor):
 #
-#  2. Autentícate:
+#  1. Instala cloudflared:
+#       curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+#            -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared
+#
+#  2. Autentícate con tu cuenta Cloudflare:
 #       cloudflared tunnel login
 #
-#  3. Crea el túnel:
+#  3. Crea el túnel (solo una vez):
 #       cloudflared tunnel create dolibarr-edu
 #
-#  4. Copia el fichero <UUID>.json que genera en esta carpeta cloudflare/
+#  4. Copia el fichero <UUID>.json generado a esta carpeta cloudflare/
 #
-#  5. Sustituye TU_UUID_AQUI por el UUID del túnel
-#     y erp.micentro.es por tu dominio real
-# ─────────────────────────────────────────────────────────
+#  5. Sustituye TU_UUID_AQUI por el UUID del paso 3
+#     y los dominios por los reales de tu centro
+#
+#  DOMINIOS DNS necesarios (en Cloudflare DNS):
+#    erp.micentro.es        → CNAME → TU_UUID_AQUI.cfargotunnel.com
+#    proyectos.micentro.es  → CNAME → TU_UUID_AQUI.cfargotunnel.com
+#    office.micentro.es     → CNAME → TU_UUID_AQUI.cfargotunnel.com
+# ─────────────────────────────────────────────────────────────────────────────
 
 tunnel: TU_UUID_AQUI
 credentials-file: /etc/cloudflared/TU_UUID_AQUI.json
 
 ingress:
+  # Dolibarr ERP
   - hostname: erp.micentro.es
     service: http://dolibarr:80
     originRequest:
       noTLSVerify: false
+
+  # OpenProject — Gestión de proyectos
+  - hostname: proyectos.micentro.es
+    service: http://openproject:80
+    originRequest:
+      noTLSVerify: false
+
+  # Collabora Online — LibreOffice en el navegador
+  - hostname: office.micentro.es
+    service: http://collabora:9980
+    originRequest:
+      noTLSVerify: false
+
+  # Ruta por defecto (debe ser la última)
   - service: http_status:404
