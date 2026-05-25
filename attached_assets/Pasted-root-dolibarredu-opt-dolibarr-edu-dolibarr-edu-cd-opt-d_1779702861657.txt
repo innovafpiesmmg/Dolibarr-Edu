@@ -1,0 +1,60 @@
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu
+git pull origin main
+
+cd dolibarr-edu
+
+# Construir las imágenes del panel (tarda ~5 min)
+docker compose build panel_api panel_web
+
+# Arrancar los nuevos servicios
+docker compose up -d panel_db panel_api panel_web
+
+docker compose ps
+From https://github.com/innovafpiesmmg/Dolibarr-Edu
+ * branch            main       -> FETCH_HEAD
+Updating 672d791..365699f
+error: Your local changes to the following files would be overwritten by merge:
+        dolibarr-edu/docker-compose.yml
+Please commit your changes or stash them before you merge.
+Aborting
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+no such service: panel_api
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+no such service: panel_db
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+NAME                   IMAGE                           COMMAND                  SERVICE          CREATED          STATUS                          PORTS
+dolibarr_app           dolibarr/dolibarr:latest        "docker-run.sh apach…"   dolibarr         10 minutes ago   Up 10 minutes                   127.0.0.1:8069->80/tcp
+dolibarr_collabora     collabora/code:latest           "/start-collabora-on…"   collabora        2 hours ago      Up 2 hours                      127.0.0.1:9980->9980/tcp
+dolibarr_db            mariadb:10.11                   "docker-entrypoint.s…"   db               9 hours ago      Up 9 hours (healthy)            3306/tcp
+dolibarr_op_db         postgres:16-alpine              "docker-entrypoint.s…"   openproject_db   9 hours ago      Up 9 hours (healthy)            5432/tcp
+dolibarr_openproject   openproject/openproject:15      "./docker/prod/entry…"   openproject      2 hours ago      Restarting (1) 10 seconds ago   
+dolibarr_tunnel        cloudflare/cloudflared:latest   "cloudflared --no-au…"   cloudflared      21 minutes ago   Up 21 minutes                   
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu
+git pull origin main
+
+# Verificar que llegaron los nuevos ficheros
+ls dolibarr-edu/Dockerfile.api dolibarr-edu/Dockerfile.panel
+grep -c "panel_web" dolibarr-edu/docker-compose.yml
+
+# Construir y arrancar
+cd dolibarr-edu
+docker compose build panel_api panel_web
+docker compose up -d panel_db panel_api panel_web
+docker compose ps
+
+ls: cannot access 'dolibarr-edu/Dockerfile.api': No such file or directory
+ls: cannot access 'dolibarr-edu/Dockerfile.panel': No such file or directory
+0
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+no such service: panel_api
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+no such service: panel_db
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+NAME                   IMAGE                           COMMAND                  SERVICE          CREATED          STATUS                          PORTS
+dolibarr_app           dolibarr/dolibarr:latest        "docker-run.sh apach…"   dolibarr         14 minutes ago   Up 14 minutes                   127.0.0.1:8069->80/tcp
+dolibarr_collabora     collabora/code:latest           "/start-collabora-on…"   collabora        2 hours ago      Up 2 hours                      127.0.0.1:9980->9980/tcp
+dolibarr_db            mariadb:10.11                   "docker-entrypoint.s…"   db               9 hours ago      Up 9 hours (healthy)            3306/tcp
+dolibarr_op_db         postgres:16-alpine              "docker-entrypoint.s…"   openproject_db   9 hours ago      Up 9 hours (healthy)            5432/tcp
+dolibarr_openproject   openproject/openproject:15      "./docker/prod/entry…"   openproject      2 hours ago      Restarting (1) 22 seconds ago   
+dolibarr_tunnel        cloudflare/cloudflared:latest   "cloudflared --no-au…"   cloudflared      26 minutes ago   Up 26 minutes                   
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# 

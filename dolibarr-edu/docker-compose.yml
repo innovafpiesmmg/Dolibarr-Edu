@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
 
   # ── Base de datos Dolibarr (MariaDB) ────────────────────────────────────────
@@ -63,7 +61,7 @@ services:
     environment:
       POSTGRES_DB: openproject
       POSTGRES_USER: openproject
-      POSTGRES_PASSWORD: ${OP_DB_PASSWORD:-openproject_secret}
+      POSTGRES_PASSWORD: ${OP_DB_PASSWORD}
     volumes:
       - op_db_data:/var/lib/postgresql/data
     networks:
@@ -83,12 +81,12 @@ services:
       openproject_db:
         condition: service_healthy
     environment:
-      OPENPROJECT_HOST__NAME: ${OP_HOST:-proyectos.micentro.es}
+      OPENPROJECT_HOST__NAME: ${OP_HOST}
       OPENPROJECT_HTTPS: "false"
       OPENPROJECT_DEFAULT__LANGUAGE: "es"
       OPENPROJECT_EDITION: "community"
-      DATABASE_URL: "postgresql://openproject:${OP_DB_PASSWORD:-openproject_secret}@openproject_db/openproject"
-      SECRET_KEY_BASE: ${OP_SECRET_KEY:-cambia_esta_clave_secreta_openproject}
+      DATABASE_URL: "postgresql://openproject:${OP_DB_PASSWORD}@openproject_db/openproject"
+      SECRET_KEY_BASE: ${OP_SECRET_KEY}
       RAILS_ENV: production
       RAILS_SERVE_STATIC_FILES: "true"
     volumes:
@@ -104,8 +102,7 @@ services:
     container_name: dolibarr_collabora
     restart: unless-stopped
     environment:
-      # Dominios permitidos para embeber el editor (regex)
-      aliasgroup1: "https://${DOLI_DOMAIN:-erp.micentro.es}|https://${OP_HOST:-proyectos.micentro.es}"
+      aliasgroup1: "https://${DOLI_DOMAIN}|https://${OP_HOST}"
       DONT_GEN_SSL_CERT: "YES"
       extra_params: >-
         --o:ssl.enable=false
@@ -113,7 +110,7 @@ services:
         --o:welcome.enable=false
         --o:logging.level=warning
       username: ${COLLABORA_ADMIN:-admin}
-      password: ${COLLABORA_PASSWORD:-cambia_esta_contrasena_collabora}
+      password: ${COLLABORA_PASSWORD}
     ports:
       - "127.0.0.1:${COLLABORA_PORT:-9980}:9980"
     networks:
@@ -121,7 +118,7 @@ services:
     cap_add:
       - MKNOD
 
-  # ── Base de datos del Panel (PostgreSQL) ─────────────────────────────────────
+  # ── Base de datos del Panel (PostgreSQL) ──────────────────────────────────────
   panel_db:
     image: postgres:16-alpine
     container_name: dolibarr_panel_db
@@ -153,11 +150,11 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      PORT: 8080
+      PORT: "8080"
       BASE_PATH: /api
       DATABASE_URL: postgresql://panel:${PANEL_DB_PASSWORD}@panel_db:5432/panel
       SESSION_SECRET: ${SESSION_SECRET}
-      DOLIBARR_BASE_URL: ${DOLIBARR_BASE_URL:-${DOLI_URL_ROOT}}
+      DOLIBARR_BASE_URL: ${DOLIBARR_BASE_URL}
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
     networks:
       - dolibarr_net
@@ -177,7 +174,7 @@ services:
     networks:
       - dolibarr_net
 
-  # ── Cloudflare Tunnel ────────────────────────────────────────────────────────
+  # ── Cloudflare Tunnel ─────────────────────────────────────────────────────────
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: dolibarr_tunnel
