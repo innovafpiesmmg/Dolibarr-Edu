@@ -148,6 +148,18 @@ for i in {1..30}; do
   sleep 3
 done
 
+# ── Activar el módulo REST API de Dolibarr (idempotente) ─────────────────────
+# DOLI_MODULES solo se aplica al primer arranque, así que en instalaciones
+# ya existentes hay que activar el módulo via SQL.
+info "Activando módulo REST API de Dolibarr..."
+if docker compose exec -T db sh -c \
+     'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "INSERT INTO llx_const (name, value, type, visible, note, entity) VALUES (\"MAIN_MODULE_API\", \"1\", \"chaine\", 0, \"\", 0) ON DUPLICATE KEY UPDATE value=\"1\";"' \
+     < /dev/null > /dev/null 2>&1; then
+  success "Módulo REST API activo"
+else
+  warn "No se pudo activar el módulo REST API automáticamente (actívalo manualmente desde Dolibarr → Inicio → Configuración → Módulos)"
+fi
+
 # ── Esperar a que OpenProject esté listo ─────────────────────────────────────
 info "Esperando a que OpenProject esté listo..."
 for i in {1..60}; do

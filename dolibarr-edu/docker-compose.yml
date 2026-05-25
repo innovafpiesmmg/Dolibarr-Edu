@@ -41,7 +41,7 @@ services:
       DOLI_ADMIN_EMAIL: ${DOLI_ADMIN_EMAIL}
       DOLI_COMPANY_NAME: ${DOLI_COMPANY_NAME}
       DOLI_COMPANY_COUNTRY_ID: "64"
-      DOLI_MODULES: "modMultiCompany,modSociete,modFournisseur,modFacture,modProjet,modStock,modBanque,modContrat,modComptabilite,modHrm"
+      DOLI_MODULES: "modApi,modMultiCompany,modSociete,modFournisseur,modFacture,modProjet,modStock,modBanque,modContrat,modComptabilite,modHrm"
       DOLI_AUTH: "dolibarr"
       DOLI_HTTPS: "0"
       PHP_INI_DATE_TIMEZONE: "Europe/Madrid"
