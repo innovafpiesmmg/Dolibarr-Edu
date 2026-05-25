@@ -1,8 +1,6 @@
-# ERP EDU — Entorno de Empresa Simulada para FP
+# ERP EDU — Guía de despliegue en servidor
 
-Sistema ERP **Dolibarr** adaptado para aulas de Formación Profesional de Administración de Empresas.
-
-Cada alumno dispone de su propia empresa simulada dentro de una única instalación compartida. Los profesores gestionan sus grupos de manera independiente.
+Paquete Docker completo para desplegar ERP EDU en el servidor del centro.
 
 ---
 
@@ -10,14 +8,12 @@ Cada alumno dispone de su propia empresa simulada dentro de una única instalaci
 
 1. [Arquitectura](#arquitectura)
 2. [Requisitos del servidor](#requisitos-del-servidor)
-3. [Instalación paso a paso](#instalación-paso-a-paso)
-4. [Configurar Cloudflare](#configurar-cloudflare)
-5. [Dar de alta profesores y grupos](#dar-de-alta-profesores-y-grupos)
-6. [Dar de alta alumnos](#dar-de-alta-alumnos)
-7. [Uso diario](#uso-diario)
-8. [Copias de seguridad](#copias-de-seguridad)
-9. [Actualización de Dolibarr](#actualización-de-dolibarr)
-10. [Resolución de problemas](#resolución-de-problemas)
+3. [Instalación](#instalación)
+4. [Configurar Cloudflare Tunnel](#configurar-cloudflare-tunnel)
+5. [Variables de entorno](#variables-de-entorno)
+6. [Gestión de contenedores](#gestión-de-contenedores)
+7. [Copias de seguridad](#copias-de-seguridad)
+8. [Resolución de problemas](#resolución-de-problemas)
 
 ---
 
@@ -27,24 +23,24 @@ Cada alumno dispone de su propia empresa simulada dentro de una única instalaci
 Internet
    │
    ▼
-Cloudflare (HTTPS) ──► Cloudflare Tunnel
-                              │
-                              ▼
-                    ┌─────────────────────────────┐
-                    │   Servidor local del centro  │
-                    │                             │
-                    │  ┌──────────────────────┐   │
-                    │  │   Dolibarr (PHP/Web) │   │
-                    │  └──────────┬───────────┘   │
-                    │             │               │
-                    │  ┌──────────▼───────────┐   │
-                    │  │   MariaDB (MySQL)    │   │
-                    │  └──────────────────────┘   │
-                    └─────────────────────────────┘
-```
+Cloudflare Tunnel
+   │
+   ├── panel.micentro.es    → panel_web:80      (nginx + React)
+   ├── erp.micentro.es      → dolibarr:80       (PHP/Apache)
+   ├── proyectos.micentro.es→ openproject:80    (Rails)
+   └── office.micentro.es   → collabora:9980    (CODE)
 
-**Módulo clave: MultiCompany**
-Dolibarr incluye un módulo nativo de multiempresa que permite tener múltiples entidades (empresas) dentro de una sola instalación. Cada alumno trabaja en su entidad propia, completamente aislada de las demás.
+Servidor Ubuntu/Debian — red Docker interna (dolibarr_net)
+   ├── cloudflared       ← cliente del túnel Cloudflare
+   ├── panel_web         ← nginx sirviendo React + proxy /api→panel_api
+   ├── panel_api         ← Node.js/Express API REST (puerto host 8080 interno)
+   ├── panel_db          ← PostgreSQL exclusiva del panel
+   ├── dolibarr          ← Dolibarr ERP (puerto host 8069)
+   ├── db                ← MariaDB de Dolibarr
+   ├── openproject       ← OpenProject (puerto host 8070)
+   ├── openproject_db    ← PostgreSQL de OpenProject
+   └── collabora         ← Collabora Online (puerto host 9980)
+```
 
 ---
 
@@ -54,276 +50,269 @@ Dolibarr incluye un módulo nativo de multiempresa que permite tener múltiples 
 |---|---|
 | SO | Ubuntu 22.04 LTS o Debian 12 |
 | CPU | 2 cores |
-| RAM | 4 GB |
+| RAM | **4 GB** (OpenProject requiere al menos 2 GB para él solo) |
 | Disco | 40 GB |
 | Software | Docker 24+ y Docker Compose 2+ |
-
-**Instalar Docker en Ubuntu/Debian:**
-
-```bash
-curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker $USER
-# Cierra sesión y vuelve a entrar para aplicar el grupo
-```
+| Red | Conexión a internet; NO es necesario abrir puertos |
 
 ---
 
-## Instalación paso a paso
+## Instalación
 
-### 1. Clonar / copiar el paquete
+### Opción A — Instalador automático (recomendado)
 
 ```bash
-# Opción A: copiar desde este ZIP al servidor
-scp dolibarr-edu.zip usuario@servidor:/opt/
-ssh usuario@servidor
-cd /opt && unzip dolibarr-edu.zip && cd dolibarr-edu
-
-# Opción B: si ya tienes el directorio en el servidor
-cd /opt/dolibarr-edu
+curl -fsSL https://raw.githubusercontent.com/innovafpiesmmg/Dolibarr-Edu/main/install.sh | bash
 ```
 
-### 2. Crear el fichero de variables de entorno
+El instalador:
+- Instala Docker si no está presente
+- Clona el repositorio en `/opt/dolibarr-edu`
+- Genera contraseñas aleatorias para todos los servicios
+- Pide la contraseña del panel, los dominios y el token de Cloudflare
+- Ofrece construir y arrancar todos los servicios automáticamente
+
+### Opción B — Manual
 
 ```bash
+# 1. Clonar
+git clone https://github.com/innovafpiesmmg/Dolibarr-Edu /opt/dolibarr-edu
+cd /opt/dolibarr-edu/dolibarr-edu
+
+# 2. Crear .env
 cp .env.example .env
-nano .env   # Edita todos los valores marcados con "cambia_esta"
-```
+nano .env   # rellena todos los valores
 
-> ⚠️ **Importante:** cambia todas las contraseñas antes de arrancar.
+# 3. Construir las imágenes del panel (~5-10 min la primera vez)
+docker compose build panel_api panel_web
 
-### 3. Arrancar los contenedores
-
-```bash
+# 4. Arrancar
 docker compose up -d
+docker compose ps
 ```
 
-Espera 1-2 minutos mientras se inicializa la base de datos. Puedes ver el progreso con:
+---
+
+## Configurar Cloudflare Tunnel
+
+### Paso 1 — Crear el túnel en el dashboard
+
+1. Entra en [dash.cloudflare.com](https://dash.cloudflare.com)
+2. **Zero Trust → Networks → Tunnels → Create a tunnel**
+3. Elige **Cloudflared** · ponle un nombre (ej: `dolibarr-edu`)
+4. Copia el **token** que aparece en el comando de instalación:
+   ```
+   cloudflared service install eyJhIjoiMT...
+   ```
+   El token es la cadena larga que empieza por `eyJ`.
+
+### Paso 2 — Guardar el token en el servidor
 
 ```bash
+cd /opt/dolibarr-edu/dolibarr-edu
+
+# Añadir al .env
+echo "CLOUDFLARE_TOKEN=eyJhIjoiMT..." >> .env
+
+# Arrancar el túnel
+docker compose up -d cloudflared
+sleep 5
+docker compose logs cloudflared --tail=15
+```
+
+Cuando veas `Registered tunnel connection`, el túnel está activo y conectado.
+
+### Paso 3 — Configurar los conectores (Public Hostnames)
+
+En el dashboard de Cloudflare → tu túnel → **Edit** → **Public Hostname** → **Add a public hostname**:
+
+| Subdominio | Dominio | Servicio (URL interna) | Notas |
+|---|---|---|---|
+| `panel` | `micentro.es` | `http://panel_web:80` | Panel de gestión |
+| `erp` | `micentro.es` | `http://dolibarr:80` | Dolibarr ERP |
+| `proyectos` | `micentro.es` | `http://openproject:80` | OpenProject |
+| `office` | `micentro.es` | `http://collabora:9980` | Collabora Online |
+
+> Los nombres de servicio (`panel_web`, `dolibarr`, `openproject`, `collabora`) son los hostnames internos de Docker. El contenedor `cloudflared` resuelve estos nombres automáticamente porque todos están en la red `dolibarr_net`.
+
+Cloudflare crea los registros DNS automáticamente al guardar cada entrada.
+
+### Verificar la conexión
+
+```bash
+# Logs del túnel
+docker compose logs cloudflared --tail=20
+
+# Test local de cada servicio
+curl -sI http://localhost:8068 | head -1   # panel_web
+curl -sI http://localhost:8069 | head -1   # dolibarr
+curl -sI http://localhost:8070 | head -1   # openproject
+curl -sI http://localhost:9980 | head -1   # collabora
+```
+
+---
+
+## Variables de entorno
+
+Fichero: `/opt/dolibarr-edu/dolibarr-edu/.env`
+
+```bash
+# ── MariaDB (Dolibarr) ──────────────────────────────────
+MYSQL_ROOT_PASSWORD=...
+MYSQL_DATABASE=dolibarr
+MYSQL_USER=dolibarr
+MYSQL_PASSWORD=...
+
+# ── Dolibarr ERP ────────────────────────────────────────
+DOLI_URL_ROOT=https://erp.micentro.es
+DOLI_DOMAIN=erp.micentro.es
+DOLI_ADMIN_LOGIN=admin
+DOLI_ADMIN_PASSWORD=...
+DOLI_ADMIN_EMAIL=admin@micentro.es
+DOLI_COMPANY_NAME=Centro FP Administración de Empresas
+APP_PORT=8069
+
+# ── OpenProject ─────────────────────────────────────────
+OP_HOST=proyectos.micentro.es
+OP_DB_PASSWORD=...
+OP_SECRET_KEY=...
+OP_PORT=8070
+
+# ── Collabora Online ────────────────────────────────────
+COLLABORA_ADMIN=admin
+COLLABORA_PASSWORD=...
+COLLABORA_PORT=9980
+
+# ── Panel EDU (Node.js) ─────────────────────────────────
+PANEL_URL=https://panel.micentro.es
+PANEL_DB_PASSWORD=...
+DOLIBARR_BASE_URL=https://erp.micentro.es
+ADMIN_PASSWORD_HASH=<sha256 de la contraseña del panel>
+SESSION_SECRET=...
+PANEL_PORT=8068
+
+# ── Cloudflare Tunnel ───────────────────────────────────
+CLOUDFLARE_TOKEN=eyJhIjoiMT...
+```
+
+### Cambiar la contraseña del panel
+
+```bash
+# Generar hash SHA-256
+echo -n "NuevaContraseña" | openssl dgst -sha256 | awk '{print $2}'
+
+# Actualizar .env
+sed -i "s|^ADMIN_PASSWORD_HASH=.*|ADMIN_PASSWORD_HASH=<hash>|" .env
+
+# Aplicar
+docker compose restart panel_api
+```
+
+---
+
+## Gestión de contenedores
+
+```bash
+# Ver estado de todos los servicios
+docker compose ps
+
+# Ver logs de un servicio
+docker compose logs -f panel_api
 docker compose logs -f dolibarr
+docker compose logs -f openproject
+
+# Reiniciar un servicio
+docker compose restart panel_web
+
+# Reconstruir imágenes del panel (tras actualización)
+docker compose build panel_api panel_web
+docker compose up -d panel_api panel_web
+
+# Parar todo
+docker compose down
+
+# Parar todo y eliminar volúmenes (¡BORRA DATOS!)
+docker compose down -v
 ```
-
-Cuando veas `Apache/... configured -- resuming normal operations`, Dolibarr está listo.
-
-### 4. Primera conexión y asistente de instalación
-
-Si Dolibarr muestra el asistente de instalación web, complétalo con los datos que pusiste en `.env`. Si arrancó automáticamente (variable `DOLI_ADMIN_LOGIN` configurada), ve directamente al paso siguiente.
-
-### 5. Activar la API REST
-
-1. Entra como administrador: `http://localhost:8069`
-2. Ve a **Configuración → Sistema → API/REST**
-3. Activa la API y copia la clave (la necesitarás para los scripts)
-
-### 6. Configuración educativa inicial
-
-```bash
-export DOLI_URL="http://localhost:8069"
-export DOLI_API_KEY="tu_clave_api_aqui"
-
-chmod +x scripts/*.sh
-./scripts/setup-inicial.sh
-```
-
----
-
-## Configurar Cloudflare
-
-### Paso 1: Crear el túnel
-
-```bash
-# Instalar cloudflared
-curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
-  -o /usr/local/bin/cloudflared
-chmod +x /usr/local/bin/cloudflared
-
-# Autenticarse (abre un navegador)
-cloudflared tunnel login
-
-# Crear el túnel
-cloudflared tunnel create dolibarr-edu
-# → Anota el UUID que muestra (ej: a1b2c3d4-...)
-```
-
-### Paso 2: Configurar el fichero del túnel
-
-```bash
-# Copia el fichero de credenciales generado
-cp ~/.cloudflared/<UUID>.json cloudflare/
-
-# Edita la configuración del túnel
-nano cloudflare/config.yml
-# Sustituye TU_UUID_AQUI y erp.micentro.es
-```
-
-### Paso 3: Apuntar el DNS
-
-```bash
-cloudflared tunnel route dns dolibarr-edu erp.micentro.es
-```
-
-### Paso 4: Reiniciar con el túnel activo
-
-```bash
-docker compose restart cloudflared
-```
-
-Accede desde cualquier navegador a `https://erp.micentro.es`.
-
----
-
-## Dar de alta profesores y grupos
-
-Por cada profesor (o por cada grupo si un profesor tiene varios):
-
-```bash
-./scripts/crear-grupo.sh \
-  --nombre "Ana García" \
-  --usuario "ana.garcia" \
-  --email "ana.garcia@centro.es" \
-  --grupo "1ADM-A" \
-  --password "ProfesorPass123!"
-```
-
-El script devuelve el **ID del profesor**, que necesitarás para el siguiente paso.
-
----
-
-## Dar de alta alumnos
-
-### Opción A: desde un CSV (recomendado para grupos completos)
-
-Edita el fichero `scripts/alumnos-ejemplo.csv` con los datos reales:
-
-```
-Carlos,López Martín,carlos.lopez,carlos@centro.es,Alumno2024!,1ADM-A
-María,Sánchez Ruiz,maria.sanchez,maria@centro.es,Alumno2024!,1ADM-A
-```
-
-Luego ejecuta:
-
-```bash
-./scripts/crear-alumnos.sh \
-  --csv scripts/alumnos.csv \
-  --profesor-id 5       # ID que devolvió crear-grupo.sh
-```
-
-### Opción B: desde la interfaz web
-
-1. Entra como administrador
-2. Ve a **MultiCompany → Entidades → Nueva entidad** (una por alumno)
-3. Ve a **Usuarios → Nuevo usuario** y vincula cada usuario a su entidad
-
----
-
-## Uso diario
-
-### El alumno
-
-1. Accede a `https://erp.micentro.es` con su usuario y contraseña
-2. Ve directamente su empresa — no puede ver las de los demás
-3. Trabaja con facturas, presupuestos, clientes, proveedores, etc.
-
-### El profesor
-
-1. Accede con su usuario
-2. Desde **MultiCompany** puede cambiar de entidad para revisar el trabajo de cada alumno
-3. Puede entrar en cualquier empresa de su grupo sin conocer la contraseña del alumno
-
-### El superadministrador (TI del centro)
-
-- Gestiona todos los grupos y profesores
-- Hace copias de seguridad
-- Actualiza Dolibarr
 
 ---
 
 ## Copias de seguridad
 
 ```bash
-# Backup completo (base de datos + ficheros)
-docker compose exec db mysqldump -u root -p"${MYSQL_ROOT_PASSWORD}" dolibarr \
-  > "backup_$(date +%Y%m%d_%H%M).sql"
+# Backup de la BD de Dolibarr
+docker compose exec db mysqldump \
+  -u root -p"${MYSQL_ROOT_PASSWORD}" dolibarr \
+  > "backup_dolibarr_$(date +%Y%m%d_%H%M).sql"
 
-# Backup de documentos adjuntos
-docker run --rm -v dolibarr-edu_dolibarr_docs:/data \
-  -v $(pwd)/backups:/backup alpine \
-  tar czf /backup/docs_$(date +%Y%m%d).tar.gz /data
+# Backup de documentos adjuntos de Dolibarr
+docker run --rm \
+  -v dolibarr-edu_dolibarr_docs:/data \
+  -v $(pwd)/backups:/backup \
+  alpine tar czf /backup/docs_$(date +%Y%m%d).tar.gz /data
+
+# Backup de la BD del panel
+docker compose exec panel_db pg_dump \
+  -U panel panel \
+  > "backup_panel_$(date +%Y%m%d_%H%M).sql"
 ```
 
-Se recomienda programar esto en cron:
-
+Automatizar con cron:
 ```bash
 crontab -e
-# Añadir esta línea para backup diario a las 22:00:
-0 22 * * * cd /opt/dolibarr-edu && ./scripts/backup.sh
-```
-
----
-
-## Actualización de Dolibarr
-
-```bash
-# Descargar nueva imagen
-docker compose pull dolibarr
-
-# Reiniciar (Dolibarr ejecuta las migraciones automáticamente)
-docker compose up -d dolibarr
-
-# Verificar que arrancó bien
-docker compose logs -f dolibarr
+# Backup diario a las 22:00:
+0 22 * * * cd /opt/dolibarr-edu/dolibarr-edu && ./scripts/backup.sh
 ```
 
 ---
 
 ## Resolución de problemas
 
-### Dolibarr no arranca
+### El panel da 502
 
 ```bash
-docker compose logs dolibarr
-docker compose logs db
+# Comprobar que panel_web y panel_api están en marcha
+docker compose ps
+
+# Ver logs
+docker compose logs panel_web --tail=20
+docker compose logs panel_api --tail=20
 ```
 
-### No puedo conectar desde Cloudflare
+Si `panel_api` está en `Restarting`, probablemente falta `ADMIN_PASSWORD_HASH` o `SESSION_SECRET` en el `.env`.
+
+### Dolibarr da "Internal Server Error"
+
+La causa más común es que `DOLI_URL_ROOT` no coincide con el dominio real. Corrígelo y recrea el contenedor:
 
 ```bash
-# Comprobar que el túnel está activo
-docker compose logs cloudflared
-
-# Probar conectividad local
-curl -v http://localhost:8069
+sed -i "s|^DOLI_URL_ROOT=.*|DOLI_URL_ROOT=https://TU_DOMINIO_REAL|" .env
+sed -i "s|^DOLI_DOMAIN=.*|DOLI_DOMAIN=TU_DOMINIO_REAL|" .env
+docker compose up -d --force-recreate dolibarr
 ```
 
-### Un alumno no ve su empresa
+### El túnel Cloudflare da 502
 
-Verifica que el usuario esté vinculado a la entidad correcta:
-- Administración → Usuarios → [usuario] → Entidad
+Verifica que el servicio de destino responde localmente:
+```bash
+curl -I http://localhost:8068   # panel
+curl -I http://localhost:8069   # dolibarr
+```
 
-### Olvidé la contraseña de admin
+Si responde localmente pero no desde Cloudflare, revisa que en el dashboard el servicio apunta a la URL correcta (con el nombre Docker interno, no `localhost`).
+
+### OpenProject en bucle de reinicios
+
+Suele ser falta de RAM. OpenProject necesita al menos 2 GB disponibles:
+```bash
+free -h
+docker compose logs openproject --tail=30
+```
+
+### Olvidé la contraseña de admin de Dolibarr
 
 ```bash
-docker compose exec db mysql -u root -p"${MYSQL_ROOT_PASSWORD}" dolibarr \
+docker compose exec db mysql \
+  -u root -p"${MYSQL_ROOT_PASSWORD}" dolibarr \
   -e "UPDATE llx_user SET pass_crypted=MD5('nueva_contrasena') WHERE login='admin';"
-```
-
----
-
-## Estructura del paquete
-
-```
-dolibarr-edu/
-├── docker-compose.yml        ← Definición de los servicios
-├── .env.example              ← Plantilla de variables (copia como .env)
-├── README.md                 ← Esta guía
-├── cloudflare/
-│   └── config.yml            ← Configuración del túnel Cloudflare
-├── init/
-│   └── mariadb.cnf           ← Ajustes de rendimiento de la BD
-└── scripts/
-    ├── setup-inicial.sh      ← Configuración educativa inicial
-    ├── crear-grupo.sh        ← Crear profesor + grupo
-    ├── crear-alumnos.sh      ← Alta masiva de alumnos desde CSV
-    ├── listar-grupos.sh      ← Ver grupos y alumnos actuales
-    └── alumnos-ejemplo.csv   ← Plantilla CSV de alumnos
 ```
