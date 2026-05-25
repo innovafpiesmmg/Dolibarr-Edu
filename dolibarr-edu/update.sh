@@ -43,7 +43,7 @@ cd "$WORK_DIR"
 info "Realizando backup de la base de datos de Dolibarr..."
 BACKUP_FILE_DOLI="$BACKUP_DIR/dolibarr_${TIMESTAMP}.sql"
 if docker compose exec -T db sh -c 'exec mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' \
-     > "$BACKUP_FILE_DOLI" 2>/dev/null; then
+     < /dev/null > "$BACKUP_FILE_DOLI" 2>/dev/null; then
   success "Backup Dolibarr → $BACKUP_FILE_DOLI"
 else
   warn "No se pudo hacer backup de Dolibarr (puede que no esté en marcha)."
@@ -52,7 +52,7 @@ fi
 info "Realizando backup de la base de datos de OpenProject..."
 BACKUP_FILE_OP="$BACKUP_DIR/openproject_${TIMESTAMP}.sql"
 if docker compose exec -T openproject_db sh -c \
-     'pg_dump -U openproject openproject' > "$BACKUP_FILE_OP" 2>/dev/null; then
+     'pg_dump -U openproject openproject' < /dev/null > "$BACKUP_FILE_OP" 2>/dev/null; then
   success "Backup OpenProject → $BACKUP_FILE_OP"
 else
   warn "No se pudo hacer backup de OpenProject (puede que no esté activo)."
@@ -141,7 +141,7 @@ docker compose up -d --remove-orphans
 # ── Esperar a que Dolibarr esté listo ────────────────────────────────────────
 info "Esperando a que Dolibarr esté listo..."
 for i in {1..30}; do
-  if docker compose exec -T dolibarr sh -c 'test -f /var/www/html/index.php' 2>/dev/null; then
+  if docker compose exec -T dolibarr sh -c 'test -f /var/www/html/index.php' < /dev/null 2>/dev/null; then
     success "Dolibarr listo"
     break
   fi
@@ -151,7 +151,7 @@ done
 # ── Esperar a que OpenProject esté listo ─────────────────────────────────────
 info "Esperando a que OpenProject esté listo..."
 for i in {1..60}; do
-  if docker compose exec -T openproject sh -c 'curl -sf http://localhost/health > /dev/null 2>&1'; then
+  if docker compose exec -T openproject sh -c 'curl -sf http://localhost/health > /dev/null 2>&1' < /dev/null 2>/dev/null; then
     success "OpenProject listo"
     break
   fi
