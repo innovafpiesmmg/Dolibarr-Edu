@@ -137,7 +137,7 @@ En el dashboard de Cloudflare → tu túnel → **Edit** → **Public Hostname**
 | `office` | `micentro.es` | `http://collabora:9980` | Collabora Online |
 | `cloud` | `micentro.es` | `http://nextcloud:80` | Nextcloud |
 
-> Los nombres de servicio (`panel_web`, `dolibarr`, `openproject`, `collabora`) son los hostnames internos de Docker. El contenedor `cloudflared` resuelve estos nombres automáticamente porque todos están en la red `dolibarr_net`.
+> Los nombres de servicio (`panel_web`, `dolibarr`, `openproject`, `collabora`, `nextcloud`) son los hostnames internos de Docker. El contenedor `cloudflared` resuelve estos nombres automáticamente porque todos están en la red `dolibarr_net`.
 
 Cloudflare crea los registros DNS automáticamente al guardar cada entrada.
 
@@ -153,6 +153,54 @@ curl -sI http://localhost:8069 | head -1   # dolibarr
 curl -sI http://localhost:8070 | head -1   # openproject
 curl -sI http://localhost:9980 | head -1   # collabora
 curl -sI http://localhost:8071 | head -1   # nextcloud
+```
+
+---
+
+## Configurar Nextcloud
+
+### Paso 1 — Establecer el dominio en `.env`
+
+```bash
+# En /opt/dolibarr-edu/dolibarr-edu/.env
+NC_HOST=cloud.micentro.es   # sin https://
+```
+
+El contenedor aplica automáticamente `NC_HOST` como dominio de confianza (`trusted_domain`) al arrancar, por lo que no es necesario editar `config.php` manualmente.
+
+### Paso 2 — Primer acceso
+
+1. Abre `https://cloud.micentro.es` en el navegador.
+2. Inicia sesión con `NC_ADMIN_USER` / `NC_ADMIN_PASSWORD` (definidos en `.env`).
+3. Completa el asistente de bienvenida si aparece.
+
+### Paso 3 — Enlazar con el Panel EDU
+
+En el Panel → **Configuración** → campo **URL de Nextcloud**, introduce:
+
+```
+https://cloud.micentro.es
+```
+
+Guarda y ve a **Nextcloud** en el menú lateral para verificar que el estado muestra «Conectado».
+
+### Paso 4 — Aprovisionar cuentas
+
+El panel crea la cuenta Nextcloud de cada alumno y profesor automáticamente al darlos de alta. Para sincronizar los que ya existían antes de activar Nextcloud, usa el botón **Aprovisionar todos** en la página Nextcloud del panel.
+
+Las contraseñas son deterministas: `SHA-256(usuario + SESSION_SECRET).slice(0,20)`. No se almacenan — se pueden regenerar en cualquier momento sin perder datos.
+
+### Resolución de problemas frecuentes
+
+| Síntoma | Causa probable | Solución |
+|---|---|---|
+| «Access through untrusted domain» | `NC_HOST` no coincide con el dominio real | Corrige `NC_HOST` en `.env` y recrea el contenedor |
+| Panel muestra «Sin conexión» | `NC_ADMIN_USER`/`PASSWORD` incorrectos o URL errónea | Revisa variables y URL en Configuración |
+| Error al crear usuario | Nextcloud no arrancó del todo | `docker compose logs nextcloud --tail=30` |
+
+```bash
+# Recrear el contenedor tras cambiar NC_HOST
+docker compose up -d --force-recreate nextcloud
 ```
 
 ---
