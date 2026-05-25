@@ -173,11 +173,6 @@ info "Reconstruyendo imágenes del panel sin caché (garantiza código actualiza
 # haya cambiado en GitHub, dejando el panel con una versión vieja del backend.
 docker compose build --no-cache panel_migrator panel_api panel_web
 
-info "Reconstruyendo imagen Dolibarr (con MultiCompany del fork hregis)..."
-# CACHE_BUST con timestamp fuerza re-clonado del fork hregis para traer parches nuevos
-# del módulo MultiCompany. Sin esto, la capa del git clone se reutilizaría siempre.
-docker compose build --build-arg CACHE_BUST="$(date +%s)" dolibarr
-
 info "Reiniciando servicios..."
 docker compose up -d --remove-orphans
 
