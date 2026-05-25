@@ -126,13 +126,7 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: dolibarr_tunnel
     restart: unless-stopped
-    command: tunnel --config /etc/cloudflared/config.yml run
-    volumes:
-      - ./cloudflare:/etc/cloudflared:ro
-    depends_on:
-      - dolibarr
-      - openproject
-      - collabora
+    command: tunnel run --token ${CLOUDFLARE_TOKEN}
     networks:
       - dolibarr_net
 
