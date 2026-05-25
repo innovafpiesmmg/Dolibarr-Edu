@@ -11,6 +11,12 @@ import {
   DeleteStudentParams,
 } from "@workspace/api-zod";
 import { createHash } from "crypto";
+import {
+  isNextcloudConfigured,
+  createNextcloudUser,
+  deleteNextcloudUser,
+  generateNcPassword,
+} from "../lib/nextcloud";
 
 const router: IRouter = Router();
 
@@ -187,6 +193,28 @@ router.post("/students", async (req, res) => {
     })
     .returning();
 
+  // Fire-and-forget Nextcloud provisioning
+  if (isNextcloudConfigured()) {
+    void createNextcloudUser({
+      username: student.username,
+      password: generateNcPassword(student.username),
+      displayName: `${student.firstName} ${student.lastName}`,
+      email: student.email,
+    })
+      .then(() =>
+        db
+          .update(studentsTable)
+          .set({ nextcloudSyncStatus: "synced" })
+          .where(eq(studentsTable.id, student.id)),
+      )
+      .catch(() =>
+        db
+          .update(studentsTable)
+          .set({ nextcloudSyncStatus: "error" })
+          .where(eq(studentsTable.id, student.id)),
+      );
+  }
+
   const [row] = await studentWithGroupQuery(eq(studentsTable.id, student.id));
   res.status(201).json(row);
 });
@@ -244,14 +272,22 @@ router.patch("/students/:id", async (req, res) => {
 router.delete("/students/:id", async (req, res) => {
   const { id } = DeleteStudentParams.parse(req.params);
 
-  const [deleted] = await db
-    .delete(studentsTable)
+  const [toDelete] = await db
+    .select({ id: studentsTable.id, username: studentsTable.username })
+    .from(studentsTable)
     .where(eq(studentsTable.id, id))
-    .returning({ id: studentsTable.id });
+    .limit(1);
 
-  if (!deleted) {
+  if (!toDelete) {
     res.status(404).json({ error: "Alumno no encontrado" });
     return;
+  }
+
+  await db.delete(studentsTable).where(eq(studentsTable.id, id));
+
+  // Fire-and-forget Nextcloud cleanup
+  if (isNextcloudConfigured()) {
+    void deleteNextcloudUser(toDelete.username);
   }
 
   res.status(204).send();

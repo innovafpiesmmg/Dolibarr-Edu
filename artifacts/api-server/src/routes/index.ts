@@ -12,6 +12,7 @@ import ssRouter from "./ss";
 import settingsRouter from "./settings";
 import resetPasswordRouter from "./reset-password";
 import activityRouter from "./activity";
+import nextcloudRouter from "./nextcloud";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(ssRouter);
 router.use(settingsRouter);
 router.use(resetPasswordRouter);
 router.use(activityRouter);
+router.use(nextcloudRouter);
 
 export default router;

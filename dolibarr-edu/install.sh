@@ -89,6 +89,9 @@ if [[ ! -f "$WORK_DIR/.env" ]]; then
   sed -i "s|cambia_esta_contrasena_openproject|$(gen_pass 24)|g"      "$WORK_DIR/.env"
   sed -i "s|cambia_esta_clave_secreta_openproject|$(openssl rand -hex 64)|g" "$WORK_DIR/.env"
   sed -i "s|cambia_esta_contrasena_collabora|$(gen_pass 20)|g"        "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_contrasena_nc_root|$(gen_pass 24)|g"          "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_contrasena_nc_db|$(gen_pass 24)|g"            "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_contrasena_nc_admin|$(gen_pass 20)|g"         "$WORK_DIR/.env"
   sed -i "s|cambia_esta_contrasena_panel|$(gen_pass 24)|g"            "$WORK_DIR/.env"
   sed -i "s|cambia_esta_clave_sesion|$(gen_pass 48)|g"                "$WORK_DIR/.env"
 
@@ -153,6 +156,10 @@ CURRENT_OFFICE=$(grep "^OFFICE_HOST=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -
 read -rp "  Dominio de Collabora      [${CURRENT_OFFICE:-office.micentro.es}]: " OFFICE_HOST < /dev/tty
 OFFICE_HOST="${OFFICE_HOST:-${CURRENT_OFFICE:-office.micentro.es}}"
 
+CURRENT_NC_HOST=$(grep "^NC_HOST=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
+read -rp "  Dominio de Nextcloud      [${CURRENT_NC_HOST:-cloud.micentro.es}]: " NC_HOST < /dev/tty
+NC_HOST="${NC_HOST:-${CURRENT_NC_HOST:-cloud.micentro.es}}"
+
 # Actualizar .env
 sed -i "s|^DOLI_URL_ROOT=.*|DOLI_URL_ROOT=$DOLI_URL|"             "$WORK_DIR/.env"
 sed -i "s|^DOLI_DOMAIN=.*|DOLI_DOMAIN=$DOLI_DOMAIN|"               "$WORK_DIR/.env"
@@ -165,6 +172,13 @@ if grep -q "^OFFICE_HOST=" "$WORK_DIR/.env"; then
   sed -i "s|^OFFICE_HOST=.*|OFFICE_HOST=$OFFICE_HOST|"             "$WORK_DIR/.env"
 else
   echo "OFFICE_HOST=$OFFICE_HOST"                                >> "$WORK_DIR/.env"
+fi
+
+# Asegurarse de que NC_HOST está en .env
+if grep -q "^NC_HOST=" "$WORK_DIR/.env"; then
+  sed -i "s|^NC_HOST=.*|NC_HOST=$NC_HOST|"                         "$WORK_DIR/.env"
+else
+  echo "NC_HOST=$NC_HOST"                                        >> "$WORK_DIR/.env"
 fi
 success "URLs configuradas"
 
@@ -208,11 +222,13 @@ echo "║        GUARDA ESTAS CREDENCIALES EN LUGAR SEGURO            ║"
 echo "╠══════════════════════════════════════════════════════════════╣"
 printf  "║  %-28s %-31s║\n" "Dolibarr admin:" "admin / $DOLI_ADMIN_PASS"
 printf  "║  %-28s %-31s║\n" "OpenProject:" "admin / admin (cámbiala)"
+printf  "║  %-28s %-31s║\n" "Nextcloud:" "admin / (ver .env → NC_ADMIN_PASSWORD)"
 echo "╠══════════════════════════════════════════════════════════════╣"
 printf  "║  %-28s %-31s║\n" "Dolibarr ERP:" "$DOLI_URL"
 printf  "║  %-28s %-31s║\n" "Panel de gestión:" "$PANEL_URL"
 printf  "║  %-28s %-31s║\n" "OpenProject:" "https://$OP_HOST"
 printf  "║  %-28s %-31s║\n" "Collabora Online:" "https://$OFFICE_HOST"
+printf  "║  %-28s %-31s║\n" "Nextcloud:" "https://$NC_HOST"
 echo "╚══════════════════════════════════════════════════════════════╝"
 
 # ── Arrancar servicios ────────────────────────────────────────────────────────

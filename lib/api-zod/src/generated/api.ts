@@ -979,7 +979,8 @@ export const GetSettingsResponse = zod.object({
   "currency": zod.string(),
   "language": zod.string(),
   "openprojectUrl": zod.string(),
-  "collaboraUrl": zod.string()
+  "collaboraUrl": zod.string(),
+  "nextcloudUrl": zod.string()
 })
 
 
@@ -989,7 +990,8 @@ export const GetSettingsResponse = zod.object({
 export const UpdateSettingsBody = zod.object({
   "taxSystem": zod.enum(['iva', 'igic']).optional(),
   "openprojectUrl": zod.string().optional(),
-  "collaboraUrl": zod.string().optional()
+  "collaboraUrl": zod.string().optional(),
+  "nextcloudUrl": zod.string().optional()
 })
 
 export const UpdateSettingsResponse = zod.object({
@@ -997,7 +999,54 @@ export const UpdateSettingsResponse = zod.object({
   "currency": zod.string(),
   "language": zod.string(),
   "openprojectUrl": zod.string(),
-  "collaboraUrl": zod.string()
+  "collaboraUrl": zod.string(),
+  "nextcloudUrl": zod.string()
+})
+
+
+/**
+ * @summary Estado de la conexión con Nextcloud
+ */
+export const GetNextcloudStatusResponse = zod.object({
+  "connected": zod.boolean(),
+  "configured": zod.boolean(),
+  "adminUser": zod.string().nullish()
+})
+
+
+/**
+ * @summary Listado de profesores y alumnos con su estado en Nextcloud
+ */
+export const GetNextcloudUsersResponse = zod.object({
+  "teachers": zod.array(zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "displayName": zod.string(),
+  "email": zod.string(),
+  "nextcloudSyncStatus": zod.string(),
+  "type": zod.enum(['teacher', 'student'])
+})),
+  "students": zod.array(zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "displayName": zod.string(),
+  "email": zod.string(),
+  "nextcloudSyncStatus": zod.string(),
+  "type": zod.enum(['teacher', 'student'])
+}))
+})
+
+
+/**
+ * @summary Aprovisiona en Nextcloud todos los usuarios pendientes
+ */
+export const ProvisionAllNextcloudResponse = zod.object({
+  "provisioned": zod.number(),
+  "total": zod.number(),
+  "errors": zod.array(zod.object({
+  "username": zod.string(),
+  "error": zod.string()
+}))
 })
 
 

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Settings, Globe, Euro, Receipt, FolderKanban, FileSpreadsheet } from "lucide-react";
+import { CheckCircle2, Settings, Globe, Euro, Receipt, FolderKanban, FileSpreadsheet, Cloud } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TaxSystem = "iva" | "igic";
@@ -35,6 +35,7 @@ export default function Configuracion() {
   const [taxSystem, setTaxSystem] = useState<TaxSystem>("igic");
   const [openprojectUrl, setOpenprojectUrl] = useState("");
   const [collaboraUrl, setCollaboraUrl] = useState("");
+  const [nextcloudUrl, setNextcloudUrl] = useState("");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -42,11 +43,12 @@ export default function Configuracion() {
     if (settings.taxSystem) setTaxSystem(settings.taxSystem as TaxSystem);
     if (settings.openprojectUrl !== undefined) setOpenprojectUrl(settings.openprojectUrl);
     if (settings.collaboraUrl !== undefined) setCollaboraUrl(settings.collaboraUrl);
+    if ((settings as any).nextcloudUrl !== undefined) setNextcloudUrl((settings as any).nextcloudUrl);
   }, [settings]);
 
   const handleSave = () => {
     updateSettings(
-      { data: { taxSystem, openprojectUrl, collaboraUrl } },
+      { data: { taxSystem, openprojectUrl, collaboraUrl, nextcloudUrl } as any },
       {
         onSuccess: () => {
           setSaved(true);
@@ -59,7 +61,8 @@ export default function Configuracion() {
   const isDirty =
     settings?.taxSystem !== taxSystem ||
     settings?.openprojectUrl !== openprojectUrl ||
-    settings?.collaboraUrl !== collaboraUrl;
+    settings?.collaboraUrl !== collaboraUrl ||
+    (settings as any)?.nextcloudUrl !== nextcloudUrl;
 
   return (
     <div className="space-y-6">
@@ -162,6 +165,18 @@ export default function Configuracion() {
                   value={collaboraUrl}
                   onChange={(e) => setCollaboraUrl(e.target.value)}
                   placeholder="https://office.micentro.es"
+                  type="url"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <Cloud className="h-3.5 w-3.5" />
+                  Nextcloud
+                </Label>
+                <Input
+                  value={nextcloudUrl}
+                  onChange={(e) => setNextcloudUrl(e.target.value)}
+                  placeholder="https://cloud.micentro.es"
                   type="url"
                 />
               </div>

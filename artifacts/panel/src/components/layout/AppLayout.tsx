@@ -15,6 +15,7 @@ import {
   FileSpreadsheet,
   ExternalLink,
   AppWindow,
+  Cloud,
 } from "lucide-react";
 import {
   Sidebar,
@@ -38,6 +39,7 @@ const navigation = [
   { name: "Alumnos", href: "/alumnos", icon: GraduationCap },
   { name: "Nóminas y SS", href: "/nominas", icon: Banknote },
   { name: "Liquidaciones SS", href: "/nominas/ss", icon: Landmark },
+  { name: "Nextcloud", href: "/nextcloud", icon: Cloud },
   { name: "Herramientas", href: "/herramientas", icon: AppWindow },
   { name: "Estado Dolibarr", href: "/estado", icon: ServerCog },
   { name: "Actividad", href: "/actividad", icon: Activity },
@@ -85,6 +87,7 @@ export function AppSidebar() {
   const dolibarrUrl = import.meta.env.VITE_DOLIBARR_BASE_URL as string | undefined;
   const openprojectUrl = settings?.openprojectUrl ?? "";
   const collaboraUrl = settings?.collaboraUrl ?? "";
+  const nextcloudUrl = settings?.nextcloudUrl ?? "";
 
   return (
     <Sidebar className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
@@ -132,6 +135,7 @@ export function AppSidebar() {
           <ExternalToolLink href={dolibarrUrl ?? ""} icon={ExternalLink} label="Dolibarr ERP" />
           <ExternalToolLink href={openprojectUrl} icon={FolderKanban} label="OpenProject" />
           <ExternalToolLink href={collaboraUrl} icon={FileSpreadsheet} label="LibreOffice Online" />
+          <ExternalToolLink href={nextcloudUrl} icon={Cloud} label="Nextcloud" />
         </div>
 
         <div className="border-t border-sidebar-border pt-3 space-y-2">

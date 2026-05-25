@@ -17,6 +17,7 @@ export const studentsTable = pgTable("students", {
   dolibarrSyncError: text("dolibarr_sync_error"),
   dolibarrPassword: varchar("dolibarr_password", { length: 255 }),
   companyName: varchar("company_name", { length: 200 }),
+  nextcloudSyncStatus: varchar("nextcloud_sync_status", { length: 20 }).notNull().default("pending"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

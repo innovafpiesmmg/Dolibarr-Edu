@@ -23,6 +23,7 @@ import EstadoSincronizacion from "@/pages/estado/index";
 import Actividad from "@/pages/actividad/index";
 import SeguimientoAlumno from "@/pages/alumnos/seguimiento";
 import Herramientas from "@/pages/herramientas/index";
+import NextcloudPage from "@/pages/nextcloud/index";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
@@ -118,6 +119,10 @@ function Router() {
 
       <Route path="/herramientas">
         <ProtectedRoute><Herramientas /></ProtectedRoute>
+      </Route>
+
+      <Route path="/nextcloud">
+        <ProtectedRoute><NextcloudPage /></ProtectedRoute>
       </Route>
 
       <Route component={NotFound} />

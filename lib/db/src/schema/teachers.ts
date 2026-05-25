@@ -10,6 +10,7 @@ export const teachersTable = pgTable("teachers", {
   username: varchar("username", { length: 100 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   phone: varchar("phone", { length: 50 }),
+  nextcloudSyncStatus: varchar("nextcloud_sync_status", { length: 20 }).notNull().default("pending"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

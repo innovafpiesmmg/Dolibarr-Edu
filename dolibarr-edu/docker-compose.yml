@@ -102,7 +102,7 @@ services:
     container_name: dolibarr_collabora
     restart: unless-stopped
     environment:
-      aliasgroup1: "https://${DOLI_DOMAIN}|https://${OP_HOST}"
+      aliasgroup1: "https://${DOLI_DOMAIN}|https://${OP_HOST}|https://${NC_HOST}"
       DONT_GEN_SSL_CERT: "YES"
       extra_params: >-
         --o:ssl.enable=false
@@ -117,6 +117,53 @@ services:
       - dolibarr_net
     cap_add:
       - MKNOD
+
+  # ── Base de datos Nextcloud (MariaDB) ────────────────────────────────────────
+  nextcloud_db:
+    image: mariadb:10.11
+    container_name: dolibarr_nc_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${NC_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: ${NC_DB_PASSWORD}
+    volumes:
+      - nc_db_data:/var/lib/mysql
+    networks:
+      - dolibarr_net
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Nextcloud — Almacenamiento en la nube ─────────────────────────────────────
+  nextcloud:
+    image: nextcloud:29
+    container_name: dolibarr_nextcloud
+    restart: unless-stopped
+    depends_on:
+      nextcloud_db:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: nextcloud_db
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: ${NC_DB_PASSWORD}
+      NEXTCLOUD_ADMIN_USER: ${NC_ADMIN_USER}
+      NEXTCLOUD_ADMIN_PASSWORD: ${NC_ADMIN_PASSWORD}
+      NEXTCLOUD_TRUSTED_DOMAINS: ${NC_HOST}
+      OVERWRITEPROTOCOL: https
+      OVERWRITEHOST: ${NC_HOST}
+      NEXTCLOUD_DEFAULT_LANGUAGE: es
+      NEXTCLOUD_DEFAULT_LOCALE: es_ES
+    volumes:
+      - nc_data:/var/www/html
+    ports:
+      - "127.0.0.1:${NC_PORT:-8071}:80"
+    networks:
+      - dolibarr_net
 
   # ── Base de datos del Panel (PostgreSQL) ──────────────────────────────────────
   panel_db:
@@ -156,6 +203,10 @@ services:
       SESSION_SECRET: ${SESSION_SECRET}
       DOLIBARR_BASE_URL: ${DOLIBARR_BASE_URL}
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
+      NEXTCLOUD_URL: ${NEXTCLOUD_URL:-http://nextcloud:80}
+      NC_ADMIN_USER: ${NC_ADMIN_USER:-admin}
+      NC_ADMIN_PASSWORD: ${NC_ADMIN_PASSWORD:-}
+      NC_HOST: ${NC_HOST:-}
     networks:
       - dolibarr_net
 
@@ -188,6 +239,8 @@ volumes:
   dolibarr_docs:
   op_db_data:
   op_data:
+  nc_db_data:
+  nc_data:
   panel_db_data:
 
 networks:

@@ -932,6 +932,46 @@ paths:
               schema:
                 $ref: "#/components/schemas/Settings"
 
+  # ── Nextcloud ──────────────────────────────────────────
+  /nextcloud/status:
+    get:
+      operationId: getNextcloudStatus
+      tags: [nextcloud]
+      summary: Estado de la conexión con Nextcloud
+      responses:
+        "200":
+          description: Estado de conexión
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NextcloudStatus"
+
+  /nextcloud/users:
+    get:
+      operationId: getNextcloudUsers
+      tags: [nextcloud]
+      summary: Listado de profesores y alumnos con su estado en Nextcloud
+      responses:
+        "200":
+          description: Usuarios agrupados por tipo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NextcloudUsers"
+
+  /nextcloud/provision/all:
+    post:
+      operationId: provisionAllNextcloud
+      tags: [nextcloud]
+      summary: Aprovisiona en Nextcloud todos los usuarios pendientes
+      responses:
+        "200":
+          description: Resultado del aprovisionamiento
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NextcloudProvisionResult"
+
   # ── Stats ─────────────────────────────────────────────
   /stats:
     get:
@@ -1355,7 +1395,7 @@ components:
     # ── Settings ─────────────────────────────────────────
     Settings:
       type: object
-      required: [taxSystem, currency, language, openprojectUrl, collaboraUrl]
+      required: [taxSystem, currency, language, openprojectUrl, collaboraUrl, nextcloudUrl]
       properties:
         taxSystem:
           type: string
@@ -1368,6 +1408,8 @@ components:
           type: string
         collaboraUrl:
           type: string
+        nextcloudUrl:
+          type: string
 
     SettingsInput:
       type: object
@@ -1379,6 +1421,59 @@ components:
           type: string
         collaboraUrl:
           type: string
+        nextcloudUrl:
+          type: string
+
+    # ── Nextcloud ─────────────────────────────────────────
+    NextcloudStatus:
+      type: object
+      required: [connected, configured]
+      properties:
+        connected:
+          type: boolean
+        configured:
+          type: boolean
+        adminUser:
+          type: ["string", "null"]
+
+    NextcloudUserEntry:
+      type: object
+      required: [id, username, displayName, email, nextcloudSyncStatus, type]
+      properties:
+        id:          { type: integer }
+        username:    { type: string }
+        displayName: { type: string }
+        email:       { type: string }
+        nextcloudSyncStatus: { type: string }
+        type:
+          type: string
+          enum: [teacher, student]
+
+    NextcloudUsers:
+      type: object
+      required: [teachers, students]
+      properties:
+        teachers:
+          type: array
+          items: { $ref: "#/components/schemas/NextcloudUserEntry" }
+        students:
+          type: array
+          items: { $ref: "#/components/schemas/NextcloudUserEntry" }
+
+    NextcloudProvisionResult:
+      type: object
+      required: [provisioned, total, errors]
+      properties:
+        provisioned: { type: integer }
+        total:       { type: integer }
+        errors:
+          type: array
+          items:
+            type: object
+            required: [username, error]
+            properties:
+              username: { type: string }
+              error:    { type: string }
 
     # ── Stats ────────────────────────────────────────────
     Stats:

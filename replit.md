@@ -34,10 +34,17 @@ Plataforma de gestión para centros de FP de Administración de Empresas. Permit
 - `artifacts/api-server/src/routes/` — handlers Express
   - `teachers.ts`, `groups.ts`, `students.ts`, `stats.ts`, `deploy.ts`
   - `employees.ts`, `payrolls.ts`, `ss.ts` — módulo de nóminas y Seguridad Social
-  - `settings.ts` — configuración del panel (taxSystem, currency, language)
+  - `settings.ts` — configuración del panel (taxSystem, currency, language, openprojectUrl, collaboraUrl, nextcloudUrl)
   - `auth.ts` — autenticación del panel y sesión de alumno
+  - `nextcloud.ts` — rutas de integración Nextcloud (status, users, provision/all)
 - `artifacts/api-server/src/lib/dolibarr.ts` — integración con Dolibarr REST API
+- `artifacts/api-server/src/lib/nextcloud.ts` — integración con Nextcloud OCS API v2
+  - `pingNextcloud` — verifica conexión con Nextcloud
+  - `createNextcloudUser` — crea cuenta (usuario, displayName, email, quota 5 GB)
+  - `deleteNextcloudUser` — elimina cuenta (silencia errores si no existe)
+  - `generateNcPassword` — contraseña determinista SHA-256(username + SESSION_SECRET)
   - `createEntity` — crea entidad empresa (aplica IGIC/IVA, EUR, es_ES)
+- `artifacts/api-server/src/lib/dolibarr.ts` — integración con Dolibarr REST API
   - `createDolibarrUser`, `createDolibarrEmployee`, `createDolibarrSalary`
   - `createPayrollAccountingEntry` — asiento contable 640/642/465/476/4751
   - `paySSToBank` — asiento 476→572 (SS Tesorería)
@@ -80,7 +87,8 @@ Plataforma de gestión para centros de FP de Administración de Empresas. Permit
 - **Nueva nómina** (`/nominas/nueva`) — cálculo y registro de nómina mensual
 - **Detalle nómina** (`/nominas/:id`) — consulta y sincronización con Dolibarr HRM
 - **Liquidaciones SS** (`/nominas/ss`) — RNT, RLC, asientos SS e IRPF (Modelo 111) en Dolibarr
-- **Configuración** (`/configuracion`) — régimen fiscal (IGIC/IVA), idioma y moneda del ERP
+- **Configuración** (`/configuracion`) — régimen fiscal (IGIC/IVA), idioma y moneda del ERP; URLs de OpenProject, Collabora y Nextcloud
+- **Nextcloud** (`/nextcloud`) — estado de conexión, listado de usuarios con estado de sincronización, botón de aprovisionamiento masivo
 
 ## User preferences
 
@@ -98,6 +106,21 @@ Conectores a configurar en el túnel Cloudflare del centro. Solo son obligatorio
 | `erp1.iesmmg.es` | `http://dolibarr:80` | Sí — Dolibarr ERP |
 | `proyectos.iesmmg.es` | `http://openproject:80` | Solo si se usa OpenProject |
 | `office.iesmmg.es` | `http://collabora:9980` | Solo si se usa Collabora Online |
+| `cloud.iesmmg.es` | `http://nextcloud:80` | Solo si se usa Nextcloud |
+
+## Nextcloud — Variables de entorno en el servidor
+
+En `dolibarr-edu/.env`:
+```
+NC_HOST=cloud.micentro.es          # dominio público (sin https://)
+NC_PORT=8071                        # puerto local
+NC_DB_ROOT_PASSWORD=...             # generada por install.sh
+NC_DB_PASSWORD=...                  # generada por install.sh
+NC_ADMIN_USER=admin                 # admin de Nextcloud
+NC_ADMIN_PASSWORD=...               # generada por install.sh
+NEXTCLOUD_URL=http://nextcloud:80   # URL interna Docker (no cambiar)
+```
+La contraseña de cada usuario en Nextcloud es: `SHA256(username + SESSION_SECRET).slice(0,20)` — determinista y no se almacena.
 
 ## Gotchas
 

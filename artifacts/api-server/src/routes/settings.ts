@@ -10,6 +10,7 @@ const DEFAULTS: Record<string, string> = {
   language: "es_ES",
   openprojectUrl: process.env.OP_HOST ? `https://${process.env.OP_HOST}` : "",
   collaboraUrl: process.env.COLLABORA_DOMAIN ? `https://${process.env.COLLABORA_DOMAIN}` : "",
+  nextcloudUrl: process.env.NC_HOST ? `https://${process.env.NC_HOST}` : "",
 };
 
 async function getSetting(key: string): Promise<string> {
@@ -26,14 +27,15 @@ export async function getTaxSystem(): Promise<"iva" | "igic"> {
 }
 
 async function getAllSettings() {
-  const [taxSystem, currency, language, openprojectUrl, collaboraUrl] = await Promise.all([
+  const [taxSystem, currency, language, openprojectUrl, collaboraUrl, nextcloudUrl] = await Promise.all([
     getSetting("taxSystem"),
     getSetting("currency"),
     getSetting("language"),
     getSetting("openprojectUrl"),
     getSetting("collaboraUrl"),
+    getSetting("nextcloudUrl"),
   ]);
-  return { taxSystem, currency, language, openprojectUrl, collaboraUrl };
+  return { taxSystem, currency, language, openprojectUrl, collaboraUrl, nextcloudUrl };
 }
 
 router.get("/settings", async (req, res) => {
@@ -41,10 +43,11 @@ router.get("/settings", async (req, res) => {
 });
 
 router.patch("/settings", async (req, res) => {
-  const { taxSystem, openprojectUrl, collaboraUrl } = req.body as {
+  const { taxSystem, openprojectUrl, collaboraUrl, nextcloudUrl } = req.body as {
     taxSystem?: string;
     openprojectUrl?: string;
     collaboraUrl?: string;
+    nextcloudUrl?: string;
   };
 
   const updates: { key: string; value: string }[] = [];
@@ -63,6 +66,10 @@ router.patch("/settings", async (req, res) => {
 
   if (collaboraUrl !== undefined) {
     updates.push({ key: "collaboraUrl", value: collaboraUrl });
+  }
+
+  if (nextcloudUrl !== undefined) {
+    updates.push({ key: "nextcloudUrl", value: nextcloudUrl });
   }
 
   for (const { key, value } of updates) {

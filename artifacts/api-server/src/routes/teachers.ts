@@ -11,6 +11,12 @@ import {
   ListTeacherGroupsParams,
 } from "@workspace/api-zod";
 import { createHash } from "crypto";
+import {
+  isNextcloudConfigured,
+  createNextcloudUser,
+  deleteNextcloudUser,
+  generateNcPassword,
+} from "../lib/nextcloud";
 
 const router: IRouter = Router();
 
@@ -85,6 +91,28 @@ router.post("/teachers", async (req, res) => {
       phone: body.phone ?? null,
     })
     .returning();
+
+  // Fire-and-forget Nextcloud provisioning
+  if (isNextcloudConfigured()) {
+    void createNextcloudUser({
+      username: teacher.username,
+      password: generateNcPassword(teacher.username),
+      displayName: `${teacher.firstName} ${teacher.lastName}`,
+      email: teacher.email,
+    })
+      .then(() =>
+        db
+          .update(teachersTable)
+          .set({ nextcloudSyncStatus: "synced" })
+          .where(eq(teachersTable.id, teacher.id)),
+      )
+      .catch(() =>
+        db
+          .update(teachersTable)
+          .set({ nextcloudSyncStatus: "error" })
+          .where(eq(teachersTable.id, teacher.id)),
+      );
+  }
 
   res.status(201).json({
     ...teacher,
@@ -177,14 +205,22 @@ router.delete("/teachers/:id", async (req, res) => {
     return;
   }
 
-  const [deleted] = await db
-    .delete(teachersTable)
+  const [toDelete] = await db
+    .select({ id: teachersTable.id, username: teachersTable.username })
+    .from(teachersTable)
     .where(eq(teachersTable.id, id))
-    .returning({ id: teachersTable.id });
+    .limit(1);
 
-  if (!deleted) {
+  if (!toDelete) {
     res.status(404).json({ error: "Profesor no encontrado" });
     return;
+  }
+
+  await db.delete(teachersTable).where(eq(teachersTable.id, id));
+
+  // Fire-and-forget Nextcloud cleanup
+  if (isNextcloudConfigured()) {
+    void deleteNextcloudUser(toDelete.username);
   }
 
   res.status(204).send();

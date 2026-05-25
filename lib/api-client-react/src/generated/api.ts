@@ -41,6 +41,9 @@ import type {
   ListPayrollsParams,
   ListStudentsParams,
   ListTeachersParams,
+  NextcloudProvisionResult,
+  NextcloudStatus,
+  NextcloudUsers,
   PanelCredentials,
   PanelToken,
   Payroll,
@@ -3061,6 +3064,230 @@ export const useUpdateSettings = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdateSettingsMutationOptions(options));
+    }
+
+export const getGetNextcloudStatusUrl = () => {
+
+
+
+
+  return `/api/nextcloud/status`
+}
+
+/**
+ * @summary Estado de la conexión con Nextcloud
+ */
+export const getNextcloudStatus = async ( options?: RequestInit): Promise<NextcloudStatus> => {
+
+  return customFetch<NextcloudStatus>(getGetNextcloudStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetNextcloudStatusQueryKey = () => {
+    return [
+    `/api/nextcloud/status`
+    ] as const;
+    }
+
+
+export const getGetNextcloudStatusQueryOptions = <TData = Awaited<ReturnType<typeof getNextcloudStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getNextcloudStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetNextcloudStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getNextcloudStatus>>> = ({ signal }) => getNextcloudStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getNextcloudStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetNextcloudStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getNextcloudStatus>>>
+export type GetNextcloudStatusQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Estado de la conexión con Nextcloud
+ */
+
+export function useGetNextcloudStatus<TData = Awaited<ReturnType<typeof getNextcloudStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getNextcloudStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetNextcloudStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetNextcloudUsersUrl = () => {
+
+
+
+
+  return `/api/nextcloud/users`
+}
+
+/**
+ * @summary Listado de profesores y alumnos con su estado en Nextcloud
+ */
+export const getNextcloudUsers = async ( options?: RequestInit): Promise<NextcloudUsers> => {
+
+  return customFetch<NextcloudUsers>(getGetNextcloudUsersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetNextcloudUsersQueryKey = () => {
+    return [
+    `/api/nextcloud/users`
+    ] as const;
+    }
+
+
+export const getGetNextcloudUsersQueryOptions = <TData = Awaited<ReturnType<typeof getNextcloudUsers>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getNextcloudUsers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetNextcloudUsersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getNextcloudUsers>>> = ({ signal }) => getNextcloudUsers({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getNextcloudUsers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetNextcloudUsersQueryResult = NonNullable<Awaited<ReturnType<typeof getNextcloudUsers>>>
+export type GetNextcloudUsersQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Listado de profesores y alumnos con su estado en Nextcloud
+ */
+
+export function useGetNextcloudUsers<TData = Awaited<ReturnType<typeof getNextcloudUsers>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getNextcloudUsers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetNextcloudUsersQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getProvisionAllNextcloudUrl = () => {
+
+
+
+
+  return `/api/nextcloud/provision/all`
+}
+
+/**
+ * @summary Aprovisiona en Nextcloud todos los usuarios pendientes
+ */
+export const provisionAllNextcloud = async ( options?: RequestInit): Promise<NextcloudProvisionResult> => {
+
+  return customFetch<NextcloudProvisionResult>(getProvisionAllNextcloudUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getProvisionAllNextcloudMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof provisionAllNextcloud>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof provisionAllNextcloud>>, TError,void, TContext> => {
+
+const mutationKey = ['provisionAllNextcloud'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof provisionAllNextcloud>>, void> = () => {
+
+
+          return  provisionAllNextcloud(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProvisionAllNextcloudMutationResult = NonNullable<Awaited<ReturnType<typeof provisionAllNextcloud>>>
+
+    export type ProvisionAllNextcloudMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Aprovisiona en Nextcloud todos los usuarios pendientes
+ */
+export const useProvisionAllNextcloud = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof provisionAllNextcloud>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof provisionAllNextcloud>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getProvisionAllNextcloudMutationOptions(options));
     }
 
 export const getGetStatsUrl = () => {

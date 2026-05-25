@@ -476,6 +476,7 @@ export interface Settings {
   language: string;
   openprojectUrl: string;
   collaboraUrl: string;
+  nextcloudUrl: string;
 }
 
 export type SettingsInputTaxSystem = typeof SettingsInputTaxSystem[keyof typeof SettingsInputTaxSystem];
@@ -490,6 +491,47 @@ export interface SettingsInput {
   taxSystem?: SettingsInputTaxSystem;
   openprojectUrl?: string;
   collaboraUrl?: string;
+  nextcloudUrl?: string;
+}
+
+export interface NextcloudStatus {
+  connected: boolean;
+  configured: boolean;
+  /** @nullable */
+  adminUser?: string | null;
+}
+
+export type NextcloudUserEntryType = typeof NextcloudUserEntryType[keyof typeof NextcloudUserEntryType];
+
+
+export const NextcloudUserEntryType = {
+  teacher: 'teacher',
+  student: 'student',
+} as const;
+
+export interface NextcloudUserEntry {
+  id: number;
+  username: string;
+  displayName: string;
+  email: string;
+  nextcloudSyncStatus: string;
+  type: NextcloudUserEntryType;
+}
+
+export interface NextcloudUsers {
+  teachers: NextcloudUserEntry[];
+  students: NextcloudUserEntry[];
+}
+
+export type NextcloudProvisionResultErrorsItem = {
+  username: string;
+  error: string;
+};
+
+export interface NextcloudProvisionResult {
+  provisioned: number;
+  total: number;
+  errors: NextcloudProvisionResultErrorsItem[];
 }
 
 export type StatsStudentsPerGroupItem = {
