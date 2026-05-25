@@ -12,5 +12,35 @@
   "devDependencies": {
     "prettier": "^3.8.3",
     "typescript": "~5.9.3"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "mysql2",
+        "@types/better-sqlite3",
+        "better-sqlite3",
+        "@op-engineering/op-sqlite",
+        "@electric-sql/pglite",
+        "@libsql/client",
+        "@libsql/client-wasm",
+        "@neondatabase/serverless",
+        "@planetscale/database",
+        "@prisma/client",
+        "@tidbcloud/serverless",
+        "@types/pg",
+        "@types/sql.js",
+        "@vercel/postgres",
+        "@xata.io/client",
+        "bun-types",
+        "expo-sqlite",
+        "gel",
+        "knex",
+        "kysely",
+        "pg",
+        "postgres",
+        "sql.js",
+        "sqlite3"
+      ]
+    }
   }
 }

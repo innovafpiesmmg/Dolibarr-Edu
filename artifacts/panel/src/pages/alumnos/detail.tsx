@@ -3,12 +3,16 @@ import { useParams, Link } from "wouter";
 import {
   useGetStudent,
   getGetStudentQueryKey,
-  useUpdateStudent,
   useDeployStudent,
   useResetStudentPassword,
+  useGetStudentContainerState,
+  getGetStudentContainerStateQueryKey,
+  useStartStudentContainer,
+  useStopStudentContainer,
+  useDestroyStudentContainer,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Building2, User, Mail, Server, Clock, Rocket, Copy, Check, AlertCircle, RefreshCw, KeyRound, Eye } from "lucide-react";
+import { ArrowLeft, Building2, User, Mail, Server, Clock, Rocket, Copy, Check, AlertCircle, RefreshCw, KeyRound, Eye, Play, Square, Trash2, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,7 +75,58 @@ export default function StudentDetail() {
     query: { enabled: !!id, queryKey: getGetStudentQueryKey(id) },
   });
 
+  const { data: containerState, refetch: refetchContainer } = useGetStudentContainerState(id, {
+    query: {
+      enabled: !!id,
+      queryKey: getGetStudentContainerStateQueryKey(id),
+      refetchInterval: 8000,
+    },
+  });
+
   const deployMutation = useDeployStudent();
+  const startMutation = useStartStudentContainer();
+  const stopMutation = useStopStudentContainer();
+  const destroyMutation = useDestroyStudentContainer();
+  const [destroyOpen, setDestroyOpen] = useState(false);
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: getGetStudentQueryKey(id) });
+    queryClient.invalidateQueries({ queryKey: getGetStudentContainerStateQueryKey(id) });
+  };
+
+  const handleStart = () => {
+    startMutation.mutate({ id }, {
+      onSuccess: () => { invalidateAll(); toast({ title: "Contenedor iniciado" }); },
+      onError: (err: unknown) => {
+        const msg = (err as any)?.response?.data?.error ?? "No se pudo iniciar el contenedor.";
+        toast({ variant: "destructive", title: "Error", description: msg });
+      },
+    });
+  };
+
+  const handleStop = () => {
+    stopMutation.mutate({ id }, {
+      onSuccess: () => { invalidateAll(); toast({ title: "Contenedor detenido" }); },
+      onError: (err: unknown) => {
+        const msg = (err as any)?.response?.data?.error ?? "No se pudo detener el contenedor.";
+        toast({ variant: "destructive", title: "Error", description: msg });
+      },
+    });
+  };
+
+  const handleDestroy = () => {
+    destroyMutation.mutate({ id }, {
+      onSuccess: () => {
+        invalidateAll();
+        setDestroyOpen(false);
+        toast({ title: "Contenedor eliminado", description: "Se eliminó el Dolibarr del alumno y su base de datos." });
+      },
+      onError: (err: unknown) => {
+        const msg = (err as any)?.response?.data?.error ?? "No se pudo eliminar el contenedor.";
+        toast({ variant: "destructive", title: "Error", description: msg });
+      },
+    });
+  };
 
   const handleDeploy = () => {
     deployMutation.mutate({ id }, {
@@ -79,8 +134,10 @@ export default function StudentDetail() {
         queryClient.invalidateQueries({ queryKey: getGetStudentQueryKey(id) });
         if (result.status === "synced") {
           toast({
-            title: "Empresa desplegada en Dolibarr",
-            description: `Tercero #${result.entityId} creado correctamente.`,
+            title: "Dolibarr del alumno desplegado",
+            description: result.publicUrl
+              ? `Disponible en ${result.publicUrl}`
+              : `Contenedor ${result.containerName ?? ""} en estado ${result.containerState ?? "running"}.`,
           });
         } else if (result.status === "skipped") {
           toast({ title: "Ya estaba desplegado", description: "Este alumno ya tiene su empresa creada en Dolibarr." });
@@ -126,8 +183,9 @@ export default function StudentDetail() {
 
   const isSynced = student.dolibarrSyncStatus === "synced";
   const isError = student.dolibarrSyncStatus === "error";
-  const canDeploy = !isSynced || isError;
-  const dolibarrBaseUrl = (import.meta.env.VITE_DOLIBARR_BASE_URL as string | undefined) ?? "";
+  const containerRunning = containerState?.state === "running";
+  const containerExists = !!containerState?.exists;
+  const publicUrl = containerState?.publicUrl ?? null;
 
   return (
     <>
@@ -246,14 +304,86 @@ export default function StudentDetail() {
             <div className="p-4 rounded-lg border bg-card">
               <div className="text-sm font-medium text-muted-foreground mb-1">Nombre de la Empresa</div>
               <div className="text-xl font-bold">{student.companyName || "No especificado"}</div>
-              {student.dolibarrEntityId && (
+              {containerState?.containerName && (
                 <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground bg-muted px-2 py-1.5 rounded">
                   <Server className="h-3.5 w-3.5" />
-                  Tercero Dolibarr:
-                  <span className="font-mono font-bold text-foreground">#{student.dolibarrEntityId}</span>
+                  Contenedor:
+                  <span className="font-mono font-bold text-foreground">{containerState.containerName}</span>
+                  <Badge
+                    variant="outline"
+                    className={
+                      containerRunning
+                        ? "ml-auto text-green-700 dark:text-green-400 border-green-500/30 bg-green-500/10"
+                        : containerExists
+                        ? "ml-auto text-yellow-700 dark:text-yellow-400 border-yellow-500/30 bg-yellow-500/10"
+                        : "ml-auto text-muted-foreground"
+                    }
+                  >
+                    {containerState.state}
+                  </Badge>
                 </div>
               )}
             </div>
+
+            {/* Controles de contenedor */}
+            {isSynced && (
+              <div className="rounded-lg border p-3 space-y-3 bg-card">
+                <div className="text-sm font-medium">Contenedor Docker</div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleStart}
+                    disabled={startMutation.isPending || containerRunning || !containerExists}
+                  >
+                    {startMutation.isPending ? (
+                      <><RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" /> Iniciando…</>
+                    ) : (
+                      <><Play className="mr-2 h-3.5 w-3.5" /> Iniciar</>
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleStop}
+                    disabled={stopMutation.isPending || !containerRunning}
+                  >
+                    {stopMutation.isPending ? (
+                      <><RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" /> Deteniendo…</>
+                    ) : (
+                      <><Square className="mr-2 h-3.5 w-3.5" /> Detener</>
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => refetchContainer()}
+                  >
+                    <RefreshCw className="mr-2 h-3.5 w-3.5" /> Refrescar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive ml-auto"
+                    onClick={() => setDestroyOpen(true)}
+                    disabled={!containerExists}
+                  >
+                    <Trash2 className="mr-2 h-3.5 w-3.5" /> Eliminar contenedor
+                  </Button>
+                </div>
+                {publicUrl && (
+                  <a
+                    href={publicUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-2 text-sm border rounded p-2 bg-background hover:bg-muted/50"
+                  >
+                    <span className="font-mono text-xs truncate">{publicUrl}</span>
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  </a>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Acceso del Alumno</h4>
@@ -282,14 +412,14 @@ export default function StudentDetail() {
                   <span className="text-muted-foreground italic text-xs">Se generará al desplegar</span>
                 </div>
               )}
-              {dolibarrBaseUrl && isSynced && student.dolibarrEntityId && (
+              {isSynced && publicUrl && (
                 <a
-                  href={`${dolibarrBaseUrl}/societe/card.php?socid=${student.dolibarrEntityId}`}
+                  href={publicUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full text-center text-sm py-2 px-3 border rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
-                  Abrir empresa en Dolibarr
+                  Abrir Dolibarr del alumno
                 </a>
               )}
             </div>
@@ -297,6 +427,31 @@ export default function StudentDetail() {
         </Card>
       </div>
     </div>
+
+    {/* Destroy container confirmation */}
+    <Dialog open={destroyOpen} onOpenChange={setDestroyOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-destructive flex items-center gap-2">
+            <AlertCircle className="h-5 w-5" /> Eliminar contenedor del alumno
+          </DialogTitle>
+          <DialogDescription>
+            Se eliminará el contenedor Docker, su base de datos en MariaDB y los datos asociados.
+            El alumno volverá al estado "pendiente de despliegue". <strong>Esta acción no se puede deshacer.</strong>
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setDestroyOpen(false)}>Cancelar</Button>
+          <Button variant="destructive" onClick={handleDestroy} disabled={destroyMutation.isPending}>
+            {destroyMutation.isPending ? (
+              <><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Eliminando…</>
+            ) : (
+              <><Trash2 className="mr-2 h-4 w-4" /> Eliminar contenedor y BD</>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     {/* Reset password result dialog */}
     <Dialog open={!!resetResult} onOpenChange={(open) => { if (!open) setResetResult(null); }}>

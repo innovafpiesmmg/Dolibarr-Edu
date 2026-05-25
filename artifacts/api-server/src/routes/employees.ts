@@ -8,10 +8,8 @@ import {
   UpdateEmployeeParams,
   DeleteEmployeeParams,
 } from "@workspace/api-zod";
-import {
-  isDolibarrConfigured,
-  createDolibarrEmployee,
-} from "../lib/dolibarr";
+import { createDolibarrEmployee } from "../lib/dolibarr";
+import { getStudentDolibarrConfig } from "../lib/student-dolibarr";
 
 const router: IRouter = Router();
 
@@ -19,7 +17,7 @@ router.get("/employees", async (req, res) => {
   const { studentId } = ListEmployeesQueryParams.parse(req.query);
 
   const [student] = await db
-    .select({ id: studentsTable.id, dolibarrEntityId: studentsTable.dolibarrEntityId })
+    .select({ id: studentsTable.id })
     .from(studentsTable)
     .where(eq(studentsTable.id, studentId))
     .limit(1);
@@ -41,7 +39,12 @@ router.post("/employees", async (req, res) => {
   const body = CreateEmployeeBody.parse(req.body);
 
   const [student] = await db
-    .select({ id: studentsTable.id, dolibarrEntityId: studentsTable.dolibarrEntityId })
+    .select({
+      id: studentsTable.id,
+      username: studentsTable.username,
+      dolibarrSyncStatus: studentsTable.dolibarrSyncStatus,
+      dolibarrPassword: studentsTable.dolibarrPassword,
+    })
     .from(studentsTable)
     .where(eq(studentsTable.id, body.studentId))
     .limit(1);
@@ -68,20 +71,18 @@ router.post("/employees", async (req, res) => {
     })
     .returning();
 
-  // Sincronización directa con Dolibarr si está configurado y la empresa está desplegada
-  if (isDolibarrConfigured() && student.dolibarrEntityId) {
+  // Sincronización directa con el Dolibarr del alumno si está desplegado
+  if (student.dolibarrSyncStatus === "synced" && student.dolibarrPassword) {
     try {
-      const { employeeId: dolibarrEmpId } = await createDolibarrEmployee(
-        student.dolibarrEntityId,
-        {
-          firstName: employee.firstName,
-          lastName: employee.lastName,
-          jobTitle: employee.jobTitle,
-          contractType: employee.contractType as "indefinido" | "temporal",
-          salaryBase: Number(employee.salaryBase),
-          dni: employee.dni,
-        },
-      );
+      const config = await getStudentDolibarrConfig(student);
+      const { employeeId: dolibarrEmpId } = await createDolibarrEmployee(config, {
+        firstName: employee.firstName,
+        lastName: employee.lastName,
+        jobTitle: employee.jobTitle,
+        contractType: employee.contractType as "indefinido" | "temporal",
+        salaryBase: Number(employee.salaryBase),
+        dni: employee.dni,
+      });
 
       const [synced] = await db
         .update(employeesTable)
@@ -98,7 +99,6 @@ router.post("/employees", async (req, res) => {
         .set({ dolibarrSyncStatus: "error", dolibarrSyncError: msg })
         .where(eq(employeesTable.id, employee.id))
         .returning();
-      // Devolvemos el empleado creado (localmente) pero con el error de sync
       res.status(201).json(toDto(updated));
       return;
     }
@@ -109,18 +109,8 @@ router.post("/employees", async (req, res) => {
 
 router.get("/employees/:id", async (req, res) => {
   const { id } = GetEmployeeParams.parse(req.params);
-
-  const [employee] = await db
-    .select()
-    .from(employeesTable)
-    .where(eq(employeesTable.id, id))
-    .limit(1);
-
-  if (!employee) {
-    res.status(404).json({ error: "Trabajador no encontrado" });
-    return;
-  }
-
+  const [employee] = await db.select().from(employeesTable).where(eq(employeesTable.id, id)).limit(1);
+  if (!employee) { res.status(404).json({ error: "Trabajador no encontrado" }); return; }
   res.json(toDto(employee));
 });
 
@@ -144,27 +134,17 @@ router.put("/employees/:id", async (req, res) => {
     .where(eq(employeesTable.id, id))
     .returning();
 
-  if (!updated) {
-    res.status(404).json({ error: "Trabajador no encontrado" });
-    return;
-  }
-
+  if (!updated) { res.status(404).json({ error: "Trabajador no encontrado" }); return; }
   res.json(toDto(updated));
 });
 
 router.delete("/employees/:id", async (req, res) => {
   const { id } = DeleteEmployeeParams.parse(req.params);
-
   const [deleted] = await db
     .delete(employeesTable)
     .where(eq(employeesTable.id, id))
     .returning({ id: employeesTable.id });
-
-  if (!deleted) {
-    res.status(404).json({ error: "Trabajador no encontrado" });
-    return;
-  }
-
+  if (!deleted) { res.status(404).json({ error: "Trabajador no encontrado" }); return; }
   res.status(204).send();
 });
 

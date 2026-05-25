@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Settings, Globe, Euro, Receipt, FolderKanban, FileSpreadsheet, Cloud } from "lucide-react";
+import { CheckCircle2, Settings, Globe, Euro, Receipt, FolderKanban, FileSpreadsheet, Cloud, Server } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TaxSystem = "iva" | "igic";
@@ -33,6 +33,7 @@ export default function Configuracion() {
   const { mutate: updateSettings, isPending } = useUpdateSettings();
 
   const [taxSystem, setTaxSystem] = useState<TaxSystem>("igic");
+  const [baseDomain, setBaseDomain] = useState("");
   const [openprojectUrl, setOpenprojectUrl] = useState("");
   const [collaboraUrl, setCollaboraUrl] = useState("");
   const [nextcloudUrl, setNextcloudUrl] = useState("");
@@ -41,6 +42,7 @@ export default function Configuracion() {
   useEffect(() => {
     if (!settings) return;
     if (settings.taxSystem) setTaxSystem(settings.taxSystem as TaxSystem);
+    if (settings.baseDomain !== undefined) setBaseDomain(settings.baseDomain);
     if (settings.openprojectUrl !== undefined) setOpenprojectUrl(settings.openprojectUrl);
     if (settings.collaboraUrl !== undefined) setCollaboraUrl(settings.collaboraUrl);
     if ((settings as any).nextcloudUrl !== undefined) setNextcloudUrl((settings as any).nextcloudUrl);
@@ -48,7 +50,7 @@ export default function Configuracion() {
 
   const handleSave = () => {
     updateSettings(
-      { data: { taxSystem, openprojectUrl, collaboraUrl, nextcloudUrl } as any },
+      { data: { taxSystem, baseDomain, openprojectUrl, collaboraUrl, nextcloudUrl } as any },
       {
         onSuccess: () => {
           setSaved(true);
@@ -60,6 +62,7 @@ export default function Configuracion() {
 
   const isDirty =
     settings?.taxSystem !== taxSystem ||
+    settings?.baseDomain !== baseDomain ||
     settings?.openprojectUrl !== openprojectUrl ||
     settings?.collaboraUrl !== collaboraUrl ||
     (settings as any)?.nextcloudUrl !== nextcloudUrl;
@@ -120,6 +123,43 @@ export default function Configuracion() {
                 </button>
               );
             })
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Dominio base de los Dolibarr de alumnos */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Server className="h-5 w-5 text-muted-foreground" />
+            <CardTitle className="text-base">Dominio base de Dolibarr</CardTitle>
+          </div>
+          <CardDescription>
+            Cada alumno tendrá su propio Dolibarr en{" "}
+            <code className="text-xs bg-muted px-1 rounded">https://&lt;usuario&gt;.&lt;dominio&gt;/</code>.
+            Configura el túnel Cloudflare con un comodín{" "}
+            <code className="text-xs bg-muted px-1 rounded">*.dominio</code> apuntando a Traefik.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="h-10 rounded-lg bg-muted animate-pulse" />
+          ) : (
+            <div className="space-y-1.5">
+              <Label>Dominio base</Label>
+              <Input
+                value={baseDomain}
+                onChange={(e) => setBaseDomain(e.target.value.trim().toLowerCase())}
+                placeholder="erp.iesmmg.es"
+                spellCheck={false}
+              />
+              {baseDomain && (
+                <p className="text-xs text-muted-foreground">
+                  Ejemplo de acceso de alumno:{" "}
+                  <code className="bg-muted px-1 rounded">https://juan-perez.{baseDomain}/</code>
+                </p>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>

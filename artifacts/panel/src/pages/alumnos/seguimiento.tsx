@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "wouter";
-import { useGetStudent, getGetStudentQueryKey } from "@workspace/api-client-react";
+import { useGetStudent, getGetStudentQueryKey, useGetStudentContainerState, getGetStudentContainerStateQueryKey } from "@workspace/api-client-react";
 import {
   ArrowLeft,
   Eye,
@@ -18,8 +18,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const dolibarrBaseUrl = (import.meta.env.VITE_DOLIBARR_BASE_URL as string | undefined) ?? "";
 
 function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
@@ -49,6 +47,9 @@ export default function SeguimientoAlumno() {
   const { data: student, isLoading } = useGetStudent(id, {
     query: { enabled: !!id, queryKey: getGetStudentQueryKey(id) },
   });
+  const { data: containerState } = useGetStudentContainerState(id, {
+    query: { enabled: !!id, queryKey: getGetStudentContainerStateQueryKey(id), refetchInterval: 5000 },
+  });
 
   if (isLoading) {
     return (
@@ -73,9 +74,8 @@ export default function SeguimientoAlumno() {
   }
 
   const isSynced = student.dolibarrSyncStatus === "synced";
-  const entityUrl = isSynced && student.dolibarrEntityId
-    ? `${dolibarrBaseUrl}?mainmenu=home&entity=${student.dolibarrEntityId}`
-    : "";
+  const entityUrl = containerState?.publicUrl ?? "";
+  const containerRunning = containerState?.state === "running";
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
@@ -168,12 +168,13 @@ export default function SeguimientoAlumno() {
               )}
             </div>
 
-            {student.dolibarrEntityId && (
+            {entityUrl && (
               <div className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground font-medium w-20">Entidad</span>
-                <code className="text-sm font-mono bg-background border border-border px-2 py-0.5 rounded">
-                  #{student.dolibarrEntityId}
+                <span className="text-xs text-muted-foreground font-medium w-20">URL</span>
+                <code className="text-sm font-mono bg-background border border-border px-2 py-0.5 rounded truncate max-w-xs">
+                  {entityUrl}
                 </code>
+                <CopyButton value={entityUrl} />
               </div>
             )}
 
@@ -190,32 +191,33 @@ export default function SeguimientoAlumno() {
           </div>
 
           <p className="mt-2 text-xs text-muted-foreground">
-            Usa estas credenciales para acceder a Dolibarr como el alumno, o abre el enlace de administrador para
-            acceder directamente a su entidad con tu cuenta.
+            Usa estas credenciales para acceder al Dolibarr propio del alumno.
           </p>
         </div>
       )}
 
       {/* ── Área principal: iframe ───────────────────────── */}
       <div className="flex-1 relative overflow-hidden">
-        {!dolibarrBaseUrl ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-8">
-            <AlertTriangle className="h-10 w-10 text-yellow-500" />
-            <div>
-              <p className="font-semibold">Dolibarr no configurado</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Establece la variable <code className="bg-muted px-1 rounded text-xs">VITE_DOLIBARR_BASE_URL</code> en
-                el servidor para activar el seguimiento embebido.
-              </p>
-            </div>
-          </div>
-        ) : !isSynced ? (
+        {!isSynced ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-8">
             <AlertTriangle className="h-10 w-10 text-yellow-500" />
             <div>
               <p className="font-semibold">Alumno no desplegado</p>
               <p className="text-sm text-muted-foreground mt-1">
                 Este alumno aún no tiene una empresa en Dolibarr. Despliégalo primero desde su ficha.
+              </p>
+            </div>
+            <Button variant="outline" asChild>
+              <Link href={`/alumnos/${id}`}>Ir a la ficha del alumno</Link>
+            </Button>
+          </div>
+        ) : !entityUrl || !containerRunning ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-8">
+            <AlertTriangle className="h-10 w-10 text-yellow-500" />
+            <div>
+              <p className="font-semibold">Contenedor no disponible</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                El contenedor Dolibarr del alumno está {containerState?.state ?? "desconocido"}. Inícialo desde la ficha del alumno.
               </p>
             </div>
             <Button variant="outline" asChild>

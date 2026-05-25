@@ -8,6 +8,7 @@ const DEFAULTS: Record<string, string> = {
   taxSystem: "igic",
   currency: "EUR",
   language: "es_ES",
+  baseDomain: process.env.BASE_DOMAIN ?? "",
   openprojectUrl: process.env.OP_HOST ? `https://${process.env.OP_HOST}` : "",
   collaboraUrl: process.env.COLLABORA_DOMAIN ? `https://${process.env.COLLABORA_DOMAIN}` : "",
   nextcloudUrl: process.env.NC_HOST ? `https://${process.env.NC_HOST}` : "",
@@ -26,16 +27,21 @@ export async function getTaxSystem(): Promise<"iva" | "igic"> {
   return val === "iva" ? "iva" : "igic";
 }
 
+export async function getBaseDomain(): Promise<string> {
+  return getSetting("baseDomain");
+}
+
 async function getAllSettings() {
-  const [taxSystem, currency, language, openprojectUrl, collaboraUrl, nextcloudUrl] = await Promise.all([
+  const [taxSystem, currency, language, baseDomain, openprojectUrl, collaboraUrl, nextcloudUrl] = await Promise.all([
     getSetting("taxSystem"),
     getSetting("currency"),
     getSetting("language"),
+    getSetting("baseDomain"),
     getSetting("openprojectUrl"),
     getSetting("collaboraUrl"),
     getSetting("nextcloudUrl"),
   ]);
-  return { taxSystem, currency, language, openprojectUrl, collaboraUrl, nextcloudUrl };
+  return { taxSystem, currency, language, baseDomain, openprojectUrl, collaboraUrl, nextcloudUrl };
 }
 
 router.get("/settings", async (req, res) => {
@@ -43,8 +49,9 @@ router.get("/settings", async (req, res) => {
 });
 
 router.patch("/settings", async (req, res) => {
-  const { taxSystem, openprojectUrl, collaboraUrl, nextcloudUrl } = req.body as {
+  const { taxSystem, baseDomain, openprojectUrl, collaboraUrl, nextcloudUrl } = req.body as {
     taxSystem?: string;
+    baseDomain?: string;
     openprojectUrl?: string;
     collaboraUrl?: string;
     nextcloudUrl?: string;
@@ -60,17 +67,18 @@ router.patch("/settings", async (req, res) => {
     updates.push({ key: "taxSystem", value: taxSystem });
   }
 
-  if (openprojectUrl !== undefined) {
-    updates.push({ key: "openprojectUrl", value: openprojectUrl });
+  if (baseDomain !== undefined) {
+    const trimmed = baseDomain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
+    if (trimmed && !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(trimmed)) {
+      res.status(400).json({ error: "baseDomain inválido (ej: iesmmg.es)" });
+      return;
+    }
+    updates.push({ key: "baseDomain", value: trimmed });
   }
 
-  if (collaboraUrl !== undefined) {
-    updates.push({ key: "collaboraUrl", value: collaboraUrl });
-  }
-
-  if (nextcloudUrl !== undefined) {
-    updates.push({ key: "nextcloudUrl", value: nextcloudUrl });
-  }
+  if (openprojectUrl !== undefined) updates.push({ key: "openprojectUrl", value: openprojectUrl });
+  if (collaboraUrl !== undefined) updates.push({ key: "collaboraUrl", value: collaboraUrl });
+  if (nextcloudUrl !== undefined) updates.push({ key: "nextcloudUrl", value: nextcloudUrl });
 
   for (const { key, value } of updates) {
     await db

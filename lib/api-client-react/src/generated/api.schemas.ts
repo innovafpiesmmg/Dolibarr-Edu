@@ -77,15 +77,13 @@ export interface Student {
   username: string;
   groupId: number;
   groupName: string;
-  /**
-     * ID del tercero (socid) de la empresa del alumno en Dolibarr. Nombre histórico — la arquitectura ya no usa MultiCompany.
-     * @nullable
-     */
-  dolibarrEntityId: number | null;
   dolibarrSyncStatus: StudentDolibarrSyncStatus;
   /** @nullable */
   dolibarrSyncError?: string | null;
-  /** @nullable */
+  /**
+     * Contraseña admin del Dolibarr propio del alumno.
+     * @nullable
+     */
   dolibarrPassword?: string | null;
   /** @nullable */
   companyName?: string | null;
@@ -174,14 +172,36 @@ export interface DeployResult {
   studentId: number;
   status: DeployResultStatus;
   /**
-     * ID del tercero (socid) creado en Dolibarr.
+     * Nombre del contenedor Docker creado para el alumno.
      * @nullable
      */
-  entityId?: number | null;
+  containerName?: string | null;
+  /**
+     * URL pública del Dolibarr del alumno (https://{user}.{baseDomain}/).
+     * @nullable
+     */
+  publicUrl?: string | null;
+  /**
+     * Estado del contenedor: running, exited, created, etc.
+     * @nullable
+     */
+  containerState?: string | null;
   /** @nullable */
   dolibarrPassword?: string | null;
   /** @nullable */
   error?: string | null;
+}
+
+export interface DolibarrContainerState {
+  studentId: number;
+  exists: boolean;
+  /** running | exited | created | restarting | paused | dead | absent */
+  state: string;
+  /** @nullable */
+  publicUrl: string | null;
+  containerName: string;
+  /** @nullable */
+  startedAt?: string | null;
 }
 
 export type DeployAllResultErrorsItem = {
@@ -214,9 +234,8 @@ export interface AlumnoSesion {
   lastName: string;
   companyName?: string | null;
   groupName: string;
+  /** URL pública del Dolibarr del alumno (https://{user}.{baseDomain}/). */
   dolibarrUrl: string;
-  /** ID del tercero (socid) del alumno en Dolibarr. */
-  entityId?: number | null;
 }
 
 export type EmployeeContractType = typeof EmployeeContractType[keyof typeof EmployeeContractType];
@@ -484,6 +503,8 @@ export interface Settings {
   openprojectUrl: string;
   collaboraUrl: string;
   nextcloudUrl: string;
+  /** Dominio base público para los Dolibarr de los alumnos (ej. erp.iesmmg.es). Cada alumno será accesible en https://{username}.{baseDomain}/ */
+  baseDomain: string;
 }
 
 export type SettingsInputTaxSystem = typeof SettingsInputTaxSystem[keyof typeof SettingsInputTaxSystem];
@@ -499,6 +520,7 @@ export interface SettingsInput {
   openprojectUrl?: string;
   collaboraUrl?: string;
   nextcloudUrl?: string;
+  baseDomain?: string;
 }
 
 export interface NextcloudStatus {

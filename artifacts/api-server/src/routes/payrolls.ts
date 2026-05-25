@@ -3,11 +3,8 @@ import { and, eq } from "drizzle-orm";
 import { db, payrollsTable, employeesTable, studentsTable } from "@workspace/db";
 import { z } from "zod";
 import { calculatePayroll } from "../lib/payroll-calculator";
-import {
-  isDolibarrConfigured,
-  createDolibarrSalary,
-  createPayrollAccountingEntry,
-} from "../lib/dolibarr";
+import { createDolibarrSalary, createPayrollAccountingEntry } from "../lib/dolibarr";
+import { getStudentDolibarrConfig } from "../lib/student-dolibarr";
 
 const router: IRouter = Router();
 
@@ -34,18 +31,15 @@ async function getEmployeeAndStudent(employeeId: number, studentId: number) {
 
   const [student] = await db
     .select({
-      dolibarrEntityId: studentsTable.dolibarrEntityId,
       username: studentsTable.username,
+      dolibarrSyncStatus: studentsTable.dolibarrSyncStatus,
+      dolibarrPassword: studentsTable.dolibarrPassword,
     })
     .from(studentsTable)
     .where(eq(studentsTable.id, studentId))
     .limit(1);
 
-  return {
-    employee: emp,
-    entityId: student?.dolibarrEntityId ?? null,
-    studentRef: student?.username,
-  };
+  return { employee: emp, student: student ?? null };
 }
 
 function toDto(p: typeof payrollsTable.$inferSelect) {
@@ -179,44 +173,53 @@ router.post("/payrolls", async (req, res) => {
     })
     .returning();
 
-  // Integración directa con Dolibarr
-  if (isDolibarrConfigured() && row.entityId && row.employee.dolibarrEmployeeId) {
+  // Integración directa con el Dolibarr del alumno si está desplegado
+  const studentReady =
+    row.student?.dolibarrSyncStatus === "synced" &&
+    !!row.student.dolibarrPassword &&
+    !!row.employee.dolibarrEmployeeId;
+
+  if (studentReady && row.student) {
     const employeeName = `${row.employee.firstName} ${row.employee.lastName}`;
     let salaryId: number | undefined;
     let accountingId: number | undefined;
     let syncError: string | undefined;
 
     try {
-      const { salaryId: sid } = await createDolibarrSalary(row.entityId, {
-        dolibarrEmployeeId: row.employee.dolibarrEmployeeId,
-        label: `Nómina ${employeeName} ${String(calc.periodMonth).padStart(2, "0")}/${calc.periodYear}`,
-        periodMonth: calc.periodMonth,
-        periodYear: calc.periodYear,
-        totalDevengos: calc.totalDevengos,
-        totalDeducciones: calc.totalDeducciones,
-        liquidoPercibir: calc.liquidoPercibir,
-      });
-      salaryId = sid;
-    } catch (err) {
-      syncError = `Salario: ${err instanceof Error ? err.message : "Error"}`;
-    }
+      const config = await getStudentDolibarrConfig(row.student);
+      try {
+        const { salaryId: sid } = await createDolibarrSalary(config, {
+          dolibarrEmployeeId: row.employee.dolibarrEmployeeId!,
+          label: `Nómina ${employeeName} ${String(calc.periodMonth).padStart(2, "0")}/${calc.periodYear}`,
+          periodMonth: calc.periodMonth,
+          periodYear: calc.periodYear,
+          totalDevengos: calc.totalDevengos,
+          totalDeducciones: calc.totalDeducciones,
+          liquidoPercibir: calc.liquidoPercibir,
+        });
+        salaryId = sid;
+      } catch (err) {
+        syncError = `Salario: ${err instanceof Error ? err.message : "Error"}`;
+      }
 
-    try {
-      const { accountingId: aid } = await createPayrollAccountingEntry(row.entityId, {
-        periodMonth: calc.periodMonth,
-        periodYear: calc.periodYear,
-        employeeName,
-        totalDevengos: calc.totalDevengos,
-        ssEmpresa: calc.totalSsEmpresa,
-        liquidoPercibir: calc.liquidoPercibir,
-        totalSsTrabajador: calc.totalSsTrabajador,
-        irpfAmount: calc.irpfAmount,
-        studentRef: row.studentRef,
-      });
-      accountingId = aid;
+      try {
+        const { accountingId: aid } = await createPayrollAccountingEntry(config, {
+          periodMonth: calc.periodMonth,
+          periodYear: calc.periodYear,
+          employeeName,
+          totalDevengos: calc.totalDevengos,
+          ssEmpresa: calc.totalSsEmpresa,
+          liquidoPercibir: calc.liquidoPercibir,
+          totalSsTrabajador: calc.totalSsTrabajador,
+          irpfAmount: calc.irpfAmount,
+        });
+        accountingId = aid;
+      } catch (err) {
+        const msg = `Contabilidad: ${err instanceof Error ? err.message : "Error"}`;
+        syncError = syncError ? `${syncError} | ${msg}` : msg;
+      }
     } catch (err) {
-      const msg = `Contabilidad: ${err instanceof Error ? err.message : "Error"}`;
-      syncError = syncError ? `${syncError} | ${msg}` : msg;
+      syncError = `Conexión: ${err instanceof Error ? err.message : "Error"}`;
     }
 
     const [updated] = await db
@@ -240,13 +243,7 @@ router.post("/payrolls", async (req, res) => {
 router.get("/payrolls/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "ID inválido" }); return; }
-
-  const [payroll] = await db
-    .select()
-    .from(payrollsTable)
-    .where(eq(payrollsTable.id, id))
-    .limit(1);
-
+  const [payroll] = await db.select().from(payrollsTable).where(eq(payrollsTable.id, id)).limit(1);
   if (!payroll) { res.status(404).json({ error: "Nómina no encontrada" }); return; }
   res.json(toDto(payroll));
 });
@@ -254,12 +251,10 @@ router.get("/payrolls/:id", async (req, res) => {
 router.delete("/payrolls/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "ID inválido" }); return; }
-
   const [deleted] = await db
     .delete(payrollsTable)
     .where(eq(payrollsTable.id, id))
     .returning({ id: payrollsTable.id });
-
   if (!deleted) { res.status(404).json({ error: "Nómina no encontrada" }); return; }
   res.status(204).send();
 });

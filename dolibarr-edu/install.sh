@@ -95,13 +95,9 @@ if [[ ! -f "$WORK_DIR/.env" ]]; then
   sed -i "s|cambia_esta_contrasena_panel|$(gen_pass 24)|g"            "$WORK_DIR/.env"
   sed -i "s|cambia_esta_clave_sesion|$(gen_pass 48)|g"                "$WORK_DIR/.env"
 
-  DOLI_ADMIN_PASS=$(gen_pass 16)
-  sed -i "s|cambia_esta_contrasena_admin|$DOLI_ADMIN_PASS|g"          "$WORK_DIR/.env"
   success ".env creado con contraseñas generadas"
 else
   warn ".env ya existe — se mantiene la configuración actual."
-  DOLI_ADMIN_PASS=$(grep "^DOLI_ADMIN_PASSWORD=" "$WORK_DIR/.env" | cut -d'=' -f2-)
-  [[ -z "$DOLI_ADMIN_PASS" ]] && DOLI_ADMIN_PASS="(no definida — ejecuta update.sh)"
 fi
 
 # ── Contraseña del panel web ──────────────────────────────────────────────────
@@ -140,10 +136,11 @@ echo ""
 echo "  Pulsa Enter para aceptar los valores por defecto."
 echo ""
 
-CURRENT_DOLI_URL=$(grep "^DOLI_URL_ROOT=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-read -rp "  URL de Dolibarr ERP       [${CURRENT_DOLI_URL:-https://erp.micentro.es}]: " DOLI_URL < /dev/tty
-DOLI_URL="${DOLI_URL:-${CURRENT_DOLI_URL:-https://erp.micentro.es}}"
-DOLI_DOMAIN=$(echo "$DOLI_URL" | sed 's|https\?://||' | cut -d'/' -f1)
+echo "  Cada alumno tendrá su propio Dolibarr en https://<usuario>.<dominio-base>/"
+echo ""
+CURRENT_BASE_DOMAIN=$(grep "^BASE_DOMAIN=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
+read -rp "  Dominio base de Dolibarr  [${CURRENT_BASE_DOMAIN:-erp.micentro.es}]: " BASE_DOMAIN_IN < /dev/tty
+BASE_DOMAIN_IN="${BASE_DOMAIN_IN:-${CURRENT_BASE_DOMAIN:-erp.micentro.es}}"
 
 CURRENT_PANEL_URL=$(grep "^PANEL_URL=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
 read -rp "  URL del Panel de gestión  [${CURRENT_PANEL_URL:-https://panel.micentro.es}]: " PANEL_URL < /dev/tty
@@ -172,13 +169,6 @@ else
   INSTALL_NC=false
 fi
 
-# Actualizar .env — URLs principales
-sed -i "s|^DOLI_URL_ROOT=.*|DOLI_URL_ROOT=$DOLI_URL|"             "$WORK_DIR/.env"
-sed -i "s|^DOLI_DOMAIN=.*|DOLI_DOMAIN=$DOLI_DOMAIN|"               "$WORK_DIR/.env"
-sed -i "s|^DOLIBARR_BASE_URL=.*|DOLIBARR_BASE_URL=$DOLI_URL|"     "$WORK_DIR/.env"
-sed -i "s|^OP_HOST=.*|OP_HOST=$OP_HOST|"                           "$WORK_DIR/.env"
-sed -i "s|^PANEL_URL=.*|PANEL_URL=$PANEL_URL|"                     "$WORK_DIR/.env"
-
 _env_set() { # _env_set KEY VALUE
   local key="$1" val="$2"
   if grep -q "^${key}=" "$WORK_DIR/.env"; then
@@ -188,7 +178,10 @@ _env_set() { # _env_set KEY VALUE
   fi
 }
 
-_env_set "OFFICE_HOST" "$OFFICE_HOST"
+_env_set "BASE_DOMAIN"  "$BASE_DOMAIN_IN"
+_env_set "OP_HOST"      "$OP_HOST"
+_env_set "PANEL_URL"    "$PANEL_URL"
+_env_set "OFFICE_HOST"  "$OFFICE_HOST"
 
 if [[ "$INSTALL_NC" == true ]]; then
   _env_set "NC_HOST"  "$NC_HOST"
@@ -264,16 +257,18 @@ echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
 echo "║        GUARDA ESTAS CREDENCIALES EN LUGAR SEGURO            ║"
 echo "╠══════════════════════════════════════════════════════════════╣"
-printf  "║  %-28s %-31s║\n" "Dolibarr admin:" "admin / $DOLI_ADMIN_PASS"
 printf  "║  %-28s %-31s║\n" "OpenProject:" "admin / admin (cámbiala)"
 printf  "║  %-28s %-31s║\n" "Nextcloud:" "admin / (ver .env → NC_ADMIN_PASSWORD)"
 echo "╠══════════════════════════════════════════════════════════════╣"
-printf  "║  %-28s %-31s║\n" "Dolibarr ERP:" "$DOLI_URL"
 printf  "║  %-28s %-31s║\n" "Panel de gestión:" "$PANEL_URL"
+printf  "║  %-28s %-31s║\n" "Dolibarr alumnos:" "https://<usuario>.$BASE_DOMAIN_IN"
 printf  "║  %-28s %-31s║\n" "OpenProject:" "https://$OP_HOST"
 printf  "║  %-28s %-31s║\n" "Collabora Online:" "https://$OFFICE_HOST"
 printf  "║  %-28s %-31s║\n" "Nextcloud:" "https://$NC_HOST"
 echo "╚══════════════════════════════════════════════════════════════╝"
+echo ""
+echo "  Cada alumno tendrá su propio Dolibarr aislado, creado desde el panel."
+echo "  Configura el túnel Cloudflare con un comodín *.$BASE_DOMAIN_IN apuntando a traefik:80"
 
 # ── Arrancar servicios ────────────────────────────────────────────────────────
 echo ""
@@ -293,57 +288,13 @@ if [[ "${START_NOW,,}" != "n" && "${START_NOW,,}" != "no" ]]; then
   info "Construyendo imágenes del panel (esto tarda unos minutos)..."
   docker compose build panel_migrator panel_api panel_web
 
+  info "Pre-descargando la imagen de Dolibarr (se usa para cada alumno)..."
+  DOLIBARR_IMAGE_VAL=$(grep "^DOLIBARR_IMAGE=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2-)
+  docker pull "${DOLIBARR_IMAGE_VAL:-dolibarr/dolibarr:latest}" >/dev/null 2>&1 || \
+    warn "No se pudo descargar la imagen de Dolibarr ahora; se descargará al desplegar el primer alumno."
+
   info "Arrancando todos los servicios..."
   docker compose up -d
-
-  # ── Esperar a que Dolibarr complete la instalación inicial ──────────────
-  info "Esperando a que Dolibarr inicialice la base de datos (puede tardar 1-3 minutos)..."
-  DOLI_READY=false
-  for i in {1..60}; do
-    if docker compose exec -T db sh -c \
-         'mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "SHOW TABLES LIKE \"llx_user\";" 2>/dev/null | grep -q llx_user' \
-         < /dev/null 2>/dev/null; then
-      DOLI_READY=true
-      success "Dolibarr inicializado"
-      break
-    fi
-    sleep 5
-  done
-
-  if [[ "$DOLI_READY" == "true" ]]; then
-    # ── Sincronizar contraseña admin con .env (fuente de verdad) ──────────
-    DOLI_PASS=$(grep "^DOLI_ADMIN_PASSWORD=" "$WORK_DIR/.env" | cut -d'=' -f2-)
-    info "Sincronizando contraseña del admin de Dolibarr (SQL)..."
-    # La imagen oficial de Dolibarr no incluye scripts/users/changepass.php.
-    # Reseteamos pass_crypted con MD5 (algoritmo por defecto de Dolibarr) y
-    # vaciamos pass para evitar contraseña en texto claro residual.
-    if docker compose exec -T db sh -c \
-         "exec mysql -u root -p\"\$MYSQL_ROOT_PASSWORD\" \"\$MYSQL_DATABASE\" -e \"UPDATE llx_user SET pass_crypted=MD5('$DOLI_PASS'), pass=NULL WHERE login='admin';\"" \
-         < /dev/null > /dev/null 2>&1; then
-      success "Contraseña admin sincronizada con .env"
-    else
-      warn "No se pudo cambiar la contraseña automáticamente. Hazlo desde Dolibarr → Usuarios → admin."
-    fi
-
-    # ── Activar módulo REST API (idempotente) ─────────────────────────────
-    info "Activando módulo REST API de Dolibarr..."
-    if docker compose exec -T db sh -c \
-         'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "INSERT INTO llx_const (name, value, type, visible, note, entity) VALUES (\"MAIN_MODULE_API\", \"1\", \"chaine\", 0, \"\", 0) ON DUPLICATE KEY UPDATE value=\"1\";"' \
-         < /dev/null > /dev/null 2>&1; then
-      success "Módulo REST API activo"
-    else
-      warn "No se pudo activar el módulo REST API (actívalo desde Dolibarr → Inicio → Configuración → Módulos → Web Services REST)"
-    fi
-
-    # NOTA: No se activa MultiCompany — el módulo fue descontinuado por su
-    # autor y no está disponible. Cada alumno se materializa en Dolibarr como
-    # un "tercero" (societe) dentro de la única entidad por defecto.
-
-    # Reiniciar panel_api para que recoja el estado actualizado
-    docker compose restart panel_api > /dev/null 2>&1 || true
-  else
-    warn "Dolibarr está tardando demasiado en iniciar. Vuelve a ejecutar update.sh en unos minutos para completar la sincronización."
-  fi
 
   echo ""
   docker compose ps
@@ -351,9 +302,9 @@ if [[ "${START_NOW,,}" != "n" && "${START_NOW,,}" != "no" ]]; then
   success "¡Todos los servicios en marcha!"
   echo ""
   echo "  Panel de gestión: $PANEL_URL"
-  echo "  Dolibarr ERP:     $DOLI_URL"
+  echo "  Cada alumno: https://<usuario>.$BASE_DOMAIN_IN/"
   echo ""
-  echo "  Si el panel da error al cargar, espera 1-2 min y recarga."
+  echo "  Crea alumnos desde el panel; cada uno tendrá su Dolibarr aislado."
 else
   echo ""
   success "Configuración completada."

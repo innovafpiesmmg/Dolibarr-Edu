@@ -2,7 +2,8 @@ import { Router, type IRouter } from "express";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, studentsTable, payrollsTable, employeesTable, ssPaymentsTable } from "@workspace/db";
-import { isDolibarrConfigured, paySSToBank, payIRPFToBank } from "../lib/dolibarr";
+import { paySSToBank, payIRPFToBank } from "../lib/dolibarr";
+import { getStudentDolibarrConfig } from "../lib/student-dolibarr";
 
 const router: IRouter = Router();
 
@@ -16,12 +17,13 @@ const PeriodBodySchema = z.object({
   year: z.number().int(),
 });
 
-async function getStudentEntity(studentId: number) {
+async function getStudent(studentId: number) {
   const [s] = await db
     .select({
       id: studentsTable.id,
-      dolibarrEntityId: studentsTable.dolibarrEntityId,
       username: studentsTable.username,
+      dolibarrSyncStatus: studentsTable.dolibarrSyncStatus,
+      dolibarrPassword: studentsTable.dolibarrPassword,
     })
     .from(studentsTable)
     .where(eq(studentsTable.id, studentId))
@@ -52,14 +54,20 @@ async function getPayrollsForPeriod(studentId: number, month: number, year: numb
     );
 }
 
+function ensureDeployed(s: { dolibarrSyncStatus: string; dolibarrPassword: string | null }): string | null {
+  if (s.dolibarrSyncStatus !== "synced" || !s.dolibarrPassword) {
+    return "El alumno no tiene su Dolibarr desplegado. Despliégalo primero.";
+  }
+  return null;
+}
+
 // GET /students/:id/ss-summary?month=&year=
 router.get("/students/:id/ss-summary", async (req, res) => {
   const studentId = Number(req.params.id);
   if (isNaN(studentId)) { res.status(400).json({ error: "ID inválido" }); return; }
-
   const { month, year } = PeriodSchema.parse(req.query);
 
-  const student = await getStudentEntity(studentId);
+  const student = await getStudent(studentId);
   if (!student) { res.status(404).json({ error: "Alumno no encontrado" }); return; }
 
   const rows = await getPayrollsForPeriod(studentId, month, year);
@@ -84,7 +92,6 @@ router.get("/students/:id/ss-summary", async (req, res) => {
   const totalSSIngresar = r2(totalSSTrabajadores + totalSSEmpresa);
   const totalIrpf = r2(lines.reduce((s, l) => s + l.irpf, 0));
 
-  // Comprobar si ya existe un registro de pago para este período
   const [existing] = await db
     .select()
     .from(ssPaymentsTable)
@@ -118,24 +125,16 @@ router.get("/students/:id/ss-summary", async (req, res) => {
   });
 });
 
-// POST /students/:id/ss-pay — registra pago SS en Dolibarr: 476 → 572
 router.post("/students/:id/ss-pay", async (req, res) => {
   const studentId = Number(req.params.id);
   if (isNaN(studentId)) { res.status(400).json({ error: "ID inválido" }); return; }
-
-  if (!isDolibarrConfigured()) {
-    res.status(503).json({ error: "Dolibarr no está configurado (falta DOLIBARR_API_URL o DOLIBARR_API_KEY)" });
-    return;
-  }
-
   const { month, year } = PeriodBodySchema.parse(req.body);
 
-  const student = await getStudentEntity(studentId);
+  const student = await getStudent(studentId);
   if (!student) { res.status(404).json({ error: "Alumno no encontrado" }); return; }
-  if (!student.dolibarrEntityId) {
-    res.status(400).json({ error: "El alumno no tiene empresa en Dolibarr. Despliégala primero." });
-    return;
-  }
+
+  const notReady = ensureDeployed(student);
+  if (notReady) { res.status(400).json({ error: notReady }); return; }
 
   const rows = await getPayrollsForPeriod(studentId, month, year);
   if (rows.length === 0) {
@@ -148,14 +147,13 @@ router.post("/students/:id/ss-pay", async (req, res) => {
     rows.reduce((s, { payroll: p }) => s + Number(p.totalSsTrabajador) + Number(p.totalSsEmpresa), 0),
   );
 
-  const { accountingId } = await paySSToBank(student.dolibarrEntityId, {
+  const config = await getStudentDolibarrConfig(student);
+  const { accountingId } = await paySSToBank(config, {
     periodMonth: month,
     periodYear: year,
     total: totalSSIngresar,
-    studentRef: student.username,
   });
 
-  // Guardar/actualizar registro de pago
   const [existing] = await db
     .select()
     .from(ssPaymentsTable)
@@ -193,28 +191,20 @@ router.post("/students/:id/ss-pay", async (req, res) => {
   res.json({
     accountingId,
     total: totalSSIngresar,
-    message: `Asiento contable 476→572 registrado en Dolibarr. Total: ${totalSSIngresar} €`,
+    message: `Asiento contable 476→572 registrado en Dolibarr del alumno. Total: ${totalSSIngresar} €`,
   });
 });
 
-// POST /students/:id/irpf-pay — registra pago IRPF en Dolibarr: 4751 → 572
 router.post("/students/:id/irpf-pay", async (req, res) => {
   const studentId = Number(req.params.id);
   if (isNaN(studentId)) { res.status(400).json({ error: "ID inválido" }); return; }
-
-  if (!isDolibarrConfigured()) {
-    res.status(503).json({ error: "Dolibarr no está configurado (falta DOLIBARR_API_URL o DOLIBARR_API_KEY)" });
-    return;
-  }
-
   const { month, year } = PeriodBodySchema.parse(req.body);
 
-  const student = await getStudentEntity(studentId);
+  const student = await getStudent(studentId);
   if (!student) { res.status(404).json({ error: "Alumno no encontrado" }); return; }
-  if (!student.dolibarrEntityId) {
-    res.status(400).json({ error: "El alumno no tiene empresa en Dolibarr. Despliégala primero." });
-    return;
-  }
+
+  const notReady = ensureDeployed(student);
+  if (notReady) { res.status(400).json({ error: notReady }); return; }
 
   const rows = await getPayrollsForPeriod(studentId, month, year);
   if (rows.length === 0) {
@@ -225,11 +215,11 @@ router.post("/students/:id/irpf-pay", async (req, res) => {
   const r2 = (n: number) => Math.round(n * 100) / 100;
   const totalIRPF = r2(rows.reduce((s, { payroll: p }) => s + Number(p.irpfAmount), 0));
 
-  const { accountingId } = await payIRPFToBank(student.dolibarrEntityId, {
+  const config = await getStudentDolibarrConfig(student);
+  const { accountingId } = await payIRPFToBank(config, {
     periodMonth: month,
     periodYear: year,
     total: totalIRPF,
-    studentRef: student.username,
   });
 
   const [existing] = await db
@@ -269,7 +259,7 @@ router.post("/students/:id/irpf-pay", async (req, res) => {
   res.json({
     accountingId,
     total: totalIRPF,
-    message: `Asiento contable 4751→572 registrado en Dolibarr. Modelo 111: ${totalIRPF} €`,
+    message: `Asiento contable 4751→572 registrado en Dolibarr del alumno. Modelo 111: ${totalIRPF} €`,
   });
 });
 

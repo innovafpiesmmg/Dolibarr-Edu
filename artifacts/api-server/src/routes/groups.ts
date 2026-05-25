@@ -123,7 +123,6 @@ router.get("/groups/:id", async (req, res) => {
       username: studentsTable.username,
       groupId: studentsTable.groupId,
       groupName: sql<string>`${groupsTable.name}`,
-      dolibarrEntityId: studentsTable.dolibarrEntityId,
       dolibarrSyncStatus: studentsTable.dolibarrSyncStatus,
       dolibarrSyncError: studentsTable.dolibarrSyncError,
       companyName: studentsTable.companyName,
@@ -211,7 +210,6 @@ router.get("/groups/:id/students", async (req, res) => {
       username: studentsTable.username,
       groupId: studentsTable.groupId,
       groupName: sql<string>`${groupsTable.name}`,
-      dolibarrEntityId: studentsTable.dolibarrEntityId,
       companyName: studentsTable.companyName,
       createdAt: studentsTable.createdAt,
     })

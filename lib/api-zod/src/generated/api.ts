@@ -33,8 +33,7 @@ export const StudentLoginResponse = zod.object({
   "lastName": zod.string(),
   "companyName": zod.string().nullish(),
   "groupName": zod.string(),
-  "dolibarrUrl": zod.string(),
-  "entityId": zod.number().nullish().describe('ID del tercero (socid) del alumno en Dolibarr.')
+  "dolibarrUrl": zod.string().describe('URL pública del Dolibarr del alumno (https:\/\/{user}.{baseDomain}\/).')
 })
 
 
@@ -238,10 +237,9 @@ export const GetGroupResponse = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrEntityId": zod.number().nullable().describe('ID del tercero (socid) de la empresa del alumno en Dolibarr. Nombre histórico — la arquitectura ya no usa MultiCompany.'),
   "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
-  "dolibarrPassword": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del alumno.'),
   "companyName": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 }))
@@ -300,10 +298,9 @@ export const ListGroupStudentsResponseItem = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrEntityId": zod.number().nullable().describe('ID del tercero (socid) de la empresa del alumno en Dolibarr. Nombre histórico — la arquitectura ya no usa MultiCompany.'),
   "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
-  "dolibarrPassword": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del alumno.'),
   "companyName": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
@@ -331,10 +328,9 @@ export const ListStudentsResponseItem = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrEntityId": zod.number().nullable().describe('ID del tercero (socid) de la empresa del alumno en Dolibarr. Nombre histórico — la arquitectura ya no usa MultiCompany.'),
   "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
-  "dolibarrPassword": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del alumno.'),
   "companyName": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
@@ -411,10 +407,9 @@ export const GetStudentResponse = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrEntityId": zod.number().nullable().describe('ID del tercero (socid) de la empresa del alumno en Dolibarr. Nombre histórico — la arquitectura ya no usa MultiCompany.'),
   "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
-  "dolibarrPassword": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del alumno.'),
   "companyName": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
@@ -447,10 +442,9 @@ export const UpdateStudentResponse = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrEntityId": zod.number().nullable().describe('ID del tercero (socid) de la empresa del alumno en Dolibarr. Nombre histórico — la arquitectura ya no usa MultiCompany.'),
   "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
-  "dolibarrPassword": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del alumno.'),
   "companyName": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
@@ -465,7 +459,7 @@ export const DeleteStudentParams = zod.object({
 
 
 /**
- * @summary Desplegar alumno en Dolibarr (crear entidad y usuario)
+ * @summary Desplegar Dolibarr propio del alumno (crear BD + contenedor)
  */
 export const DeployStudentParams = zod.object({
   "id": zod.coerce.number()
@@ -474,9 +468,70 @@ export const DeployStudentParams = zod.object({
 export const DeployStudentResponse = zod.object({
   "studentId": zod.number(),
   "status": zod.enum(['synced', 'error', 'skipped']),
-  "entityId": zod.number().nullish().describe('ID del tercero (socid) creado en Dolibarr.'),
+  "containerName": zod.string().nullish().describe('Nombre del contenedor Docker creado para el alumno.'),
+  "publicUrl": zod.string().nullish().describe('URL pública del Dolibarr del alumno (https:\/\/{user}.{baseDomain}\/).'),
+  "containerState": zod.string().nullish().describe('Estado del contenedor: running, exited, created, etc.'),
   "dolibarrPassword": zod.string().nullish(),
   "error": zod.string().nullish()
+})
+
+
+/**
+ * @summary Estado del contenedor Dolibarr del alumno
+ */
+export const GetStudentContainerStateParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetStudentContainerStateResponse = zod.object({
+  "studentId": zod.number(),
+  "exists": zod.boolean(),
+  "state": zod.string().describe('running | exited | created | restarting | paused | dead | absent'),
+  "publicUrl": zod.string().nullable(),
+  "containerName": zod.string(),
+  "startedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Arrancar el contenedor Dolibarr del alumno
+ */
+export const StartStudentContainerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const StartStudentContainerResponse = zod.object({
+  "studentId": zod.number(),
+  "exists": zod.boolean(),
+  "state": zod.string().describe('running | exited | created | restarting | paused | dead | absent'),
+  "publicUrl": zod.string().nullable(),
+  "containerName": zod.string(),
+  "startedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Detener el contenedor Dolibarr del alumno
+ */
+export const StopStudentContainerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const StopStudentContainerResponse = zod.object({
+  "studentId": zod.number(),
+  "exists": zod.boolean(),
+  "state": zod.string().describe('running | exited | created | restarting | paused | dead | absent'),
+  "publicUrl": zod.string().nullable(),
+  "containerName": zod.string(),
+  "startedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Eliminar contenedor y BD del Dolibarr del alumno (datos perdidos)
+ */
+export const DestroyStudentContainerParams = zod.object({
+  "id": zod.coerce.number()
 })
 
 
@@ -980,7 +1035,8 @@ export const GetSettingsResponse = zod.object({
   "language": zod.string(),
   "openprojectUrl": zod.string(),
   "collaboraUrl": zod.string(),
-  "nextcloudUrl": zod.string()
+  "nextcloudUrl": zod.string(),
+  "baseDomain": zod.string().describe('Dominio base público para los Dolibarr de los alumnos (ej. erp.iesmmg.es). Cada alumno será accesible en https:\/\/{username}.{baseDomain}\/')
 })
 
 
@@ -991,7 +1047,8 @@ export const UpdateSettingsBody = zod.object({
   "taxSystem": zod.enum(['iva', 'igic']).optional(),
   "openprojectUrl": zod.string().optional(),
   "collaboraUrl": zod.string().optional(),
-  "nextcloudUrl": zod.string().optional()
+  "nextcloudUrl": zod.string().optional(),
+  "baseDomain": zod.string().optional()
 })
 
 export const UpdateSettingsResponse = zod.object({
@@ -1000,7 +1057,8 @@ export const UpdateSettingsResponse = zod.object({
   "language": zod.string(),
   "openprojectUrl": zod.string(),
   "collaboraUrl": zod.string(),
-  "nextcloudUrl": zod.string()
+  "nextcloudUrl": zod.string(),
+  "baseDomain": zod.string().describe('Dominio base público para los Dolibarr de los alumnos (ej. erp.iesmmg.es). Cada alumno será accesible en https:\/\/{username}.{baseDomain}\/')
 })
 
 

@@ -53,19 +53,20 @@ if [[ -f "$WORK_DIR/.env" ]]; then
   }
 
   ADDED=0
-  if [[ -z "$(_env_get DOLI_ADMIN_LOGIN)" ]]; then
-    _env_set DOLI_ADMIN_LOGIN admin; ADDED=$((ADDED+1))
-  fi
-  if [[ -z "$(_env_get DOLI_ADMIN_PASSWORD)" ]]; then
-    NEW_PASS=$(gen_pass 16)
-    _env_set DOLI_ADMIN_PASSWORD "$NEW_PASS"
-    warn "DOLI_ADMIN_PASSWORD faltaba en .env — generada nueva: $NEW_PASS"
-    warn "Esta contraseña DEBE coincidir con la del admin existente en Dolibarr."
-    warn "Si Dolibarr ya tiene otra contraseña para 'admin', edita .env manualmente y pon la correcta."
+  if [[ -z "$(_env_get BASE_DOMAIN)" ]]; then
+    # Migración: derivar del antiguo DOLI_URL_ROOT si existe
+    OLD_DOLI=$(_env_get DOLI_URL_ROOT)
+    DEFAULT_BD=$(echo "$OLD_DOLI" | sed 's|https\?://||' | cut -d'/' -f1)
+    [[ -z "$DEFAULT_BD" ]] && DEFAULT_BD="erp.micentro.es"
+    _env_set BASE_DOMAIN "$DEFAULT_BD"
+    warn "BASE_DOMAIN faltaba — establecido a '$DEFAULT_BD'. Cámbialo en .env si no es correcto."
     ADDED=$((ADDED+1))
   fi
-  if [[ -z "$(_env_get DOLIBARR_BASE_URL)" ]]; then
-    _env_set DOLIBARR_BASE_URL "$(_env_get DOLI_URL_ROOT)"; ADDED=$((ADDED+1))
+  if [[ -z "$(_env_get DOLIBARR_IMAGE)" ]]; then
+    _env_set DOLIBARR_IMAGE "dolibarr/dolibarr:latest"; ADDED=$((ADDED+1))
+  fi
+  if [[ -z "$(_env_get STUDENT_DOCKER_NETWORK)" ]]; then
+    _env_set STUDENT_DOCKER_NETWORK "dolibarr-edu_dolibarr_net"; ADDED=$((ADDED+1))
   fi
   [[ $ADDED -gt 0 ]] && success "Añadidas $ADDED variables nuevas al .env" || success "Variables OK"
 fi
@@ -73,13 +74,13 @@ fi
 # ── Backup previo ─────────────────────────────────────────────────────────────
 cd "$WORK_DIR"
 
-info "Realizando backup de la base de datos de Dolibarr..."
-BACKUP_FILE_DOLI="$BACKUP_DIR/dolibarr_${TIMESTAMP}.sql"
-if docker compose exec -T db sh -c 'exec mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' \
+info "Realizando backup completo de MariaDB (incluye BDs de todos los alumnos)..."
+BACKUP_FILE_DOLI="$BACKUP_DIR/mariadb_${TIMESTAMP}.sql"
+if docker compose exec -T db sh -c 'exec mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" --all-databases' \
      < /dev/null > "$BACKUP_FILE_DOLI" 2>/dev/null; then
-  success "Backup Dolibarr → $BACKUP_FILE_DOLI"
+  success "Backup MariaDB → $BACKUP_FILE_DOLI"
 else
-  warn "No se pudo hacer backup de Dolibarr (puede que no esté en marcha)."
+  warn "No se pudo hacer backup de MariaDB (puede que no esté en marcha)."
 fi
 
 info "Realizando backup de la base de datos de OpenProject..."
@@ -149,6 +150,11 @@ _ensure_key "COMPOSE_PROFILES"    ""
 # Clave OFFICE_HOST (introducida en versiones recientes)
 _ensure_key "OFFICE_HOST"         "office.micentro.es"
 
+# Orquestación de Dolibarr por alumno (pivot a contenedor-por-alumno)
+_ensure_key "BASE_DOMAIN"            "erp.micentro.es"
+_ensure_key "DOLIBARR_IMAGE"         "dolibarr/dolibarr:latest"
+_ensure_key "STUDENT_DOCKER_NETWORK" "dolibarr-edu_dolibarr_net"
+
 # ── Recomponer COMPOSE_PROFILES según servicios opcionales activos ──────────
 # nextcloud  → si NC_HOST tiene valor
 # cloudflare → si CLOUDFLARE_TOKEN tiene valor (evita restart loop de cloudflared)
@@ -191,44 +197,21 @@ for i in {1..60}; do
 done
 
 if [[ "$DOLI_READY" == "true" ]]; then
-  # ── Sincronizar contraseña admin Dolibarr ↔ .env (fuente de verdad) ────
-  DOLI_PASS=$(grep "^DOLI_ADMIN_PASSWORD=" "$WORK_DIR/.env" | cut -d'=' -f2-)
-  if [[ -n "$DOLI_PASS" ]]; then
-    info "Sincronizando contraseña del admin de Dolibarr (SQL)..."
-    # La imagen oficial de Dolibarr no incluye scripts/users/changepass.php.
-    # Reseteamos pass_crypted con MD5 (algoritmo por defecto de Dolibarr).
-    if docker compose exec -T db sh -c \
-         "exec mysql -u root -p\"\$MYSQL_ROOT_PASSWORD\" \"\$MYSQL_DATABASE\" -e \"UPDATE llx_user SET pass_crypted=MD5('$DOLI_PASS'), pass=NULL WHERE login='admin';\"" \
-         < /dev/null > /dev/null 2>&1; then
-      success "Contraseña admin sincronizada"
-    else
-      warn "No se pudo cambiar la contraseña automáticamente"
-    fi
-  fi
-
-  # ── Activar módulo REST API (idempotente) ─────────────────────────────
-  info "Activando módulo REST API de Dolibarr..."
-  if docker compose exec -T db sh -c \
-       'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "INSERT INTO llx_const (name, value, type, visible, note, entity) VALUES (\"MAIN_MODULE_API\", \"1\", \"chaine\", 0, \"\", 0) ON DUPLICATE KEY UPDATE value=\"1\";"' \
-       < /dev/null > /dev/null 2>&1; then
-    success "Módulo REST API activo"
-  else
-    warn "No se pudo activar el módulo REST API (actívalo desde Dolibarr → Configuración → Módulos)"
-  fi
-
-  # ── Limpieza: desactivar MultiCompany si quedó activo de instalaciones viejas ─
-  # El módulo fue descontinuado por su autor; ahora trabajamos en single-entity
-  # con cada alumno como tercero (societe). Si los constants quedaron en BD de
-  # versiones previas del panel, los desactivamos para evitar errores.
-  docker compose exec -T db sh -c \
-    'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "DELETE FROM llx_const WHERE name IN (\"MAIN_MODULE_MULTICOMPANY\",\"MAIN_MODULE_MULTICOMPANY_TRANSVERSE_MODE\");"' \
-    < /dev/null > /dev/null 2>&1 || true
+  # ── Reset de alumnos a 'pending' al migrar a contenedor-por-alumno ──────
+  # En la arquitectura nueva, el campo legacy dolibarrEntityId apunta al
+  # tercero de un Dolibarr global que ya no usamos. Marcar como 'pending'
+  # fuerza re-despliegue como contenedor propio cuando el profesor lo pida.
+  info "Marcando alumnos con estado legacy como 'pending' para re-despliegue..."
+  docker compose exec -T panel_db sh -c \
+    "psql -U panel -d panel -c \"UPDATE students SET dolibarr_sync_status='pending', dolibarr_entity_id=NULL, dolibarr_user_id=NULL WHERE dolibarr_sync_status='synced' AND dolibarr_entity_id IS NOT NULL;\"" \
+    < /dev/null > /dev/null 2>&1 || \
+    warn "No se pudo aplicar el reset automático (puedes hacerlo manualmente desde el panel)."
 
   # Reiniciar panel_api para que recoja todo limpio
   docker compose restart panel_api > /dev/null 2>&1 || true
   success "panel_api reiniciado"
 else
-  warn "Dolibarr no respondió a tiempo. Ejecuta de nuevo update.sh dentro de unos minutos."
+  warn "MariaDB no respondió a tiempo. Ejecuta de nuevo update.sh dentro de unos minutos."
 fi
 
 # ── Esperar a que OpenProject esté listo ─────────────────────────────────────

@@ -41,7 +41,6 @@ async function buildAll() {
       "xxhash-addon",
       "bufferutil",
       "utf-8-validate",
-      "ssh2",
       "cpu-features",
       "dtrace-provider",
       "isolated-vm",
@@ -104,7 +103,23 @@ async function buildAll() {
     sourcemap: "linked",
     plugins: [
       // pino relies on workers to handle logging, instead of externalizing it we use a plugin to handle it
-      esbuildPluginPino({ transports: ["pino-pretty"] })
+      esbuildPluginPino({ transports: ["pino-pretty"] }),
+      // Stub deps required eagerly by dockerode/docker-modem that we never use
+      // (we talk to the local Docker daemon via the UNIX socket, no SSH or gRPC).
+      {
+        name: "stub-docker-optional-deps",
+        setup(b) {
+          const stubbed = /^(ssh2|@grpc\/grpc-js|@grpc\/proto-loader|protobufjs)$/;
+          b.onResolve({ filter: stubbed }, (args) => ({
+            path: args.path,
+            namespace: "stub-docker-optional-deps",
+          }));
+          b.onLoad({ filter: /.*/, namespace: "stub-docker-optional-deps" }, () => ({
+            contents: "module.exports = {};",
+            loader: "js",
+          }));
+        },
+      },
     ],
     // Make sure packages that are cjs only (e.g. express) but are bundled continue to work in our esm output file
     banner: {

@@ -1,15 +1,34 @@
 services:
 
-  # ── Base de datos Dolibarr (MariaDB) ────────────────────────────────────────
+  # ── Traefik — reverse proxy con descubrimiento automático ───────────────────
+  # Enruta *.{BASE_DOMAIN} hacia los contenedores Dolibarr de cada alumno
+  # mediante etiquetas Docker. Acepta tráfico HTTP del túnel Cloudflare; TLS
+  # lo termina Cloudflare. Solo escucha en localhost (los puertos los expone
+  # el túnel hacia el exterior).
+  traefik:
+    image: traefik:v3.1
+    container_name: dolibarr_traefik
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--providers.docker.network=dolibarr_net"
+      - "--entrypoints.web.address=:80"
+      - "--log.level=WARN"
+    ports:
+      - "127.0.0.1:${TRAEFIK_PORT:-8090}:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - dolibarr_net
+
+  # ── MariaDB compartida — alberga una BD por alumno ─────────────────────────
   db:
     image: mariadb:10.11
     container_name: dolibarr_db
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
       - ./init/mariadb.cnf:/etc/mysql/conf.d/dolibarr.cnf:ro
@@ -20,38 +39,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # ── Dolibarr ERP ─────────────────────────────────────────────────────────────
-  dolibarr:
-    image: dolibarr/dolibarr:latest
-    container_name: dolibarr_app
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DOLI_DB_HOST: db
-      DOLI_DB_PORT: 3306
-      DOLI_DB_USER: ${MYSQL_USER}
-      DOLI_DB_PASSWORD: ${MYSQL_PASSWORD}
-      DOLI_DB_NAME: ${MYSQL_DATABASE}
-      DOLI_URL_ROOT: ${DOLI_URL_ROOT}
-      DOLI_ADMIN_LOGIN: ${DOLI_ADMIN_LOGIN}
-      DOLI_ADMIN_PASSWORD: ${DOLI_ADMIN_PASSWORD}
-      DOLI_ADMIN_EMAIL: ${DOLI_ADMIN_EMAIL}
-      DOLI_COMPANY_NAME: ${DOLI_COMPANY_NAME}
-      DOLI_COMPANY_COUNTRY_ID: "64"
-      DOLI_MODULES: "modApi,modSociete,modFournisseur,modFacture,modProjet,modStock,modBanque,modContrat,modComptabilite,modHrm"
-      DOLI_AUTH: "dolibarr"
-      DOLI_HTTPS: "0"
-      PHP_INI_DATE_TIMEZONE: "Europe/Madrid"
-    volumes:
-      - dolibarr_docs:/var/www/documents
-      - ./modules:/var/www/html/custom
-    ports:
-      - "127.0.0.1:${APP_PORT:-8069}:80"
-    networks:
-      - dolibarr_net
 
   # ── Base de datos OpenProject (PostgreSQL) ───────────────────────────────────
   openproject_db:
@@ -89,7 +76,6 @@ services:
       OPENPROJECT_RAILS__RELATIVE__URL__ROOT: ""
       OPENPROJECT_DEFAULT__LANGUAGE: "es"
       OPENPROJECT_EDITION: "community"
-      # Confiar en el túnel Cloudflare como proxy HTTPS
       OPENPROJECT_RAILS__FORCE__SSL: "false"
       USE_PUMA: "true"
       DATABASE_URL: "postgres://openproject:${OP_DB_PASSWORD}@openprojectdb/openproject"
@@ -109,8 +95,7 @@ services:
     container_name: dolibarr_collabora
     restart: unless-stopped
     environment:
-      # NC_HOST puede estar vacío; usamos un placeholder inocuo para evitar trailing "https://"
-      aliasgroup1: "https://${DOLI_DOMAIN}|https://${OP_HOST}|https://${NC_HOST:-no-nextcloud.local}"
+      aliasgroup1: "https://${OP_HOST}|https://${NC_HOST:-no-nextcloud.local}"
       DONT_GEN_SSL_CERT: "YES"
       extra_params: >-
         --o:ssl.enable=false
@@ -127,7 +112,6 @@ services:
       - MKNOD
 
   # ── Base de datos Nextcloud (MariaDB) ────────────────────────────────────────
-  # Solo arranca cuando COMPOSE_PROFILES=nextcloud está en .env
   nextcloud_db:
     profiles: ["nextcloud"]
     image: mariadb:10.11
@@ -149,7 +133,6 @@ services:
       retries: 5
 
   # ── Nextcloud — Almacenamiento en la nube ─────────────────────────────────────
-  # Solo arranca cuando COMPOSE_PROFILES=nextcloud está en .env
   nextcloud:
     profiles: ["nextcloud"]
     image: nextcloud:29
@@ -165,7 +148,6 @@ services:
       MYSQL_PASSWORD: ${NC_DB_PASSWORD}
       NEXTCLOUD_ADMIN_USER: ${NC_ADMIN_USER}
       NEXTCLOUD_ADMIN_PASSWORD: ${NC_ADMIN_PASSWORD}
-      # Lista separada por espacios: dominio público + nombre interno Docker para panel_api
       NEXTCLOUD_TRUSTED_DOMAINS: "${NC_HOST} nextcloud localhost"
       TRUSTED_PROXIES: "172.16.0.0/12 10.0.0.0/8"
       OVERWRITEPROTOCOL: https
@@ -217,6 +199,7 @@ services:
       - dolibarr_net
 
   # ── Panel API (Node.js / Express) ─────────────────────────────────────────────
+  # Necesita acceso al socket Docker para orquestar contenedores Dolibarr por alumno.
   panel_api:
     build:
       context: ../
@@ -230,20 +213,34 @@ services:
         condition: service_healthy
       panel_migrator:
         condition: service_completed_successfully
+      db:
+        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: "8080"
       BASE_PATH: /api
       DATABASE_URL: postgresql://panel:${PANEL_DB_PASSWORD}@panel_db:5432/panel
       SESSION_SECRET: ${SESSION_SECRET}
-      DOLIBARR_BASE_URL: http://dolibarr:80
-      DOLI_ADMIN_LOGIN: ${DOLI_ADMIN_LOGIN:-admin}
-      DOLI_ADMIN_PASSWORD: ${DOLI_ADMIN_PASSWORD}
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
+
+      # Orquestación de Dolibarr por alumno
+      BASE_DOMAIN: ${BASE_DOMAIN}
+      DOLIBARR_IMAGE: ${DOLIBARR_IMAGE:-dolibarr/dolibarr:latest}
+      DOLIBARR_MODULES: ${DOLIBARR_MODULES:-modApi,modSociete,modFournisseur,modFacture,modProjet,modStock,modBanque,modContrat,modComptabilite,modHrm}
+      STUDENT_DOCKER_NETWORK: ${STUDENT_DOCKER_NETWORK:-dolibarr-edu_dolibarr_net}
+
+      # MariaDB compartida
+      MARIADB_HOST: db
+      MARIADB_PORT: "3306"
+      MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+      # Nextcloud (opcional)
       NEXTCLOUD_URL: ${NEXTCLOUD_URL:-http://nextcloud:80}
       NC_ADMIN_USER: ${NC_ADMIN_USER:-admin}
       NC_ADMIN_PASSWORD: ${NC_ADMIN_PASSWORD:-}
       NC_HOST: ${NC_HOST:-}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - dolibarr_net
 
@@ -263,8 +260,6 @@ services:
       - dolibarr_net
 
   # ── Cloudflare Tunnel ─────────────────────────────────────────────────────────
-  # Solo arranca cuando COMPOSE_PROFILES incluye "cloudflare" (activado por install.sh
-  # si se proporciona CLOUDFLARE_TOKEN). Así evitamos restart loop con token vacío.
   cloudflared:
     profiles: ["cloudflare"]
     image: cloudflare/cloudflared:latest
@@ -276,7 +271,6 @@ services:
 
 volumes:
   db_data:
-  dolibarr_docs:
   op_db_data:
   op_data:
   nc_db_data:

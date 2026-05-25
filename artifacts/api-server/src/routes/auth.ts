@@ -5,6 +5,8 @@ import { studentsTable, groupsTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { AdminLoginBody, StudentLoginBody } from "@workspace/api-zod";
 import { adminPasswordHash, generateAdminToken } from "../lib/auth";
+import { publicUrl } from "../lib/student-dolibarr";
+import { getBaseDomain } from "./settings";
 
 const router = Router();
 
@@ -41,7 +43,7 @@ router.post("/auth/login", async (req, res) => {
   res.json({ token: generateAdminToken() });
 });
 
-// POST /auth/student-login — alumno accede a su empresa
+// POST /auth/student-login — alumno accede a su Dolibarr propio
 router.post("/auth/student-login", async (req, res) => {
   const parsed = StudentLoginBody.safeParse(req.body);
   if (!parsed.success) {
@@ -56,9 +58,10 @@ router.post("/auth/student-login", async (req, res) => {
       id: studentsTable.id,
       firstName: studentsTable.firstName,
       lastName: studentsTable.lastName,
+      username: studentsTable.username,
       companyName: studentsTable.companyName,
       passwordHash: studentsTable.passwordHash,
-      dolibarrEntityId: studentsTable.dolibarrEntityId,
+      dolibarrSyncStatus: studentsTable.dolibarrSyncStatus,
       groupName: groupsTable.name,
     })
     .from(studentsTable)
@@ -72,11 +75,11 @@ router.post("/auth/student-login", async (req, res) => {
     return;
   }
 
-  const base = (process.env.DOLIBARR_BASE_URL ?? "").replace(/\/$/, "");
+  const baseDomain = await getBaseDomain();
   const dolibarrUrl =
-    student.dolibarrEntityId
-      ? `${base}/societe/card.php?socid=${student.dolibarrEntityId}`
-      : base;
+    baseDomain && student.dolibarrSyncStatus === "synced"
+      ? publicUrl(student.username, baseDomain)
+      : "";
 
   res.json({
     firstName: student.firstName,
@@ -84,7 +87,7 @@ router.post("/auth/student-login", async (req, res) => {
     companyName: student.companyName ?? null,
     groupName: student.groupName ?? "",
     dolibarrUrl,
-    entityId: student.dolibarrEntityId ?? null,
+    entityId: null,
   });
 });
 

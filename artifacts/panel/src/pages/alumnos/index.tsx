@@ -41,7 +41,6 @@ export default function AlumnosList() {
       Grupo: s.groupName,
       Empresa: s.companyName ?? "",
       Estado_Dolibarr: s.dolibarrSyncStatus,
-      Tercero_ID: s.dolibarrEntityId ?? "",
     }));
     downloadCSV(rows, `alumnos-${new Date().toISOString().slice(0, 10)}.csv`);
   };
@@ -155,7 +154,7 @@ export default function AlumnosList() {
                         <div className="mt-1">
                           {student.dolibarrSyncStatus === "synced" ? (
                             <Badge variant="outline" className="text-[10px] h-5 px-1.5 text-green-600 border-green-200 bg-green-50 dark:bg-green-500/10">
-                              ✓ Tercero #{student.dolibarrEntityId}
+                              ✓ Contenedor activo
                             </Badge>
                           ) : student.dolibarrSyncStatus === "error" ? (
                             <Badge variant="outline" className="text-[10px] h-5 px-1.5 text-red-600 border-red-200 bg-red-50 dark:bg-red-500/10">
