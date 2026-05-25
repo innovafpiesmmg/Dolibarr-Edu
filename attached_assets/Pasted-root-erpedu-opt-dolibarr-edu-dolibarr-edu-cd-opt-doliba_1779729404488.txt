@@ -1,0 +1,79 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu/dolibarr-edu
+
+echo "=== ¿Qué imagen usa el contenedor Dolibarr ahora? ==="
+docker compose ps dolibarr
+docker inspect dolibarr_app --format '{{.Config.Image}} | creado {{.Created}}'
+
+echo ""
+echo "=== ¿Existe la imagen custom? ==="
+docker images | grep -E "dolibarr|REPOSITORY"
+
+echo ""
+echo "=== Estructura htdocs del contenedor (¿es del fork hregis?) ==="
+docker compose exec -T dolibarr ls /var/www/html/ | head -30
+
+echo ""
+echo "=== ¿Existe el archivo API de multicompany en el contenedor? ==="
+docker compose exec -T dolibarr find /var/www/html -iname "api_multicompany*" 2>/dev/null
+docker compose exec -T dolibarr find /var/www/html -iname "modMultiCompany*" 2>/dev/null
+
+echo ""
+echo "=== Forzar recreación del contenedor con la imagen nueva ==="
+docker compose up -d --force-recreate dolibarr
+es" 2>&1 | head -c 500 panel_api wget -qO- --header="DOLAPIKEY: $TOKEN" "http://dolibarr/api/index.php/multicompany/entiti
+=== ¿Qué imagen usa el contenedor Dolibarr ahora? ===
+NAME           IMAGE                      COMMAND                  SERVICE    CREATED         STATUS         PORTS
+dolibarr_app   dolibarr-edu-dolibarr-mc   "docker-run.sh apach…"   dolibarr   7 minutes ago   Up 7 minutes   127.0.0.1:8069->80/tcp
+dolibarr-edu-dolibarr-mc | creado 2026-05-25T17:07:36.12405075Z
+
+=== ¿Existe la imagen custom? ===
+WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+dolibarr-edu-dolibarr-mc:latest      ca176a0875fe       1.67GB          389MB   U    
+dolibarr-edu-panel-api:latest        b0a012b0b6fa        239MB           59MB   U    
+dolibarr-edu-panel-migrator:latest   3b17628fa567        580MB          125MB   U    
+dolibarr-edu-panel-web:latest        007fec37ef6e       98.5MB         28.5MB   U    
+dolibarr/dolibarr:latest             9dbf09ca8fac       1.35GB          324MB        
+
+=== Estructura htdocs del contenedor (¿es del fork hregis?) ===
+accountancy
+adherents
+admin
+ai
+api
+asset
+asterisk
+barcode
+blockedlog
+bom
+bookcal
+bookmarks
+categories
+collab
+comm
+commande
+compta
+conf
+contact
+contrat
+core
+cron
+custom
+datapolicy
+dav
+debugbar
+delivery
+document.php
+don
+ecm
+
+=== ¿Existe el archivo API de multicompany en el contenedor? ===
+
+=== Forzar recreación del contenedor con la imagen nueva ===
+[+] up 2/2
+ ✔ Container dolibarr_db  Healthy                                                                                     2.4s
+ ✔ Container dolibarr_app Recreated                                                                                   1.8s
+
+=== Probar endpoint de nuevo ===
+Token: ...
+wget: server returned error: HTTP/1.1 501 API not found (failed to include API file)
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 
