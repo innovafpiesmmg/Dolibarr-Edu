@@ -1,0 +1,53 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-educd /opt/dolibarr-edu/dolibarr-edu && \ \
+echo "→ Rebuild forzado de panel_api (sin caché, esto tarda unos minutos)..." && \
+docker compose build --no-cache panel_api && \
+echo "→ Recreando contenedor..." && \
+docker compose up -d --force-recreate panel_api && \
+sleep 12 && \
+echo "→ Versión del nuevo bundle:" && \
+docker compose exec -T panel_api sh -c 'grep -c "DOLI_ADMIN_LOGIN" /app/dist/index.mjs' && \
+echo "✓ Recarga el panel y vuelve a probar el deploy del alumno."
+→ Rebuild forzado de panel_api (sin caché, esto tarda unos minutos)...
+[+] Building 50.4s (19/19) FINISHED                                                                                       
+ => [internal] load local bake definitions                                                                           0.0s
+ => => reading from stdin 1.06kB                                                                                     0.0s
+ => [internal] load build definition from Dockerfile.api                                                             0.0s
+ => => transferring dockerfile: 1.59kB                                                                               0.0s
+ => [internal] load metadata for docker.io/library/node:24-alpine                                                    0.6s
+ => [internal] load .dockerignore                                                                                    0.0s
+ => => transferring context: 146B                                                                                    0.0s
+ => [builder  1/10] FROM docker.io/library/node:24-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb75  0.1s
+ => => resolve docker.io/library/node:24-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5  0.1s
+ => [internal] load build context                                                                                    0.1s
+ => => transferring context: 4.05kB                                                                                  0.0s
+ => CACHED [api 2/3] WORKDIR /app                                                                                    0.0s
+ => CACHED [builder  2/10] WORKDIR /workspace                                                                        0.0s
+ => [builder  3/10] RUN corepack enable && corepack prepare pnpm@latest --activate                                   3.7s
+ => [builder  4/10] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./                                          0.7s 
+ => [builder  5/10] COPY tsconfig*.json ./                                                                           0.2s
+ => [builder  6/10] COPY lib/ ./lib/                                                                                 0.5s
+ => [builder  7/10] COPY artifacts/api-server/ ./artifacts/api-server/                                               0.2s
+ => [builder  8/10] RUN pnpm install --frozen-lockfile --ignore-scripts                                             25.0s
+ => [builder  9/10] RUN pnpm run typecheck:libs                                                                     12.0s 
+ => [builder 10/10] RUN pnpm --filter @workspace/api-server run build                                                2.7s
+ => [api 3/3] COPY --from=builder /workspace/artifacts/api-server/dist ./dist                                        0.2s
+ => exporting to image                                                                                               3.7s
+ => => exporting layers                                                                                              1.2s
+ => => exporting manifest sha256:0b294554a93ff6e608542c330b3dc48a4e38d85f0042996918d0925ebfe700d9                    0.1s
+ => => exporting config sha256:1a2381ac16ca4129846aeb90c7ef862f969bd3fbaa5574be1700c25efe29a37c                      0.1s
+ => => exporting attestation manifest sha256:addcddde1061c7794b191d46fee4d8dd8d2747803c39489ed900ddbd80d11d3e        1.1s
+ => => exporting manifest list sha256:3fccf887f9b18284f45ba449212294daed8ce6b620dcd3878107c6d5c77f1f14               0.2s
+ => => naming to docker.io/library/dolibarr-edu-panel-api:latest                                                     0.0s
+ => => unpacking to docker.io/library/dolibarr-edu-panel-api:latest                                                  0.9s
+ => resolving provenance for metadata file                                                                           0.0s
+[+] build 1/2
+ ✔ Image dolibarr-edu-panel-api      Built                                                                           50.6s
+ ⠙ Image dolibarr-edu-panel-migrator Building                                                                        50.6s
+→ Recreando contenedor...
+[+] up 3/3
+ ✔ Container dolibarr_panel_db       Healthy                                                                         12.9s
+ ✔ Container dolibarr_panel_api      Recreated                                                                       11.2s
+ ✔ Container dolibarr_panel_migrator Exited                                                                          4.4s
+→ Versión del nuevo bundle:
+0
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 
