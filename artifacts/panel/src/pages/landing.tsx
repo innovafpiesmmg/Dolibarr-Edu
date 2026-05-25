@@ -211,22 +211,28 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
 
       {/* Nav */}
-      <nav className="fixed top-0 w-full z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
+      <nav className="fixed top-0 w-full z-50 border-b border-white/10 bg-black">
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary">
-            <BookOpen className="h-6 w-6" />
-            <span>ERP EDU</span>
+          <div className="flex items-center gap-2.5">
+            <img src="/images/logo.png" alt="ERP EDU" className="h-8 w-auto" />
+            <span className="font-bold text-xl tracking-tight text-white">ERP EDU</span>
           </div>
           <div className="flex items-center gap-3">
             <a
               href="https://github.com/innovafpiesmmg/Dolibarr-Edu"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="hidden md:flex items-center gap-1.5 text-sm text-white/60 hover:text-white transition-colors"
             >
               <Github className="h-4 w-4" />
               GitHub
             </a>
+            <Button variant="outline" className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white" asChild>
+              <a href="#acceso-alumno">
+                <LogIn className="mr-2 h-4 w-4" />
+                Portal del alumno
+              </a>
+            </Button>
             <Button asChild>
               <Link href="/login">
                 Panel de gestión <ArrowRight className="ml-2 h-4 w-4" />
