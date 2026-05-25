@@ -961,7 +961,7 @@ export default function LandingPage() {
               className="flex items-center gap-1 hover:text-white transition-colors"
             >
               <FileSpreadsheet className="h-3.5 w-3.5" />
-              LibreOffice Online
+              Collabora Online
             </a>
           </div>
         </div>
