@@ -474,6 +474,8 @@ export interface Settings {
   taxSystem: SettingsTaxSystem;
   currency: string;
   language: string;
+  openprojectUrl: string;
+  collaboraUrl: string;
 }
 
 export type SettingsInputTaxSystem = typeof SettingsInputTaxSystem[keyof typeof SettingsInputTaxSystem];
@@ -486,6 +488,8 @@ export const SettingsInputTaxSystem = {
 
 export interface SettingsInput {
   taxSystem?: SettingsInputTaxSystem;
+  openprojectUrl?: string;
+  collaboraUrl?: string;
 }
 
 export type StatsStudentsPerGroupItem = {

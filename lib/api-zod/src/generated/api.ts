@@ -977,7 +977,9 @@ export const ListActivityResponse = zod.array(ListActivityResponseItem)
 export const GetSettingsResponse = zod.object({
   "taxSystem": zod.enum(['iva', 'igic']),
   "currency": zod.string(),
-  "language": zod.string()
+  "language": zod.string(),
+  "openprojectUrl": zod.string(),
+  "collaboraUrl": zod.string()
 })
 
 
@@ -985,13 +987,17 @@ export const GetSettingsResponse = zod.object({
  * @summary Actualiza la configuración del panel
  */
 export const UpdateSettingsBody = zod.object({
-  "taxSystem": zod.enum(['iva', 'igic']).optional()
+  "taxSystem": zod.enum(['iva', 'igic']).optional(),
+  "openprojectUrl": zod.string().optional(),
+  "collaboraUrl": zod.string().optional()
 })
 
 export const UpdateSettingsResponse = zod.object({
   "taxSystem": zod.enum(['iva', 'igic']),
   "currency": zod.string(),
-  "language": zod.string()
+  "language": zod.string(),
+  "openprojectUrl": zod.string(),
+  "collaboraUrl": zod.string()
 })
 
 

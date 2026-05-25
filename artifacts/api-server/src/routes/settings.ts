@@ -8,6 +8,8 @@ const DEFAULTS: Record<string, string> = {
   taxSystem: "igic",
   currency: "EUR",
   language: "es_ES",
+  openprojectUrl: process.env.OP_HOST ? `https://${process.env.OP_HOST}` : "",
+  collaboraUrl: process.env.COLLABORA_DOMAIN ? `https://${process.env.COLLABORA_DOMAIN}` : "",
 };
 
 async function getSetting(key: string): Promise<string> {
@@ -23,17 +25,27 @@ export async function getTaxSystem(): Promise<"iva" | "igic"> {
   return val === "iva" ? "iva" : "igic";
 }
 
-router.get("/settings", async (req, res) => {
-  const [taxSystem, currency, language] = await Promise.all([
+async function getAllSettings() {
+  const [taxSystem, currency, language, openprojectUrl, collaboraUrl] = await Promise.all([
     getSetting("taxSystem"),
     getSetting("currency"),
     getSetting("language"),
+    getSetting("openprojectUrl"),
+    getSetting("collaboraUrl"),
   ]);
-  res.json({ taxSystem, currency, language });
+  return { taxSystem, currency, language, openprojectUrl, collaboraUrl };
+}
+
+router.get("/settings", async (req, res) => {
+  res.json(await getAllSettings());
 });
 
 router.patch("/settings", async (req, res) => {
-  const { taxSystem } = req.body as { taxSystem?: string };
+  const { taxSystem, openprojectUrl, collaboraUrl } = req.body as {
+    taxSystem?: string;
+    openprojectUrl?: string;
+    collaboraUrl?: string;
+  };
 
   const updates: { key: string; value: string }[] = [];
 
@@ -45,6 +57,14 @@ router.patch("/settings", async (req, res) => {
     updates.push({ key: "taxSystem", value: taxSystem });
   }
 
+  if (openprojectUrl !== undefined) {
+    updates.push({ key: "openprojectUrl", value: openprojectUrl });
+  }
+
+  if (collaboraUrl !== undefined) {
+    updates.push({ key: "collaboraUrl", value: collaboraUrl });
+  }
+
   for (const { key, value } of updates) {
     await db
       .insert(settingsTable)
@@ -52,12 +72,7 @@ router.patch("/settings", async (req, res) => {
       .onConflictDoUpdate({ target: settingsTable.key, set: { value, updatedAt: new Date() } });
   }
 
-  const [ts, currency, language] = await Promise.all([
-    getSetting("taxSystem"),
-    getSetting("currency"),
-    getSetting("language"),
-  ]);
-  res.json({ taxSystem: ts, currency, language });
+  res.json(await getAllSettings());
 });
 
 export default router;

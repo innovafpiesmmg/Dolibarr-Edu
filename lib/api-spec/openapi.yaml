@@ -1355,7 +1355,7 @@ components:
     # ── Settings ─────────────────────────────────────────
     Settings:
       type: object
-      required: [taxSystem, currency, language]
+      required: [taxSystem, currency, language, openprojectUrl, collaboraUrl]
       properties:
         taxSystem:
           type: string
@@ -1364,6 +1364,10 @@ components:
           type: string
         language:
           type: string
+        openprojectUrl:
+          type: string
+        collaboraUrl:
+          type: string
 
     SettingsInput:
       type: object
@@ -1371,6 +1375,10 @@ components:
         taxSystem:
           type: string
           enum: [iva, igic]
+        openprojectUrl:
+          type: string
+        collaboraUrl:
+          type: string
 
     # ── Stats ────────────────────────────────────────────
     Stats:
