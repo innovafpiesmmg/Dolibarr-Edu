@@ -1,0 +1,35 @@
+FROM node:24-alpine AS builder
+WORKDIR /workspace
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Workspace config
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY tsconfig*.json ./
+
+# Libs compartidas
+COPY lib/ ./lib/
+
+# API server
+COPY artifacts/api-server/ ./artifacts/api-server/
+
+# Instalar dependencias
+RUN pnpm install --frozen-lockfile
+
+# Compilar libs (tipos necesarios para esbuild)
+RUN pnpm run typecheck:libs
+
+# Build del API server
+RUN pnpm --filter @workspace/api-server run build
+
+# ── Imagen de producción ──────────────────────────────────────────────────────
+FROM node:24-alpine
+WORKDIR /app
+
+COPY --from=builder /workspace/artifacts/api-server/dist ./dist
+
+ENV NODE_ENV=production
+ENV PORT=8080
+ENV BASE_PATH=/api
+
+CMD ["node", "--enable-source-maps", "./dist/index.mjs"]

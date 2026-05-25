@@ -121,6 +121,62 @@ services:
     cap_add:
       - MKNOD
 
+  # ── Base de datos del Panel (PostgreSQL) ─────────────────────────────────────
+  panel_db:
+    image: postgres:16-alpine
+    container_name: dolibarr_panel_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: panel
+      POSTGRES_USER: panel
+      POSTGRES_PASSWORD: ${PANEL_DB_PASSWORD}
+    volumes:
+      - panel_db_data:/var/lib/postgresql/data
+    networks:
+      - dolibarr_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U panel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Panel API (Node.js / Express) ─────────────────────────────────────────────
+  panel_api:
+    build:
+      context: ../
+      dockerfile: dolibarr-edu/Dockerfile.api
+    image: dolibarr-edu-panel-api
+    container_name: dolibarr_panel_api
+    restart: unless-stopped
+    depends_on:
+      panel_db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      BASE_PATH: /api
+      DATABASE_URL: postgresql://panel:${PANEL_DB_PASSWORD}@panel_db:5432/panel
+      SESSION_SECRET: ${SESSION_SECRET}
+      DOLIBARR_BASE_URL: ${DOLIBARR_BASE_URL:-${DOLI_URL_ROOT}}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
+    networks:
+      - dolibarr_net
+
+  # ── Panel Web (React + Nginx) ─────────────────────────────────────────────────
+  panel_web:
+    build:
+      context: ../
+      dockerfile: dolibarr-edu/Dockerfile.panel
+    image: dolibarr-edu-panel-web
+    container_name: dolibarr_panel_web
+    restart: unless-stopped
+    depends_on:
+      - panel_api
+    ports:
+      - "127.0.0.1:${PANEL_PORT:-8068}:80"
+    networks:
+      - dolibarr_net
+
   # ── Cloudflare Tunnel ────────────────────────────────────────────────────────
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -135,6 +191,7 @@ volumes:
   dolibarr_docs:
   op_db_data:
   op_data:
+  panel_db_data:
 
 networks:
   dolibarr_net:

@@ -1,0 +1,34 @@
+FROM node:24-alpine AS builder
+WORKDIR /workspace
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Workspace config
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY tsconfig*.json ./
+
+# Libs compartidas
+COPY lib/ ./lib/
+
+# Panel frontend
+COPY artifacts/panel/ ./artifacts/panel/
+
+# Carpeta de assets (alias @assets en vite)
+RUN mkdir -p attached_assets
+
+# Instalar dependencias
+RUN pnpm install --frozen-lockfile
+
+# Compilar libs
+RUN pnpm run typecheck:libs
+
+# Build del panel (BASE_PATH=/ porque nginx sirve todo desde la raíz)
+ENV NODE_ENV=production
+ENV PORT=80
+ENV BASE_PATH=/
+RUN pnpm --filter @workspace/panel run build
+
+# ── Imagen de producción (nginx) ──────────────────────────────────────────────
+FROM nginx:alpine
+COPY --from=builder /workspace/artifacts/panel/dist/public /usr/share/nginx/html
+COPY dolibarr-edu/nginx-panel.conf /etc/nginx/conf.d/default.conf

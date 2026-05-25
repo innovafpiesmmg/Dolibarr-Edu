@@ -1,0 +1,9 @@
+.git
+.local
+node_modules
+**/node_modules
+**/.env
+**/dist
+**/*.log
+dolibarr-edu/cloudflare
+attached_assets

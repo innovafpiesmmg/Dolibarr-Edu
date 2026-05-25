@@ -76,12 +76,14 @@ if [[ ! -f "$WORK_DIR/.env" ]]; then
   cp "$WORK_DIR/.env.example" "$WORK_DIR/.env"
   info "Generando contraseñas aleatorias..."
 
-  sed -i "s|cambia_esta_contrasena_root|$(gen_pass 24)|g"     "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_contrasena_db|$(gen_pass 24)|g"       "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_contrasena_openproject|$(gen_pass 24)|g" "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_contrasena_root|$(gen_pass 24)|g"         "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_contrasena_db|$(gen_pass 24)|g"           "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_contrasena_openproject|$(gen_pass 24)|g"  "$WORK_DIR/.env"
   sed -i "s|cambia_esta_clave_secreta_openproject|$(openssl rand -hex 64)|g" "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_contrasena_collabora|$(gen_pass 20)|g" "$WORK_DIR/.env"
-  sed -i "s|^SESSION_SECRET=.*|SESSION_SECRET=$(gen_pass 48)|" "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_contrasena_collabora|$(gen_pass 20)|g"    "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_contrasena_panel|$(gen_pass 24)|g"        "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_clave_sesion|$(gen_pass 48)|g"            "$WORK_DIR/.env"
+  sed -i "s|^SESSION_SECRET=.*|SESSION_SECRET=$(gen_pass 48)|"    "$WORK_DIR/.env"
 
   # Dolibarr admin — guardar para mostrarlo luego
   DOLI_ADMIN_PASS=$(gen_pass 16)
@@ -129,20 +131,24 @@ echo ""
 echo "  Pulsa Enter para aceptar los valores por defecto."
 echo ""
 
-read -rp "  URL de Dolibarr ERP     [https://erp.micentro.es]: " DOLI_URL < /dev/tty
+read -rp "  URL de Dolibarr ERP        [https://erp.micentro.es]: "   DOLI_URL < /dev/tty
 DOLI_URL="${DOLI_URL:-https://erp.micentro.es}"
 DOLI_DOMAIN=$(echo "$DOLI_URL" | sed 's|https\?://||' | cut -d'/' -f1)
 
-read -rp "  Dominio de OpenProject  [proyectos.micentro.es]: " OP_HOST < /dev/tty
+read -rp "  URL del Panel de gestión   [https://panel.micentro.es]: " PANEL_URL < /dev/tty
+PANEL_URL="${PANEL_URL:-https://panel.micentro.es}"
+
+read -rp "  Dominio de OpenProject     [proyectos.micentro.es]: "     OP_HOST < /dev/tty
 OP_HOST="${OP_HOST:-proyectos.micentro.es}"
 
-read -rp "  Dominio de Collabora    [office.micentro.es]: "    OFFICE_HOST < /dev/tty
+read -rp "  Dominio de Collabora       [office.micentro.es]: "        OFFICE_HOST < /dev/tty
 OFFICE_HOST="${OFFICE_HOST:-office.micentro.es}"
 
 sed -i "s|^DOLI_URL_ROOT=.*|DOLI_URL_ROOT=$DOLI_URL|"         "$WORK_DIR/.env"
 sed -i "s|^DOLI_DOMAIN=.*|DOLI_DOMAIN=$DOLI_DOMAIN|"           "$WORK_DIR/.env"
 sed -i "s|^DOLIBARR_BASE_URL=.*|DOLIBARR_BASE_URL=$DOLI_URL|" "$WORK_DIR/.env"
 sed -i "s|^OP_HOST=.*|OP_HOST=$OP_HOST|"                       "$WORK_DIR/.env"
+sed -i "s|^PANEL_URL=.*|PANEL_URL=$PANEL_URL|"                 "$WORK_DIR/.env"
 success "URLs configuradas"
 
 # ── Cloudflare Tunnel (opcional) ──────────────────────────────────────────────
