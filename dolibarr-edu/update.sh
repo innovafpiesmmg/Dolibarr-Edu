@@ -168,8 +168,10 @@ cd "$WORK_DIR"
 info "Descargando nuevas imágenes Docker (puede tardar varios minutos)..."
 docker compose pull --ignore-buildable
 
-info "Reconstruyendo imágenes del panel..."
-docker compose build panel_migrator panel_api panel_web
+info "Reconstruyendo imágenes del panel sin caché (garantiza código actualizado)..."
+# --no-cache es crítico: sin él, Docker reutiliza capas antiguas aunque el código fuente
+# haya cambiado en GitHub, dejando el panel con una versión vieja del backend.
+docker compose build --no-cache panel_migrator panel_api panel_web
 
 info "Reiniciando servicios..."
 docker compose up -d --remove-orphans
