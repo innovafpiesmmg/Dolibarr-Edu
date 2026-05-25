@@ -328,6 +328,43 @@ crontab -e
 
 ---
 
+## Reinstalación limpia
+
+> ⚠ **Esta operación elimina todos los datos** (BD, ficheros, configuración). Úsala solo si quieres empezar desde cero.
+
+El script `reset.sh` hace backup de las bases de datos y el `.env`, para todos los contenedores, borra los volúmenes, elimina el directorio y lanza el instalador automáticamente.
+
+```bash
+bash /opt/dolibarr-edu/dolibarr-edu/reset.sh
+```
+
+El script pedirá confirmación escribiendo **RESETEAR** antes de proceder.
+
+### Opciones
+
+| Opción | Efecto |
+|---|---|
+| `--skip-backup` | Omite el backup previo (más rápido, sin red de seguridad) |
+| `--yes` | No pide confirmación (uso en scripts no interactivos) |
+
+```bash
+# Sin backup ni confirmación
+bash reset.sh --skip-backup --yes
+```
+
+### ¿Qué hace exactamente?
+
+1. **Backup automático** en `~/erp-edu-backup-<fecha>/`:
+   - `env_backup.txt` — copia del `.env` con todas las contraseñas
+   - `backup_dolibarr.sql` — volcado de la BD de Dolibarr
+   - `backup_panel.sql` — volcado de la BD del panel
+2. `docker compose down -v` — para contenedores y borra volúmenes
+3. Elimina imágenes Docker del panel
+4. Borra `/opt/dolibarr-edu`
+5. Ejecuta `install.sh` — instalación completa desde cero
+
+---
+
 ## Resolución de problemas
 
 ### El panel da 502
