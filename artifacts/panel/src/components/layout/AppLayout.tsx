@@ -52,7 +52,7 @@ export function AppSidebar() {
     <Sidebar className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
       <SidebarHeader className="h-16 flex items-center px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-sidebar-primary">
-          <BookOpen className="h-6 w-6 text-sidebar-primary" />
+          <img src="/images/logo.png" alt="ERP EDU" className="h-7 w-7 object-contain" />
           <span>ERP EDU</span>
         </div>
       </SidebarHeader>
