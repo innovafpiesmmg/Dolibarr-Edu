@@ -1,0 +1,139 @@
+root@erpedu:~# curl -fsSL https://raw.githubusercontent.com/innovafpiesmmg/Dolibarr-Edu/main/install.sh | bash
+
+╔══════════════════════════════════════════════════════════════╗
+║                  ERP EDU — Instalación                      ║
+║  Dolibarr ERP + Panel de gestión para FP                    ║
+║  https://github.com/innovafpiesmmg/Dolibarr-Edu             ║
+╚══════════════════════════════════════════════════════════════╝
+
+[WARN]  Ejecutando como root.
+[INFO]  Actualizando lista de paquetes...
+[OK]    curl disponible
+[OK]    git disponible
+[OK]    openssl disponible
+[OK]    Docker 29.2.1 disponible
+[WARN]  El repositorio ya existe en /opt/dolibarr-edu — se omite el clonado.
+[INFO]  Actualizando ficheros del repositorio...
+[OK]    Ficheros actualizados desde GitHub
+[WARN]  .env ya existe — se mantiene la configuración actual.
+[OK]    Contraseña del panel ya configurada
+
+┌─────────────────────────────────────────────────────────┐
+│           URLs públicas (dominios del centro)            │
+└─────────────────────────────────────────────────────────┘
+
+  Pulsa Enter para aceptar los valores por defecto.
+
+  URL de Dolibarr ERP       [erp.iesmmg.es]: 
+  URL del Panel de gestión  [panel.iesmmg.es]: 
+  Dominio de OpenProject    [proyectos.iesmmg.es]: 
+  Dominio de Collabora      [office.iesmmg.es]: 
+[OK]    URLs configuradas
+
+┌─────────────────────────────────────────────────────────┐
+│           Cloudflare Tunnel (opcional)                   │
+└─────────────────────────────────────────────────────────┘
+
+[OK]    Token de Cloudflare ya configurado
+
+╔══════════════════════════════════════════════════════════════╗
+║        GUARDA ESTAS CREDENCIALES EN LUGAR SEGURO            ║
+╠══════════════════════════════════════════════════════════════╣
+║  Dolibarr admin:              admin / (ver /opt/dolibarr-edu/dolibarr-edu/.env → DOLI_ADMIN_PASSWORD)║
+║  OpenProject:                 admin / admin (cámbiala)      ║
+╠══════════════════════════════════════════════════════════════╣
+║  Dolibarr ERP:                erp.iesmmg.es                  ║
+║  Panel de gestión:           panel.iesmmg.es                ║
+║  OpenProject:                 https://proyectos.iesmmg.es    ║
+║  Collabora Online:            https://office.iesmmg.es       ║
+╚══════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────┐
+│           Arrancar servicios                             │
+└─────────────────────────────────────────────────────────┘
+
+  Las imágenes del panel se construyen localmente (Node.js + React).
+  Este proceso tarda ~5-10 minutos la primera vez.
+
+  ¿Construir imágenes y arrancar todos los servicios ahora? [S/n]: s
+[INFO]  Construyendo imágenes del panel (esto tarda unos minutos)...
+[+] Building 3.3s (39/39) FINISHED                                                                                        
+ => [internal] load local bake definitions                                                                           0.0s
+ => => reading from stdin 1.40kB                                                                                     0.0s
+ => [panel_web internal] load build definition from Dockerfile.panel                                                 0.0s
+ => => transferring dockerfile: 1.12kB                                                                               0.0s
+ => [panel_api internal] load build definition from Dockerfile.api                                                   0.1s
+ => => transferring dockerfile: 1.06kB                                                                               0.0s
+ => [panel_web internal] load metadata for docker.io/library/nginx:alpine                                            1.1s
+ => [panel_web internal] load metadata for docker.io/library/node:24                                                 1.1s
+ => [panel_api internal] load metadata for docker.io/library/node:24-alpine                                          1.0s
+ => [panel_api internal] load .dockerignore                                                                          0.1s
+ => => transferring context: 146B                                                                                    0.0s
+ => [panel_api builder  1/10] FROM docker.io/library/node:24-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1  0.2s
+ => => resolve docker.io/library/node:24-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5  0.2s
+ => [panel_api internal] load build context                                                                          0.1s
+ => => transferring context: 4.05kB                                                                                  0.0s
+ => [panel_web builder  1/11] FROM docker.io/library/node:24@sha256:8530f76a96d88820d288761f022e318970dda93d0153691  0.3s
+ => => resolve docker.io/library/node:24@sha256:8530f76a96d88820d288761f022e318970dda93d01536919fbc16076b7983e63     0.2s
+ => [panel_web internal] load build context                                                                          0.1s
+ => => transferring context: 10.08kB                                                                                 0.0s
+ => [panel_web stage-1 1/3] FROM docker.io/library/nginx:alpine@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598  0.3s
+ => => resolve docker.io/library/nginx:alpine@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e58  0.2s
+ => CACHED [panel_web builder  2/11] WORKDIR /workspace                                                              0.0s
+ => CACHED [panel_web builder  3/11] RUN corepack enable && corepack prepare pnpm@latest --activate                  0.0s
+ => CACHED [panel_web builder  4/11] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./                         0.0s
+ => CACHED [panel_web builder  5/11] COPY tsconfig*.json ./                                                          0.0s
+ => CACHED [panel_web builder  6/11] COPY lib/ ./lib/                                                                0.0s
+ => CACHED [panel_web builder  7/11] COPY artifacts/panel/ ./artifacts/panel/                                        0.0s
+ => CACHED [panel_web builder  8/11] RUN mkdir -p attached_assets                                                    0.0s
+ => CACHED [panel_web builder  9/11] RUN pnpm install --frozen-lockfile --ignore-scripts                             0.0s
+ => CACHED [panel_web builder 10/11] RUN pnpm run typecheck:libs                                                     0.0s
+ => CACHED [panel_web builder 11/11] RUN pnpm --filter @workspace/panel run build                                    0.0s
+ => CACHED [panel_web stage-1 2/3] COPY --from=builder /workspace/artifacts/panel/dist/public /usr/share/nginx/html  0.0s
+ => CACHED [panel_web stage-1 3/3] COPY dolibarr-edu/nginx-panel.conf /etc/nginx/conf.d/default.conf                 0.0s
+ => [panel_web] exporting to image                                                                                   0.7s
+ => => exporting layers                                                                                              0.0s
+ => => exporting manifest sha256:8c318d1b60d27ec80b898fbe7925768acfb435d2e2de8ec46efd82960942d558                    0.0s
+ => => exporting config sha256:d1d6e0585e5fe8a8964f5d803ec9973374ca650cfabcd3a02c6b21df7ca399ee                      0.0s
+ => => exporting attestation manifest sha256:52d63129560f33331f40a85e289fd868bda33cb6b7f119c8f43977ce7560fe62        0.3s
+ => => exporting manifest list sha256:8983418b6262f3fdc030ee8a60c0f7a086067e4d7b1694999389e918688d3f28               0.2s
+ => => naming to docker.io/library/dolibarr-edu-panel-web:latest                                                     0.0s
+ => => unpacking to docker.io/library/dolibarr-edu-panel-web:latest                                                  0.0s
+ => CACHED [panel_api stage-1 2/3] WORKDIR /app                                                                      0.0s
+ => CACHED [panel_api builder  2/10] WORKDIR /workspace                                                              0.0s
+ => CACHED [panel_api builder  3/10] RUN corepack enable && corepack prepare pnpm@latest --activate                  0.0s
+ => CACHED [panel_api builder  4/10] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./                         0.0s
+ => CACHED [panel_api builder  5/10] COPY tsconfig*.json ./                                                          0.0s
+ => CACHED [panel_api builder  6/10] COPY lib/ ./lib/                                                                0.0s
+ => CACHED [panel_api builder  7/10] COPY artifacts/api-server/ ./artifacts/api-server/                              0.0s
+ => CACHED [panel_api builder  8/10] RUN pnpm install --frozen-lockfile --ignore-scripts                             0.0s
+ => CACHED [panel_api builder  9/10] RUN pnpm run typecheck:libs                                                     0.0s
+ => CACHED [panel_api builder 10/10] RUN pnpm --filter @workspace/api-server run build                               0.0s
+ => CACHED [panel_api stage-1 3/3] COPY --from=builder /workspace/artifacts/api-server/dist ./dist                   0.0s
+ => [panel_api] exporting to image                                                                                   0.7s
+ => => exporting layers                                                                                              0.0s
+ => => exporting manifest sha256:f22fe6981aebbf6538444a122501ef598afbe4cd039f78b27795ffc069eab5e3                    0.0s
+ => => exporting config sha256:002164d1a3cb9362a10b959ca71cdd6b039062c67e172aae59987319212ae82e                      0.0s
+ => => exporting attestation manifest sha256:5b02ea4a0389a27936ee5d6246029aa2412da2420653aa25ce59b4d6d5d7a397        0.3s
+ => => exporting manifest list sha256:00c3e784e867ac21fa62c149a141adbaa804fd5dae7b85268adb5e466c5e9864               0.2s
+ => => naming to docker.io/library/dolibarr-edu-panel-api:latest                                                     0.0s
+ => => unpacking to docker.io/library/dolibarr-edu-panel-api:latest                                                  0.0s
+ => [panel_api] resolving provenance for metadata file                                                               0.0s
+ => [panel_web] resolving provenance for metadata file                                                               0.0s
+[+] build 2/3
+ ✔ Image dolibarr-edu-panel-api      Built                                                                            3.4s
+ ⠙ Image dolibarr-edu-panel-migrator Building                                                                         3.4s
+ ✔ Image dolibarr-edu-panel-web      Built                                                                            3.4s
+[INFO]  Arrancando todos los servicios...
+[+] up 0/1
+ ⠧ Image dolibarr-edu-panel-migrator Pulling                                                                          0.7s
+[+] Building 0.5s (2/2) FINISHED                                                                                          
+ => [internal] load local bake definitions                                                                           0.0s
+ => => reading from stdin 1.39kB                                                                                     0.0s
+[+] up 0/3nal] load build definition from Dockerfile.migrator                                                        0.0s
+ ⠇ Image dolibarr-edu-panel-migrator Building                                                                         1.4s
+ ⠙ Image dolibarr-edu-panel-web      Building                                                                         0.6s
+ ⠙ Image dolibarr-edu-panel-api      Building                                                                         0.6s
+failed to solve: failed to read dockerfile: open Dockerfile.migrator: no such file or directory
+
+root@erpedu:~# 
