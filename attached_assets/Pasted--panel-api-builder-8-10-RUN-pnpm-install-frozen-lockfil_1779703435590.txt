@@ -1,0 +1,192 @@
+ => [panel_api builder  8/10] RUN pnpm install --frozen-lockfile --ignore-scripts                                                                     23.2s
+ => [panel_api builder  9/10] RUN pnpm run typecheck:libs                                                                                             14.5s
+ => [panel_web builder 10/11] RUN pnpm run typecheck:libs                                                                                             14.6s
+ => [panel_api builder 10/10] RUN pnpm --filter @workspace/api-server run build                                                                        3.9s
+ => ERROR [panel_web builder 11/11] RUN pnpm --filter @workspace/panel run build                                                                       2.9s
+ => [panel_api stage-1 3/3] COPY --from=builder /workspace/artifacts/api-server/dist ./dist                                                            0.8s
+ => CANCELED [panel_api] exporting to image                                                                                                            1.7s
+ => => exporting layers                                                                                                                                1.6s
+ => => exporting manifest sha256:4c01aea88c0278e99a34e0aae0766ffbb0a5efccf813aabd0b4006b01455f040                                                      0.1s
+------
+ > [panel_web builder 11/11] RUN pnpm --filter @workspace/panel run build:
+2.043 $ vite build --config vite.config.ts
+2.412 /workspace/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/native.js:115
+2.412           throw new Error(
+2.412                 ^
+2.412 
+2.412 Error: Cannot find module @rollup/rollup-linux-x64-musl. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try `npm i` again after removing both package-lock.json and node_modules directory.
+2.412     at requireWithFriendlyError (/workspace/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/native.js:115:9)
+2.412     at Object.<anonymous> (/workspace/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/native.js:124:76)
+2.412     at Module._compile (node:internal/modules/cjs/loader:1854:14)
+2.412     at Object..js (node:internal/modules/cjs/loader:1985:10)
+2.412     at Module.load (node:internal/modules/cjs/loader:1577:32)
+2.412     at Module._load (node:internal/modules/cjs/loader:1379:12)
+2.412     at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+2.412     at loadCJSModuleWithModuleLoad (node:internal/modules/esm/translators:326:3)
+2.412     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:231:7)
+2.412     at ModuleJob.run (node:internal/modules/esm/module_job:439:25) {
+2.412   [cause]: Error: Cannot find module '@rollup/rollup-linux-x64-musl'
+2.412   Require stack:
+2.412   - /workspace/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/native.js
+2.412       at Module._resolveFilename (node:internal/modules/cjs/loader:1500:15)
+2.412       at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+2.412       at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+2.412       at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1116:12)
+2.412       at Module._load (node:internal/modules/cjs/loader:1285:25)
+2.412       at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+2.412       at Module.require (node:internal/modules/cjs/loader:1600:12)
+2.412       at require (node:internal/modules/helpers:153:16)
+2.412       at requireWithFriendlyError (/workspace/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/native.js:97:10)
+2.412       at Object.<anonymous> (/workspace/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/native.js:124:76) {
+2.412     code: 'MODULE_NOT_FOUND',
+2.412     requireStack: [
+2.412       '/workspace/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/native.js'
+2.412     ]
+2.412   }
+2.412 }
+2.412 
+2.412 Node.js v24.16.0
+2.474 /workspace/artifacts/panel:
+2.474 [ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @workspace/panel@0.0.0 build: `vite build --config vite.config.ts`
+2.474 Exit status 1
+------
+[+] build 0/2
+ ⠙ Image dolibarr-edu-panel-api Building                                                                                                               45.6s
+ ⠙ Image dolibarr-edu-panel-web Building                                                                                                               45.6s
+Dockerfile.panel:29
+
+--------------------
+
+  27 |     ENV PORT=80
+
+  28 |     ENV BASE_PATH=/
+
+  29 | >>> RUN pnpm --filter @workspace/panel run build
+
+  30 |     
+
+  31 |     # ── Imagen de producción (nginx) ──────────────────────────────────────────────
+
+--------------------
+
+target panel_web: failed to solve: process "/bin/sh -c pnpm --filter @workspace/panel run build" did not complete successfully: exit code: 1
+
+[+] up 0/2
+ ⠇ Image dolibarr-edu-panel-api Pulling                                                                                                                 0.8s
+ ⠇ Image dolibarr-edu-panel-web Pulling                                                                                                                 0.8s
+[+] Building 4.2s (31/33)                                                                                                                                   
+ => [internal] load local bake definitions                                                                                                             0.0s
+ => => reading from stdin 965B                                                                                                                         0.0s
+ => [panel_api internal] load build definition from Dockerfile.api                                                                                     0.0s
+ => => transferring dockerfile: 1.06kB                                                                                                                 0.0s
+ => [panel_web internal] load build definition from Dockerfile.panel                                                                                   0.0s
+ => => transferring dockerfile: 1.13kB                                                                                                                 0.0s
+ => [panel_web internal] load metadata for docker.io/library/node:24-alpine                                                                            0.6s
+ => [panel_web internal] load metadata for docker.io/library/nginx:alpine                                                                              0.6s
+ => [panel_web internal] load .dockerignore                                                                                                            0.0s
+ => => transferring context: 2B                                                                                                                        0.0s
+ => [panel_web builder  1/11] FROM docker.io/library/node:24-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5bf14            0.2s
+ => => resolve docker.io/library/node:24-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5bf14                                0.2s
+ => [panel_web internal] load build context                                                                                                            0.2s
+ => => transferring context: 9.96kB                                                                                                                    0.0s
+ => CACHED [panel_web stage-1 1/3] FROM docker.io/library/nginx:alpine@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e589a         0.2s
+ => => resolve docker.io/library/nginx:alpine@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e589a                                  0.2s
+ => [panel_api internal] load build context                                                                                                            0.1s
+ => => transferring context: 3.93kB                                                                                                                    0.0s
+ => CACHED [panel_api builder  2/11] WORKDIR /workspace                                                                                                0.0s
+ => CACHED [panel_api builder  3/11] RUN corepack enable && corepack prepare pnpm@latest --activate                                                    0.0s
+ => CACHED [panel_web builder  4/11] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./                                                           0.0s
+ => CACHED [panel_web builder  5/11] COPY tsconfig*.json ./                                                                                            0.0s
+ => CACHED [panel_web builder  6/11] COPY lib/ ./lib/                                                                                                  0.0s
+ => CACHED [panel_web builder  7/11] COPY artifacts/panel/ ./artifacts/panel/                                                                          0.0s
+ => CACHED [panel_web builder  8/11] RUN mkdir -p attached_assets                                                                                      0.0s
+ => CACHED [panel_web builder  9/11] RUN pnpm install --frozen-lockfile --ignore-scripts                                                               0.0s
+ => CACHED [panel_web builder 10/11] RUN pnpm run typecheck:libs                                                                                       0.0s
+ => ERROR [panel_web builder 11/11] RUN pnpm --filter @workspace/panel run build                                                                       2.6s
+ => CACHED [panel_api stage-1 2/3] WORKDIR /app                                                                                                        0.0s
+ => CACHED [panel_api builder  4/10] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./                                                           0.0s
+ => CACHED [panel_api builder  5/10] COPY tsconfig*.json ./                                                                                            0.0s
+ => CACHED [panel_api builder  6/10] COPY lib/ ./lib/                                                                                                  0.0s
+ => CACHED [panel_api builder  7/10] COPY artifacts/api-server/ ./artifacts/api-server/                                                                0.0s
+ => CACHED [panel_api builder  8/10] RUN pnpm install --frozen-lockfile --ignore-scripts                                                               0.0s
+ => CACHED [panel_api builder  9/10] RUN pnpm run typecheck:libs                                                                                       0.0s
+ => CACHED [panel_api builder 10/10] RUN pnpm --filter @workspace/api-server run build                                                                 0.0s
+ => CACHED [panel_api stage-1 3/3] COPY --from=builder /workspace/artifacts/api-server/dist ./dist                                                     0.0s
+ => [panel_api] exporting to image                                                                                                                     2.0s
+ => => exporting layers                                                                                                                                0.0s
+ => => exporting manifest sha256:4c01aea88c0278e99a34e0aae0766ffbb0a5efccf813aabd0b4006b01455f040                                                      0.1s
+ => => exporting config sha256:2a675c42f621429045fa8dfe4ed89848203bab3410d7e00083bb95ecd8624c30                                                        0.1s
+ => => exporting attestation manifest sha256:ec6d9701bc7ac34459cdc7383e446cb1ceb74ff4dda3714d5ce67e2a1eca1881                                          0.2s
+ => => exporting manifest list sha256:4f6c7c0cf9a9c87a25e0b2956f4e38a7daf088535a8b7c68a9b5f18174412749                                                 0.1s
+ => => naming to docker.io/library/dolibarr-edu-panel-api:latest                                                                                       0.0s
+ => => unpacking to docker.io/library/dolibarr-edu-panel-api:latest                                                                                    1.4s
+ => [panel_api] resolving provenance for metadata file                                                                                                 0.0s
+------
+ > [panel_web builder 11/11] RUN pnpm --filter @workspace/panel run build:
+1.627 $ vite build --config vite.config.ts
+1.928 /workspace/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/native.js:115
+1.928           throw new Error(
+1.928                 ^
+1.928 
+1.928 Error: Cannot find module @rollup/rollup-linux-x64-musl. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try `npm i` again after removing both package-lock.json and node_modules directory.
+1.928     at requireWithFriendlyError (/workspace/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/native.js:115:9)
+1.928     at Object.<anonymous> (/workspace/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/native.js:124:76)
+1.928     at Module._compile (node:internal/modules/cjs/loader:1854:14)
+1.928     at Object..js (node:internal/modules/cjs/loader:1985:10)
+1.928     at Module.load (node:internal/modules/cjs/loader:1577:32)
+1.928     at Module._load (node:internal/modules/cjs/loader:1379:12)
+1.928     at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+1.928     at loadCJSModuleWithModuleLoad (node:internal/modules/esm/translators:326:3)
+1.928     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:231:7)
+1.928     at ModuleJob.run (node:internal/modules/esm/module_job:439:25) {
+1.928   [cause]: Error: Cannot find module '@rollup/rollup-linux-x64-musl'
+1.928   Require stack:
+1.928   - /workspace/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/native.js
+1.928       at Module._resolveFilename (node:internal/modules/cjs/loader:1500:15)
+1.928       at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+1.928       at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+1.928       at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1116:12)
+1.928       at Module._load (node:internal/modules/cjs/loader:1285:25)
+1.928       at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+1.928       at Module.require (node:internal/modules/cjs/loader:1600:12)
+1.928       at require (node:internal/modules/helpers:153:16)
+1.928       at requireWithFriendlyError (/workspace/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/native.js:97:10)
+1.928       at Object.<anonymous> (/workspace/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/native.js:124:76) {
+1.928     code: 'MODULE_NOT_FOUND',
+1.928     requireStack: [
+1.928       '/workspace/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/native.js'
+1.928     ]
+1.928   }
+1.928 }
+1.929 
+1.929 Node.js v24.16.0
+2.123 /workspace/artifacts/panel:
+[+] up 0/2_PNPM_RECURSIVE_RUN_FIRST_FAIL] @workspace/panel@0.0.0 build: `vite build --config vite.config.ts`
+ ⠏ Image dolibarr-edu-panel-api Building                                                                                                                5.2s
+ ⠏ Image dolibarr-edu-panel-web Building                                                                                                                5.2s
+Dockerfile.panel:29
+
+--------------------
+
+  27 |     ENV PORT=80
+
+  28 |     ENV BASE_PATH=/
+
+  29 | >>> RUN pnpm --filter @workspace/panel run build
+
+  30 |     
+
+  31 |     # ── Imagen de producción (nginx) ──────────────────────────────────────────────
+
+--------------------
+
+target panel_web: failed to solve: process "/bin/sh -c pnpm --filter @workspace/panel run build" did not complete successfully: exit code: 1
+
+NAME                   IMAGE                           COMMAND                  SERVICE          CREATED          STATUS                 PORTS
+dolibarr_app           dolibarr/dolibarr:latest        "docker-run.sh apach…"   dolibarr         25 minutes ago   Up 24 minutes          127.0.0.1:8069->80/tcp
+dolibarr_collabora     collabora/code:latest           "/start-collabora-on…"   collabora        2 hours ago      Up 2 hours             127.0.0.1:9980->9980/tcp
+dolibarr_db            mariadb:10.11                   "docker-entrypoint.s…"   db               9 hours ago      Up 9 hours (healthy)   3306/tcp
+dolibarr_op_db         postgres:16-alpine              "docker-entrypoint.s…"   openproject_db   9 hours ago      Up 9 hours (healthy)   5432/tcp
+dolibarr_openproject   openproject/openproject:15      "./docker/prod/entry…"   openproject      2 hours ago      Up 7 seconds           127.0.0.1:8070->80/tcp
+dolibarr_tunnel        cloudflare/cloudflared:latest   "cloudflared --no-au…"   cloudflared      36 minutes ago   Up 36 minutes          
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# 
