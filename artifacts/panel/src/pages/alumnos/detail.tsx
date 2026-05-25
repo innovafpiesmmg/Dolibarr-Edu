@@ -8,7 +8,7 @@ import {
   useResetStudentPassword,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Building2, User, Mail, Server, Clock, Rocket, Copy, Check, AlertCircle, RefreshCw, KeyRound } from "lucide-react";
+import { ArrowLeft, Building2, User, Mail, Server, Clock, Rocket, Copy, Check, AlertCircle, RefreshCw, KeyRound, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -132,11 +132,11 @@ export default function StudentDetail() {
   return (
     <>
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/alumnos"><ArrowLeft className="h-4 w-4" /></Link>
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold tracking-tight">{student.firstName} {student.lastName}</h1>
           <p className="text-muted-foreground flex items-center gap-2">
             <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-xs">{student.username}</span>
@@ -146,6 +146,14 @@ export default function StudentDetail() {
             </Link>
           </p>
         </div>
+        {isSynced && (
+          <Button asChild variant="default" className="gap-2 shrink-0">
+            <Link href={`/alumnos/${id}/seguimiento`}>
+              <Eye className="h-4 w-4" />
+              Seguimiento del alumno
+            </Link>
+          </Button>
+        )}
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">

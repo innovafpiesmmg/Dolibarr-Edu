@@ -21,6 +21,7 @@ import LiquidacionSS from "@/pages/nominas/ss";
 import Configuracion from "@/pages/configuracion/index";
 import EstadoSincronizacion from "@/pages/estado/index";
 import Actividad from "@/pages/actividad/index";
+import SeguimientoAlumno from "@/pages/alumnos/seguimiento";
 import Herramientas from "@/pages/herramientas/index";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
@@ -75,6 +76,9 @@ function Router() {
 
       <Route path="/alumnos">
         <ProtectedRoute><AlumnosList /></ProtectedRoute>
+      </Route>
+      <Route path="/alumnos/:id/seguimiento">
+        <ProtectedRoute><SeguimientoAlumno /></ProtectedRoute>
       </Route>
       <Route path="/alumnos/:id">
         <ProtectedRoute><StudentDetail /></ProtectedRoute>
