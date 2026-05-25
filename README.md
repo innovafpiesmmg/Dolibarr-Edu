@@ -189,53 +189,109 @@ Servidor del centro (Ubuntu/Debian)
 
 ### Requisitos previos
 - Ubuntu 22.04 / Debian 12 (o compatible)
-- Usuario con `sudo` (no ejecutar como root)
+- Usuario con `sudo` (NO ejecutar como root)
 - Conexión a internet
 - Mínimo 4 GB de RAM recomendados (OpenProject es el servicio más exigente)
 
-### Instalación con un comando
+---
+
+### Paso 0 — Preparar el servidor Ubuntu
+
+Antes de instalar Dolibarr EDU, actualiza el sistema e instala las herramientas básicas:
+
+```bash
+# 1. Actualizar la lista de paquetes y el sistema completo
+sudo apt-get update && sudo apt-get upgrade -y
+
+# 2. Instalar git, curl y openssl (necesarios para el instalador)
+sudo apt-get install -y git curl openssl
+
+# 3. Reiniciar si hay actualizaciones del kernel (recomendado)
+sudo reboot
+```
+
+> Si tu servidor es de nueva instalación, también puedes instalar `nano` para editar ficheros fácilmente:
+> ```bash
+> sudo apt-get install -y nano
+> ```
+
+---
+
+### Paso 1 — Instalación con un comando
+
+Una vez preparado el servidor, ejecuta el instalador:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/innovafpiesmmg/Dolibarr-Edu/main/install.sh | bash
 ```
 
 El script realiza automáticamente:
-1. Instala Docker si no está presente
-2. Clona el repositorio en `/opt/dolibarr-edu`
-3. Genera contraseñas aleatorias para todas las bases de datos
-4. **Solicita la contraseña del panel** (dos veces para confirmar)
-5. **Solicita la URL pública de Dolibarr** (ej: `https://erp.micentro.es`)
-6. Muestra las credenciales iniciales de administrador
+1. Comprueba e instala `git`, `curl` y `openssl` si faltan
+2. Instala Docker Engine si no está presente
+3. Clona el repositorio en `/opt/dolibarr-edu`
+4. **Genera contraseñas aleatorias** para todas las bases de datos y servicios
+5. **Solicita la contraseña del panel** de gestión (dos veces para confirmar)
+6. **Solicita los dominios públicos** de cada servicio (Dolibarr, OpenProject, LibreOffice)
+7. Muestra un resumen de todas las credenciales generadas
 
-### Pasos post-instalación
+> Si Docker acaba de instalarse, el script te pedirá que cierres sesión y vuelvas a entrar antes de continuar. También puedes ejecutar `newgrp docker` sin cerrar sesión.
+
+---
+
+### Paso 2 — Arrancar los servicios
 
 ```bash
-# 1. Revisa y ajusta la configuración
-nano /opt/dolibarr-edu/.env
-
-# 2. Arranca todos los servicios
 cd /opt/dolibarr-edu && docker compose up -d
-
-# 3. Configura el túnel Cloudflare
-#    Edita cloudflare/config.yml con tu UUID de túnel y dominios reales
-#    (ver sección de Configuración más abajo)
-
-# 4. Sigue los logs de OpenProject hasta que esté listo (~2-3 min)
-docker compose logs -f openproject
-
-# 5. Configuración inicial del entorno educativo
-cd /opt/dolibarr-edu && ./scripts/setup-inicial.sh
 ```
 
-### Dominios DNS necesarios (Cloudflare)
+Sigue el arranque de OpenProject (la primera vez ejecuta migraciones de base de datos y tarda ~3 minutos):
+
+```bash
+docker compose logs -f openproject
+# Ctrl+C cuando veas algo como "listening on http://0.0.0.0:80"
+```
+
+---
+
+### Paso 3 — Configurar el túnel Cloudflare
+
+Edita `cloudflare/config.yml` con el UUID de tu túnel y los dominios reales del centro:
+
+```bash
+nano /opt/dolibarr-edu/cloudflare/config.yml
+```
 
 Crea tres registros CNAME en tu zona DNS de Cloudflare, todos apuntando al mismo UUID del túnel:
 
-| Subdominio | CNAME |
-|------------|-------|
-| `erp.micentro.es` | `TU_UUID.cfargotunnel.com` |
-| `proyectos.micentro.es` | `TU_UUID.cfargotunnel.com` |
-| `office.micentro.es` | `TU_UUID.cfargotunnel.com` |
+| Subdominio | Tipo | Destino |
+|------------|------|---------|
+| `erp.micentro.es` | CNAME | `TU_UUID.cfargotunnel.com` |
+| `proyectos.micentro.es` | CNAME | `TU_UUID.cfargotunnel.com` |
+| `office.micentro.es` | CNAME | `TU_UUID.cfargotunnel.com` |
+
+Reinicia el túnel para que aplique la nueva configuración:
+
+```bash
+cd /opt/dolibarr-edu && docker compose restart cloudflared
+```
+
+---
+
+### Paso 4 — Configuración inicial del entorno educativo
+
+```bash
+cd /opt/dolibarr-edu && ./scripts/setup-inicial.sh
+```
+
+---
+
+### Paso 5 — Activar el módulo NominasEDU en Dolibarr
+
+Una sola vez, desde el navegador:
+
+> **Dolibarr → Configuración → Módulos/Aplicaciones → pestaña Recursos humanos → NominasEDU → Activar**
+
+---
 
 ### Scripts CLI disponibles
 
