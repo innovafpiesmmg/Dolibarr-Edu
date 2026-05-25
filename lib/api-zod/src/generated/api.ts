@@ -34,7 +34,7 @@ export const StudentLoginResponse = zod.object({
   "companyName": zod.string().nullish(),
   "groupName": zod.string(),
   "dolibarrUrl": zod.string(),
-  "entityId": zod.number().nullish()
+  "entityId": zod.number().nullish().describe('ID del tercero (socid) del alumno en Dolibarr.')
 })
 
 
@@ -238,7 +238,7 @@ export const GetGroupResponse = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrEntityId": zod.number().nullable(),
+  "dolibarrEntityId": zod.number().nullable().describe('ID del tercero (socid) de la empresa del alumno en Dolibarr. Nombre histórico — la arquitectura ya no usa MultiCompany.'),
   "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "dolibarrPassword": zod.string().nullish(),
@@ -300,7 +300,7 @@ export const ListGroupStudentsResponseItem = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrEntityId": zod.number().nullable(),
+  "dolibarrEntityId": zod.number().nullable().describe('ID del tercero (socid) de la empresa del alumno en Dolibarr. Nombre histórico — la arquitectura ya no usa MultiCompany.'),
   "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "dolibarrPassword": zod.string().nullish(),
@@ -331,7 +331,7 @@ export const ListStudentsResponseItem = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrEntityId": zod.number().nullable(),
+  "dolibarrEntityId": zod.number().nullable().describe('ID del tercero (socid) de la empresa del alumno en Dolibarr. Nombre histórico — la arquitectura ya no usa MultiCompany.'),
   "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "dolibarrPassword": zod.string().nullish(),
@@ -411,7 +411,7 @@ export const GetStudentResponse = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrEntityId": zod.number().nullable(),
+  "dolibarrEntityId": zod.number().nullable().describe('ID del tercero (socid) de la empresa del alumno en Dolibarr. Nombre histórico — la arquitectura ya no usa MultiCompany.'),
   "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "dolibarrPassword": zod.string().nullish(),
@@ -447,7 +447,7 @@ export const UpdateStudentResponse = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrEntityId": zod.number().nullable(),
+  "dolibarrEntityId": zod.number().nullable().describe('ID del tercero (socid) de la empresa del alumno en Dolibarr. Nombre histórico — la arquitectura ya no usa MultiCompany.'),
   "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "dolibarrPassword": zod.string().nullish(),
@@ -474,7 +474,7 @@ export const DeployStudentParams = zod.object({
 export const DeployStudentResponse = zod.object({
   "studentId": zod.number(),
   "status": zod.enum(['synced', 'error', 'skipped']),
-  "entityId": zod.number().nullish(),
+  "entityId": zod.number().nullish().describe('ID del tercero (socid) creado en Dolibarr.'),
   "dolibarrPassword": zod.string().nullish(),
   "error": zod.string().nullish()
 })

@@ -1097,7 +1097,7 @@ components:
         username:            { type: string }
         groupId:             { type: integer }
         groupName:           { type: string }
-        dolibarrEntityId:    { type: ["integer", "null"] }
+        dolibarrEntityId:    { type: ["integer", "null"], description: "ID del tercero (socid) de la empresa del alumno en Dolibarr. Nombre histórico — la arquitectura ya no usa MultiCompany." }
         dolibarrSyncStatus:  { type: string, enum: [pending, synced, error] }
         dolibarrSyncError:   { type: ["string", "null"] }
         dolibarrPassword:    { type: ["string", "null"] }
@@ -1155,7 +1155,7 @@ components:
       properties:
         studentId:        { type: integer }
         status:           { type: string, enum: [synced, error, skipped] }
-        entityId:         { type: ["integer", "null"] }
+        entityId:         { type: ["integer", "null"], description: "ID del tercero (socid) creado en Dolibarr." }
         dolibarrPassword: { type: ["string", "null"] }
         error:            { type: ["string", "null"] }
 
@@ -1204,7 +1204,7 @@ components:
         companyName: { type: string, nullable: true }
         groupName:   { type: string }
         dolibarrUrl: { type: string }
-        entityId:    { type: integer, nullable: true }
+        entityId:    { type: integer, nullable: true, description: "ID del tercero (socid) del alumno en Dolibarr." }
 
     # ── Employee ─────────────────────────────────────────
     Employee:

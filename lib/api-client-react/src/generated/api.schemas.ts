@@ -77,7 +77,10 @@ export interface Student {
   username: string;
   groupId: number;
   groupName: string;
-  /** @nullable */
+  /**
+     * ID del tercero (socid) de la empresa del alumno en Dolibarr. Nombre histórico — la arquitectura ya no usa MultiCompany.
+     * @nullable
+     */
   dolibarrEntityId: number | null;
   dolibarrSyncStatus: StudentDolibarrSyncStatus;
   /** @nullable */
@@ -170,7 +173,10 @@ export const DeployResultStatus = {
 export interface DeployResult {
   studentId: number;
   status: DeployResultStatus;
-  /** @nullable */
+  /**
+     * ID del tercero (socid) creado en Dolibarr.
+     * @nullable
+     */
   entityId?: number | null;
   /** @nullable */
   dolibarrPassword?: string | null;
@@ -209,6 +215,7 @@ export interface AlumnoSesion {
   companyName?: string | null;
   groupName: string;
   dolibarrUrl: string;
+  /** ID del tercero (socid) del alumno en Dolibarr. */
   entityId?: number | null;
 }
 

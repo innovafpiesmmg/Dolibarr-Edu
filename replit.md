@@ -43,7 +43,7 @@ Plataforma de gestión para centros de FP de Administración de Empresas. Permit
   - `createNextcloudUser` — crea cuenta (usuario, displayName, email, quota 5 GB)
   - `deleteNextcloudUser` — elimina cuenta (silencia errores si no existe)
   - `generateNcPassword` — contraseña determinista SHA-256(username + SESSION_SECRET)
-  - `createEntity` — crea entidad empresa (aplica IGIC/IVA, EUR, es_ES)
+  - `createEntity` — crea TERCERO (cliente+proveedor) en Dolibarr representando la empresa del alumno. Nombre histórico — internamente es un tercero, no una entidad MultiCompany.
 - `artifacts/api-server/src/lib/dolibarr.ts` — integración con Dolibarr REST API
   - `createDolibarrUser`, `createDolibarrEmployee`, `createDolibarrSalary`
   - `createPayrollAccountingEntry` — asiento contable 640/642/465/476/4751
@@ -66,8 +66,10 @@ Plataforma de gestión para centros de FP de Administración de Empresas. Permit
 
 ## Architecture decisions
 
-- Multi-empresa Dolibarr mediante el módulo `modMultiCompany` — cada alumno tiene una entidad independiente
-- **MultiCompany requiere el módulo oficial de Dolistore** (descarga gratuita previo registro). El fork `hregis/dolibarr_multicompany` solo parchea el core para soportar el módulo, pero no lo incluye. Decisión pendiente: pre-empaquetar el zip en `dolibarr-edu/modules/multicompany.zip` o pivotar a arquitectura sin multi-entidad
+- **Single-entity Dolibarr (sin MultiCompany)**: cada alumno se materializa como un "tercero" (`llx_societe`) con `name_alias = ALU-<username>` dentro de la entidad por defecto. El módulo MultiCompany fue descontinuado por su autor en Dolistore ("no more available") y no hay alternativas viables.
+- Los empleados (HRM) del alumno se vinculan al tercero vía `fk_soc` para poder filtrarlos por empresa simulada
+- El usuario Dolibarr de cada alumno se asocia a su tercero vía `fk_soc` y entra directamente a su ficha (`/societe/card.php?socid=...`) en lugar de un panel multi-entidad
+- El campo histórico `dolibarrEntityId` en BD/API se mantiene por compatibilidad pero ahora almacena el ID del tercero (socid), no de la entidad
 - Hash de contraseñas con SHA-256 (adecuado para sincronización con ERP, no para auth de usuario)
 - El API del panel usa PostgreSQL como fuente de verdad y sincroniza con Dolibarr vía su API REST
 - Cloudflare Tunnel para HTTPS sin abrir puertos en el cortafuegos del centro

@@ -335,20 +335,9 @@ if [[ "${START_NOW,,}" != "n" && "${START_NOW,,}" != "no" ]]; then
       warn "No se pudo activar el módulo REST API (actívalo desde Dolibarr → Inicio → Configuración → Módulos → Web Services REST)"
     fi
 
-    # ── Activar módulo MultiCompany ─────────────────────────────────────
-    # La imagen Dolibarr de este proyecto se construye desde Dockerfile.dolibarr
-    # (fork hregis/dolibarr_multicompany) que ya incluye los archivos del módulo
-    # integrados en el core. Solo necesitamos activar los constants en BD.
-    info "Activando módulo MultiCompany (alumno = entidad propia)..."
-    if docker compose exec -T db sh -c \
-         'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "INSERT INTO llx_const (name,entity,value,type,visible) VALUES (\"MAIN_MODULE_MULTICOMPANY\",0,\"1\",\"chaine\",0) ON DUPLICATE KEY UPDATE value=\"1\"; INSERT INTO llx_const (name,entity,value,type,visible) VALUES (\"MAIN_MODULE_MULTICOMPANY_TRANSVERSE_MODE\",0,\"1\",\"chaine\",0) ON DUPLICATE KEY UPDATE value=\"1\";"' \
-         < /dev/null > /dev/null 2>&1; then
-      success "Módulo MultiCompany activo (modo transversal)"
-      info "Reiniciando Dolibarr para cargar la configuración..."
-      docker compose restart dolibarr > /dev/null 2>&1 || true
-    else
-      warn "No se pudo activar MultiCompany. Actívalo manualmente: Dolibarr → Configuración → Módulos → MultiCompany."
-    fi
+    # NOTA: No se activa MultiCompany — el módulo fue descontinuado por su
+    # autor y no está disponible. Cada alumno se materializa en Dolibarr como
+    # un "tercero" (societe) dentro de la única entidad por defecto.
 
     # Reiniciar panel_api para que recoja el estado actualizado
     docker compose restart panel_api > /dev/null 2>&1 || true

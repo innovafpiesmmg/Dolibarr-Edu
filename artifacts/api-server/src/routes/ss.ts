@@ -18,7 +18,11 @@ const PeriodBodySchema = z.object({
 
 async function getStudentEntity(studentId: number) {
   const [s] = await db
-    .select({ id: studentsTable.id, dolibarrEntityId: studentsTable.dolibarrEntityId })
+    .select({
+      id: studentsTable.id,
+      dolibarrEntityId: studentsTable.dolibarrEntityId,
+      username: studentsTable.username,
+    })
     .from(studentsTable)
     .where(eq(studentsTable.id, studentId))
     .limit(1);
@@ -148,6 +152,7 @@ router.post("/students/:id/ss-pay", async (req, res) => {
     periodMonth: month,
     periodYear: year,
     total: totalSSIngresar,
+    studentRef: student.username,
   });
 
   // Guardar/actualizar registro de pago
@@ -224,6 +229,7 @@ router.post("/students/:id/irpf-pay", async (req, res) => {
     periodMonth: month,
     periodYear: year,
     total: totalIRPF,
+    studentRef: student.username,
   });
 
   const [existing] = await db

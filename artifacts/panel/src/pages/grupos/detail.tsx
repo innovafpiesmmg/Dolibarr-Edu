@@ -300,7 +300,7 @@ export default function GroupDetail() {
                         <div className="space-y-1">
                           <SyncBadge status={student.dolibarrSyncStatus ?? "pending"} />
                           {student.dolibarrEntityId && (
-                            <div className="text-xs text-muted-foreground font-mono">ID: {student.dolibarrEntityId}</div>
+                            <div className="text-xs text-muted-foreground font-mono">Tercero #{student.dolibarrEntityId}</div>
                           )}
                         </div>
                       </TableCell>

@@ -216,18 +216,13 @@ if [[ "$DOLI_READY" == "true" ]]; then
     warn "No se pudo activar el módulo REST API (actívalo desde Dolibarr → Configuración → Módulos)"
   fi
 
-  # ── Asegurar módulo MultiCompany activo ─────────────────────────────────
-  # Los archivos del módulo ya vienen integrados en la imagen Dolibarr de este
-  # proyecto (construida desde fork hregis/dolibarr_multicompany).
-  # Solo activamos los constants en BD por idempotencia.
-  info "Asegurando MultiCompany activo (constants en BD)..."
-  if docker compose exec -T db sh -c \
-       'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "INSERT INTO llx_const (name,entity,value,type,visible) VALUES (\"MAIN_MODULE_MULTICOMPANY\",0,\"1\",\"chaine\",0) ON DUPLICATE KEY UPDATE value=\"1\"; INSERT INTO llx_const (name,entity,value,type,visible) VALUES (\"MAIN_MODULE_MULTICOMPANY_TRANSVERSE_MODE\",0,\"1\",\"chaine\",0) ON DUPLICATE KEY UPDATE value=\"1\";"' \
-       < /dev/null > /dev/null 2>&1; then
-    success "MultiCompany activo"
-  else
-    warn "No se pudo activar MultiCompany por BD."
-  fi
+  # ── Limpieza: desactivar MultiCompany si quedó activo de instalaciones viejas ─
+  # El módulo fue descontinuado por su autor; ahora trabajamos en single-entity
+  # con cada alumno como tercero (societe). Si los constants quedaron en BD de
+  # versiones previas del panel, los desactivamos para evitar errores.
+  docker compose exec -T db sh -c \
+    'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "DELETE FROM llx_const WHERE name IN (\"MAIN_MODULE_MULTICOMPANY\",\"MAIN_MODULE_MULTICOMPANY_TRANSVERSE_MODE\");"' \
+    < /dev/null > /dev/null 2>&1 || true
 
   # Reiniciar panel_api para que recoja todo limpio
   docker compose restart panel_api > /dev/null 2>&1 || true

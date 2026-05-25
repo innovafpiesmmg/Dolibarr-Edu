@@ -80,17 +80,18 @@ async function getConfig(): Promise<DolibarrConfig | null> {
 async function dolibarrFetch(
   config: DolibarrConfig,
   path: string,
-  options: RequestInit & { entityId?: number } = {},
+  options: RequestInit = {},
 ): Promise<Response> {
-  const { entityId, ...fetchOptions } = options;
+  // Single-entity Dolibarr: no necesitamos DOLENTITY header. El módulo
+  // MultiCompany fue descontinuado por el autor — usamos un único Dolibarr
+  // donde cada alumno está representado por un "tercero" (societe).
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     DOLAPIKEY: config.apiKey,
-    ...(entityId !== undefined ? { DOLENTITY: String(entityId) } : {}),
-    ...(fetchOptions.headers as Record<string, string> ?? {}),
+    ...(options.headers as Record<string, string> ?? {}),
   };
   const url = `${config.apiUrl}/api/index.php${path}`;
-  return fetch(url, { ...fetchOptions, headers });
+  return fetch(url, { ...options, headers });
 }
 
 async function parseId(res: Response, context: string): Promise<number> {
@@ -105,7 +106,12 @@ async function parseId(res: Response, context: string): Promise<number> {
   return id;
 }
 
-// ── Company entity ────────────────────────────────────────────────────────────
+// ── Company / Tercero (single-entity, sin MultiCompany) ───────────────────────
+//
+// Cada alumno se materializa en Dolibarr como un "tercero" (societe), que
+// representa su empresa simulada. El nombre histórico `entityId` se mantiene
+// en la API para evitar migraciones, pero el valor real es ahora el ID del
+// tercero (socid) en `llx_societe`.
 
 export type TaxSystem = "iva" | "igic";
 
@@ -117,20 +123,26 @@ export async function createEntity(
   const config = await getConfig();
   if (!config) throw new Error("No se pudo conectar con Dolibarr. Comprueba la URL y las credenciales en Configuración.");
 
+  // IGIC (Canarias): el tercero NO está sujeto a IVA pero sí a IGIC (localtax1).
+  // IVA (Península): sujeto a IVA estándar, sin localtax.
   const taxFields =
     taxSystem === "igic"
       ? { tva_assuj: 0, localtax1_assuj: 1, localtax2_assuj: 0 }
       : { tva_assuj: 1, localtax1_assuj: 0, localtax2_assuj: 0 };
 
-  const res = await dolibarrFetch(config, "/multicompany/entities", {
+  // Cliente Y proveedor a la vez (typent_id=2 = empresa) — el alumno debe poder
+  // facturar a clientes y recibir facturas de proveedores en su empresa simulada.
+  const res = await dolibarrFetch(config, "/thirdparties", {
     method: "POST",
     body: JSON.stringify({
-      label: companyName || `Empresa de ${username}`,
-      description: `Empresa simulada FP — alumno: ${username}`,
+      name: companyName || `Empresa de ${username}`,
+      name_alias: `ALU-${username}`,
+      client: 1,
+      fournisseur: 1,
       country_id: 4,
-      active: 1,
-      currency_code: "EUR",
-      lang: "es_ES",
+      typent_id: 2,
+      status: 1,
+      note_private: `Empresa simulada FP — alumno: ${username}`,
       ...taxFields,
     }),
   });
@@ -139,7 +151,7 @@ export async function createEntity(
 }
 
 export async function createDolibarrUser(
-  entityId: number,
+  thirdpartyId: number,
   opts: { username: string; password: string; firstName: string; lastName: string; email: string },
 ): Promise<{ userId: number }> {
   const config = await getConfig();
@@ -147,14 +159,13 @@ export async function createDolibarrUser(
 
   const res = await dolibarrFetch(config, "/users", {
     method: "POST",
-    entityId,
     body: JSON.stringify({
       login: opts.username,
       pass: opts.password,
       firstname: opts.firstName,
       lastname: opts.lastName,
       email: opts.email,
-      entity: entityId,
+      fk_soc: thirdpartyId,
       admin: 0,
       statut: 1,
     }),
@@ -165,7 +176,7 @@ export async function createDolibarrUser(
 
 export async function updateDolibarrUserPassword(
   userId: number,
-  entityId: number,
+  _thirdpartyId: number,
   newPassword: string,
 ): Promise<void> {
   const config = await getConfig();
@@ -173,7 +184,6 @@ export async function updateDolibarrUserPassword(
 
   await dolibarrFetch(config, `/users/${userId}`, {
     method: "PUT",
-    entityId,
     body: JSON.stringify({ pass: newPassword }),
   });
 }
@@ -188,7 +198,7 @@ export function generateDolibarrPassword(username: string): string {
 // ── HRM — Empleados ───────────────────────────────────────────────────────────
 
 export async function createDolibarrEmployee(
-  entityId: number,
+  thirdpartyId: number,
   opts: {
     firstName: string;
     lastName: string;
@@ -201,9 +211,10 @@ export async function createDolibarrEmployee(
   const config = await getConfig();
   if (!config) throw new Error("No se pudo conectar con Dolibarr");
 
+  // En single-entity Dolibarr usamos `fk_soc` para vincular el empleado a la
+  // empresa simulada (tercero) del alumno, así filtramos por alumno en listados.
   const res = await dolibarrFetch(config, "/hrm/employees", {
     method: "POST",
-    entityId,
     body: JSON.stringify({
       firstname: opts.firstName,
       lastname: opts.lastName,
@@ -211,8 +222,8 @@ export async function createDolibarrEmployee(
       contract_type: opts.contractType === "indefinido" ? 1 : 2,
       salary: opts.salaryBase,
       ref_number: opts.dni ?? "",
+      fk_soc: thirdpartyId,
       statut: 1,
-      entity: entityId,
     }),
   });
 
@@ -222,7 +233,7 @@ export async function createDolibarrEmployee(
 // ── Salary record ─────────────────────────────────────────────────────────────
 
 export async function createDolibarrSalary(
-  entityId: number,
+  thirdpartyId: number,
   opts: {
     dolibarrEmployeeId: number;
     label: string;
@@ -233,6 +244,7 @@ export async function createDolibarrSalary(
     liquidoPercibir: number;
   },
 ): Promise<{ salaryId: number }> {
+  void thirdpartyId; // El tercero se vincula vía el empleado (fk_user→fk_soc).
   const config = await getConfig();
   if (!config) throw new Error("No se pudo conectar con Dolibarr");
 
@@ -240,7 +252,6 @@ export async function createDolibarrSalary(
 
   const res = await dolibarrFetch(config, "/salaries", {
     method: "POST",
-    entityId,
     body: JSON.stringify({
       label: opts.label,
       fk_user: opts.dolibarrEmployeeId,
@@ -257,18 +268,19 @@ export async function createDolibarrSalary(
 // ── Accounting entry ──────────────────────────────────────────────────────────
 
 export async function paySSToBank(
-  entityId: number,
-  opts: { periodMonth: number; periodYear: number; total: number },
+  thirdpartyId: number,
+  opts: { periodMonth: number; periodYear: number; total: number; studentRef?: string },
 ): Promise<{ accountingId: number }> {
   const config = await getConfig();
   if (!config) throw new Error("No se pudo conectar con Dolibarr");
 
   const dateStr = `${opts.periodYear}-${String(opts.periodMonth).padStart(2, "0")}-28`;
-  const label = `Pago SS Tesorería — ${String(opts.periodMonth).padStart(2, "0")}/${opts.periodYear}`;
+  // Prefijo [ALU-<ref>#<socid>] para trazabilidad por alumno en asientos compartidos.
+  const tag = `[ALU-${opts.studentRef ?? "?"}#${thirdpartyId}]`;
+  const label = `${tag} Pago SS Tesorería — ${String(opts.periodMonth).padStart(2, "0")}/${opts.periodYear}`;
 
   const res = await dolibarrFetch(config, "/accountancy/bookkeeping", {
     method: "POST",
-    entityId,
     body: JSON.stringify({
       label,
       date_document: dateStr,
@@ -284,18 +296,18 @@ export async function paySSToBank(
 }
 
 export async function payIRPFToBank(
-  entityId: number,
-  opts: { periodMonth: number; periodYear: number; total: number },
+  thirdpartyId: number,
+  opts: { periodMonth: number; periodYear: number; total: number; studentRef?: string },
 ): Promise<{ accountingId: number }> {
   const config = await getConfig();
   if (!config) throw new Error("No se pudo conectar con Dolibarr");
 
   const dateStr = `${opts.periodYear}-${String(opts.periodMonth).padStart(2, "0")}-20`;
-  const label = `Pago IRPF Modelo 111 — ${String(opts.periodMonth).padStart(2, "0")}/${opts.periodYear}`;
+  const tag = `[ALU-${opts.studentRef ?? "?"}#${thirdpartyId}]`;
+  const label = `${tag} Pago IRPF Modelo 111 — ${String(opts.periodMonth).padStart(2, "0")}/${opts.periodYear}`;
 
   const res = await dolibarrFetch(config, "/accountancy/bookkeeping", {
     method: "POST",
-    entityId,
     body: JSON.stringify({
       label,
       date_document: dateStr,
@@ -311,7 +323,7 @@ export async function payIRPFToBank(
 }
 
 export async function createPayrollAccountingEntry(
-  entityId: number,
+  thirdpartyId: number,
   opts: {
     periodMonth: number;
     periodYear: number;
@@ -321,13 +333,15 @@ export async function createPayrollAccountingEntry(
     liquidoPercibir: number;
     totalSsTrabajador: number;
     irpfAmount: number;
+    studentRef?: string;
   },
 ): Promise<{ accountingId: number }> {
   const config = await getConfig();
   if (!config) throw new Error("No se pudo conectar con Dolibarr");
 
   const dateStr = `${opts.periodYear}-${String(opts.periodMonth).padStart(2, "0")}-28`;
-  const label = `Nómina ${opts.employeeName} — ${String(opts.periodMonth).padStart(2, "0")}/${opts.periodYear}`;
+  const tag = `[ALU-${opts.studentRef ?? "?"}#${thirdpartyId}]`;
+  const label = `${tag} Nómina ${opts.employeeName} — ${String(opts.periodMonth).padStart(2, "0")}/${opts.periodYear}`;
 
   const ssAcreedores = opts.totalSsTrabajador + opts.ssEmpresa;
 
@@ -341,7 +355,6 @@ export async function createPayrollAccountingEntry(
 
   const res = await dolibarrFetch(config, "/accountancy/bookkeeping", {
     method: "POST",
-    entityId,
     body: JSON.stringify({
       label,
       date_document: dateStr,

@@ -80,10 +80,10 @@ export default function StudentDetail() {
         if (result.status === "synced") {
           toast({
             title: "Empresa desplegada en Dolibarr",
-            description: `Entidad #${result.entityId} creada correctamente.`,
+            description: `Tercero #${result.entityId} creado correctamente.`,
           });
         } else if (result.status === "skipped") {
-          toast({ title: "Ya estaba desplegado", description: "Este alumno ya tiene una entidad activa en Dolibarr." });
+          toast({ title: "Ya estaba desplegado", description: "Este alumno ya tiene su empresa creada en Dolibarr." });
         } else {
           toast({
             variant: "destructive",
@@ -249,7 +249,7 @@ export default function StudentDetail() {
               {student.dolibarrEntityId && (
                 <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground bg-muted px-2 py-1.5 rounded">
                   <Server className="h-3.5 w-3.5" />
-                  Entidad Dolibarr:
+                  Tercero Dolibarr:
                   <span className="font-mono font-bold text-foreground">#{student.dolibarrEntityId}</span>
                 </div>
               )}
@@ -284,7 +284,7 @@ export default function StudentDetail() {
               )}
               {dolibarrBaseUrl && isSynced && student.dolibarrEntityId && (
                 <a
-                  href={`${dolibarrBaseUrl}?entity=${student.dolibarrEntityId}`}
+                  href={`${dolibarrBaseUrl}/societe/card.php?socid=${student.dolibarrEntityId}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full text-center text-sm py-2 px-3 border rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"

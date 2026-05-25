@@ -33,12 +33,19 @@ async function getEmployeeAndStudent(employeeId: number, studentId: number) {
   if (!emp) return null;
 
   const [student] = await db
-    .select({ dolibarrEntityId: studentsTable.dolibarrEntityId })
+    .select({
+      dolibarrEntityId: studentsTable.dolibarrEntityId,
+      username: studentsTable.username,
+    })
     .from(studentsTable)
     .where(eq(studentsTable.id, studentId))
     .limit(1);
 
-  return { employee: emp, entityId: student?.dolibarrEntityId ?? null };
+  return {
+    employee: emp,
+    entityId: student?.dolibarrEntityId ?? null,
+    studentRef: student?.username,
+  };
 }
 
 function toDto(p: typeof payrollsTable.$inferSelect) {
@@ -204,6 +211,7 @@ router.post("/payrolls", async (req, res) => {
         liquidoPercibir: calc.liquidoPercibir,
         totalSsTrabajador: calc.totalSsTrabajador,
         irpfAmount: calc.irpfAmount,
+        studentRef: row.studentRef,
       });
       accountingId = aid;
     } catch (err) {

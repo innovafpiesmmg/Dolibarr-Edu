@@ -75,7 +75,7 @@ router.post("/auth/student-login", async (req, res) => {
   const base = (process.env.DOLIBARR_BASE_URL ?? "").replace(/\/$/, "");
   const dolibarrUrl =
     student.dolibarrEntityId
-      ? `${base}/?mainmenu=home&entity=${student.dolibarrEntityId}`
+      ? `${base}/societe/card.php?socid=${student.dolibarrEntityId}`
       : base;
 
   res.json({

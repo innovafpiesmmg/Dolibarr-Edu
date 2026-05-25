@@ -79,7 +79,7 @@ router.post("/students/:id/deploy", async (req, res) => {
       entityType: "student",
       entityId: studentId,
       entityName: `${student.firstName} ${student.lastName}`,
-      details: `Entidad Dolibarr #${entityId} creada`,
+      details: `Tercero Dolibarr #${entityId} creado (empresa: ${student.companyName ?? student.username})`,
     });
 
     res.json({
@@ -142,14 +142,16 @@ router.post("/groups/:id/deploy-all", async (req, res) => {
   const skipped = students.length - pending.length;
   const errors: { studentId: number; username: string; error: string }[] = [];
 
+  const taxSystem = await getTaxSystem();
   for (const student of pending) {
     try {
       const password = student.dolibarrPassword ?? generateDolibarrPassword(student.username);
       const { entityId } = await createEntity(
         student.companyName ?? `Empresa de ${student.username}`,
         student.username,
+        taxSystem,
       );
-      await createDolibarrUser(entityId, {
+      const { userId } = await createDolibarrUser(entityId, {
         username: student.username,
         password,
         firstName: student.firstName,
@@ -161,6 +163,7 @@ router.post("/groups/:id/deploy-all", async (req, res) => {
         .update(studentsTable)
         .set({
           dolibarrEntityId: entityId,
+          dolibarrUserId: userId,
           dolibarrSyncStatus: "synced",
           dolibarrSyncError: null,
           dolibarrPassword: password,
