@@ -192,8 +192,11 @@ if [[ "$DOLI_READY" == "true" ]]; then
   # ── Sincronizar contraseña admin Dolibarr ↔ .env (fuente de verdad) ────
   DOLI_PASS=$(grep "^DOLI_ADMIN_PASSWORD=" "$WORK_DIR/.env" | cut -d'=' -f2-)
   if [[ -n "$DOLI_PASS" ]]; then
-    info "Sincronizando contraseña del admin de Dolibarr..."
-    if docker compose exec -T dolibarr php /var/www/html/scripts/users/changepass.php admin "$DOLI_PASS" \
+    info "Sincronizando contraseña del admin de Dolibarr (SQL)..."
+    # La imagen oficial de Dolibarr no incluye scripts/users/changepass.php.
+    # Reseteamos pass_crypted con MD5 (algoritmo por defecto de Dolibarr).
+    if docker compose exec -T db sh -c \
+         "exec mysql -u root -p\"\$MYSQL_ROOT_PASSWORD\" \"\$MYSQL_DATABASE\" -e \"UPDATE llx_user SET pass_crypted=MD5('$DOLI_PASS'), pass=NULL WHERE login='admin';\"" \
          < /dev/null > /dev/null 2>&1; then
       success "Contraseña admin sincronizada"
     else
