@@ -28,7 +28,8 @@ Cloudflare Tunnel
    ├── panel.micentro.es    → panel_web:80      (nginx + React)
    ├── erp.micentro.es      → dolibarr:80       (PHP/Apache)
    ├── proyectos.micentro.es→ openproject:80    (Rails)
-   └── office.micentro.es   → collabora:9980    (CODE)
+   ├── office.micentro.es   → collabora:9980    (CODE)
+   └── cloud.micentro.es    → nextcloud:80      (Nextcloud)
 
 Servidor Ubuntu/Debian — red Docker interna (dolibarr_net)
    ├── cloudflared       ← cliente del túnel Cloudflare
@@ -39,7 +40,9 @@ Servidor Ubuntu/Debian — red Docker interna (dolibarr_net)
    ├── db                ← MariaDB de Dolibarr
    ├── openproject       ← OpenProject (puerto host 8070)
    ├── openproject_db    ← PostgreSQL de OpenProject
-   └── collabora         ← Collabora Online (puerto host 9980)
+   ├── collabora         ← Collabora Online (puerto host 9980)
+   ├── nextcloud         ← Nextcloud (puerto host 8071)
+   └── nextcloud_db      ← MariaDB de Nextcloud
 ```
 
 ---
@@ -132,6 +135,7 @@ En el dashboard de Cloudflare → tu túnel → **Edit** → **Public Hostname**
 | `erp` | `micentro.es` | `http://dolibarr:80` | Dolibarr ERP |
 | `proyectos` | `micentro.es` | `http://openproject:80` | OpenProject |
 | `office` | `micentro.es` | `http://collabora:9980` | Collabora Online |
+| `cloud` | `micentro.es` | `http://nextcloud:80` | Nextcloud |
 
 > Los nombres de servicio (`panel_web`, `dolibarr`, `openproject`, `collabora`) son los hostnames internos de Docker. El contenedor `cloudflared` resuelve estos nombres automáticamente porque todos están en la red `dolibarr_net`.
 
@@ -148,6 +152,7 @@ curl -sI http://localhost:8068 | head -1   # panel_web
 curl -sI http://localhost:8069 | head -1   # dolibarr
 curl -sI http://localhost:8070 | head -1   # openproject
 curl -sI http://localhost:9980 | head -1   # collabora
+curl -sI http://localhost:8071 | head -1   # nextcloud
 ```
 
 ---
@@ -182,6 +187,15 @@ OP_PORT=8070
 COLLABORA_ADMIN=admin
 COLLABORA_PASSWORD=...
 COLLABORA_PORT=9980
+
+# ── Nextcloud ────────────────────────────────────────────
+NC_HOST=cloud.micentro.es          # dominio público (sin https://)
+NC_PORT=8071                        # puerto local del host
+NC_DB_ROOT_PASSWORD=...             # generada por install.sh
+NC_DB_PASSWORD=...                  # generada por install.sh
+NC_ADMIN_USER=admin
+NC_ADMIN_PASSWORD=...               # generada por install.sh
+NEXTCLOUD_URL=http://nextcloud:80   # URL interna Docker (no cambiar)
 
 # ── Panel EDU (Node.js) ─────────────────────────────────
 PANEL_URL=https://panel.micentro.es
