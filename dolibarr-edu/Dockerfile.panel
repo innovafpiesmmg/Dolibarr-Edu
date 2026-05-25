@@ -16,8 +16,8 @@ COPY artifacts/panel/ ./artifacts/panel/
 # Carpeta de assets (alias @assets en vite)
 RUN mkdir -p attached_assets
 
-# Instalar dependencias
-RUN pnpm install --frozen-lockfile
+# Instalar dependencias (--ignore-scripts omite el check de agente del workspace raíz)
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Compilar libs
 RUN pnpm run typecheck:libs

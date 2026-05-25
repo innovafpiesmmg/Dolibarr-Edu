@@ -13,8 +13,8 @@ COPY lib/ ./lib/
 # API server
 COPY artifacts/api-server/ ./artifacts/api-server/
 
-# Instalar dependencias
-RUN pnpm install --frozen-lockfile
+# Instalar dependencias (--ignore-scripts omite el check de agente del workspace raíz)
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Compilar libs (tipos necesarios para esbuild)
 RUN pnpm run typecheck:libs

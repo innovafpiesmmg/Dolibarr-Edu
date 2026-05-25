@@ -1,0 +1,74 @@
+ => => extracting sha256:a5008f4a4b257356728e2feaf2b5b9e2054c0c577d324e76abbf14470b5f1cfd                                                              1.7s
+ => => extracting sha256:fbaed3f7fcbe6a0d591ac8601934f1f05252cee42741fde9e950dce55580af18                                                              2.5s
+ => [panel_web internal] load build context                                                                                                            0.7s
+ => => transferring context: 3.29MB                                                                                                                    0.1s
+ => [panel_api stage-1 2/3] WORKDIR /app                                                                                                               0.8s
+ => [panel_api builder  2/10] WORKDIR /workspace                                                                                                       0.7s
+ => [panel_web builder  3/10] RUN corepack enable && corepack prepare pnpm@latest --activate                                                           2.4s
+ => [panel_api builder  4/10] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./                                                                  0.2s
+ => [panel_api builder  5/10] COPY tsconfig*.json ./                                                                                                   0.1s
+ => [panel_web builder  6/10] COPY lib/ ./lib/                                                                                                         0.2s
+ => [panel_api builder  7/10] COPY artifacts/api-server/ ./artifacts/api-server/                                                                       0.3s
+ => CACHED [panel_web builder  4/11] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./                                                           0.0s
+ => CACHED [panel_web builder  5/11] COPY tsconfig*.json ./                                                                                            0.0s
+ => CACHED [panel_web builder  6/11] COPY lib/ ./lib/                                                                                                  0.0s
+ => [panel_web builder  7/11] COPY artifacts/panel/ ./artifacts/panel/                                                                                 0.3s
+ => ERROR [panel_api builder  8/10] RUN pnpm install --frozen-lockfile                                                                                33.2s
+ => [panel_web builder  8/11] RUN mkdir -p attached_assets                                                                                             0.5s
+ => CANCELED [panel_web builder  9/11] RUN pnpm install --frozen-lockfile                                                                             33.6s
+------
+ > [panel_api builder  8/10] RUN pnpm install --frozen-lockfile:
+1.763 Scope: all 6 workspace projects
+2.043 ? Verifying lockfile against supply-chain policies (487 entries)...
+10.49 ✓ Lockfile passes supply-chain policies (487 entries in 8.4s)
+10.50 Lockfile is up to date, resolution step is skipped
+10.55 Progress: resolved 1, reused 0, downloaded 0, added 0
+10.61 Packages: +263
+10.61 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+11.55 Progress: resolved 263, reused 0, downloaded 12, added 1
+12.55 Progress: resolved 263, reused 0, downloaded 25, added 5
+13.56 Progress: resolved 263, reused 0, downloaded 26, added 7
+14.56 Progress: resolved 263, reused 0, downloaded 55, added 17
+15.56 Progress: resolved 263, reused 0, downloaded 113, added 93
+16.56 Progress: resolved 263, reused 0, downloaded 122, added 97
+17.56 Progress: resolved 263, reused 0, downloaded 158, added 127
+18.56 Progress: resolved 263, reused 0, downloaded 158, added 130
+19.56 Progress: resolved 263, reused 0, downloaded 166, added 134
+20.56 Progress: resolved 263, reused 0, downloaded 183, added 138
+21.56 Progress: resolved 263, reused 0, downloaded 192, added 142
+22.56 Progress: resolved 263, reused 0, downloaded 246, added 246
+23.56 Progress: resolved 263, reused 0, downloaded 262, added 262
+28.29 Progress: resolved 263, reused 0, downloaded 263, added 262
+28.30 Progress: resolved 263, reused 0, downloaded 263, added 263, done
+31.58 
+31.58 devDependencies:
+31.58 + prettier 3.8.3
+31.58 + typescript 5.9.3
+31.58 
+31.62 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+31.66 . preinstall: Use pnpm instead
+31.67 . preinstall: Failed
+31.72 [ELIFECYCLE] Command failed with exit code 1.
+------
+[+] build 0/2
+ ⠙ Image dolibarr-edu-panel-web Building                                                                                                               62.8s
+ ⠙ Image dolibarr-edu-panel-api Building                                                                                                               62.8s
+Dockerfile.api:17
+
+--------------------
+
+  15 |     
+
+  16 |     # Instalar dependencias
+
+  17 | >>> RUN pnpm install --frozen-lockfile
+
+  18 |     
+
+  19 |     # Compilar libs (tipos necesarios para esbuild)
+
+--------------------
+
+target panel_api: failed to solve: process "/bin/sh -c pnpm install --frozen-lockfile" did not complete successfully: exit code: 1
+
+root@dolibarredu:/opt/dolibarr-edu# 
