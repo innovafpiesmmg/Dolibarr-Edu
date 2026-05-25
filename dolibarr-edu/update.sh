@@ -84,8 +84,11 @@ cp /tmp/dolibarr_edu_env.bak .env
 success ".env restaurado (tu configuración se mantiene intacta)"
 
 # ── Actualizar imágenes y reiniciar ──────────────────────────────────────────
-info "Descargando nuevas imágenes Docker (puede tardar varios minutos)..."
-docker compose pull
+info "Descargando nuevas imágenes Docker de terceros (puede tardar varios minutos)..."
+docker compose pull --ignore-buildable
+
+info "Reconstruyendo imágenes personalizadas del panel..."
+docker compose build panel_api panel_web
 
 info "Reiniciando servicios..."
 docker compose up -d --remove-orphans
