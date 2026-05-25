@@ -94,7 +94,7 @@ else
 fi
 
 # ── Contraseña del panel web ──────────────────────────────────────────────────
-CURRENT_HASH=$(grep "^ADMIN_PASSWORD_HASH=" "$WORK_DIR/.env" | cut -d'=' -f2)
+CURRENT_HASH=$(grep "^ADMIN_PASSWORD_HASH=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
 if [[ -z "$CURRENT_HASH" || "$CURRENT_HASH" == "cambia_este_hash" ]]; then
   echo ""
   echo -e "${BOLD}┌─────────────────────────────────────────────────────────┐${NC}"
