@@ -149,13 +149,16 @@ _ensure_key "COMPOSE_PROFILES"    ""
 # Clave OFFICE_HOST (introducida en versiones recientes)
 _ensure_key "OFFICE_HOST"         "office.micentro.es"
 
-# Si NC_HOST tiene valor pero el perfil no está activado → activarlo automáticamente
+# ── Recomponer COMPOSE_PROFILES según servicios opcionales activos ──────────
+# nextcloud  → si NC_HOST tiene valor
+# cloudflare → si CLOUDFLARE_TOKEN tiene valor (evita restart loop de cloudflared)
 NC_HOST_VAL=$(_get NC_HOST)
-PROFILES_VAL=$(_get COMPOSE_PROFILES)
-if [[ -n "$NC_HOST_VAL" && "$PROFILES_VAL" != *"nextcloud"* ]]; then
-  _set "COMPOSE_PROFILES" "nextcloud"
-  info "Perfil Nextcloud activado automáticamente (NC_HOST=$NC_HOST_VAL)"
-fi
+CF_TOKEN_VAL=$(_get CLOUDFLARE_TOKEN)
+NEW_PROFILES=""
+[[ -n "$NC_HOST_VAL"  ]] && NEW_PROFILES="nextcloud"
+[[ -n "$CF_TOKEN_VAL" ]] && NEW_PROFILES="${NEW_PROFILES:+$NEW_PROFILES,}cloudflare"
+_set "COMPOSE_PROFILES" "$NEW_PROFILES"
+[[ -n "$NEW_PROFILES" ]] && info "Perfiles Compose activos: $NEW_PROFILES" || info "Sin perfiles opcionales activos"
 
 success "Migración del .env completada"
 

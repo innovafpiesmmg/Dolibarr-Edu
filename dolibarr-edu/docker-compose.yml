@@ -109,7 +109,8 @@ services:
     container_name: dolibarr_collabora
     restart: unless-stopped
     environment:
-      aliasgroup1: "https://${DOLI_DOMAIN}|https://${OP_HOST}|https://${NC_HOST}"
+      # NC_HOST puede estar vacío; usamos un placeholder inocuo para evitar trailing "https://"
+      aliasgroup1: "https://${DOLI_DOMAIN}|https://${OP_HOST}|https://${NC_HOST:-no-nextcloud.local}"
       DONT_GEN_SSL_CERT: "YES"
       extra_params: >-
         --o:ssl.enable=false
@@ -262,7 +263,10 @@ services:
       - dolibarr_net
 
   # ── Cloudflare Tunnel ─────────────────────────────────────────────────────────
+  # Solo arranca cuando COMPOSE_PROFILES incluye "cloudflare" (activado por install.sh
+  # si se proporciona CLOUDFLARE_TOKEN). Así evitamos restart loop con token vacío.
   cloudflared:
+    profiles: ["cloudflare"]
     image: cloudflare/cloudflared:latest
     container_name: dolibarr_tunnel
     restart: unless-stopped

@@ -100,7 +100,8 @@ if [[ ! -f "$WORK_DIR/.env" ]]; then
   success ".env creado con contraseñas generadas"
 else
   warn ".env ya existe — se mantiene la configuración actual."
-  DOLI_ADMIN_PASS="(ver $WORK_DIR/.env → DOLI_ADMIN_PASSWORD)"
+  DOLI_ADMIN_PASS=$(grep "^DOLI_ADMIN_PASSWORD=" "$WORK_DIR/.env" | cut -d'=' -f2-)
+  [[ -z "$DOLI_ADMIN_PASS" ]] && DOLI_ADMIN_PASS="(no definida — ejecuta update.sh)"
 fi
 
 # ── Contraseña del panel web ──────────────────────────────────────────────────
@@ -206,11 +207,9 @@ if [[ "$INSTALL_NC" == true ]]; then
   grep -q "^NC_PORT="          "$WORK_DIR/.env" || echo "NC_PORT=8071"                  >> "$WORK_DIR/.env"
   grep -q "^NC_ADMIN_USER="    "$WORK_DIR/.env" || echo "NC_ADMIN_USER=admin"            >> "$WORK_DIR/.env"
   grep -q "^NEXTCLOUD_URL="    "$WORK_DIR/.env" || echo "NEXTCLOUD_URL=http://nextcloud:80" >> "$WORK_DIR/.env"
-  _env_set "COMPOSE_PROFILES" "nextcloud"
   success "Nextcloud activado → $NC_HOST"
 else
   _env_set "NC_HOST" ""
-  _env_set "COMPOSE_PROFILES" ""
   info "Nextcloud no instalado (puedes activarlo más adelante con install.sh)"
 fi
 
@@ -248,6 +247,17 @@ else
     grep -q "^CLOUDFLARE_TOKEN=" "$WORK_DIR/.env" || echo "CLOUDFLARE_TOKEN=" >> "$WORK_DIR/.env"
   fi
 fi
+
+# ── Componer COMPOSE_PROFILES según servicios opcionales activos ─────────────
+# Combina "nextcloud" y "cloudflare" en una lista separada por comas.
+PROFILES=""
+[[ "$INSTALL_NC" == true ]] && PROFILES="nextcloud"
+CF_TOKEN_VAL=$(grep "^CLOUDFLARE_TOKEN=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2-)
+if [[ -n "$CF_TOKEN_VAL" ]]; then
+  PROFILES="${PROFILES:+$PROFILES,}cloudflare"
+fi
+_env_set "COMPOSE_PROFILES" "$PROFILES"
+[[ -n "$PROFILES" ]] && info "Perfiles Compose activos: $PROFILES" || info "Sin perfiles opcionales activos"
 
 # ── Resumen de credenciales ───────────────────────────────────────────────────
 echo ""
