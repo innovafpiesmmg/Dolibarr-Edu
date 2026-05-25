@@ -216,7 +216,7 @@ Ver la sección completa [Configurar Cloudflare Tunnel](#configurar-cloudflare-t
 cd /opt/dolibarr-edu/dolibarr-edu
 
 # Construir las imágenes del panel (solo la primera vez, ~5-10 min)
-docker compose build panel_api panel_web
+docker compose build panel_migrator panel_api panel_web
 
 # Arrancar todo
 docker compose up -d
