@@ -1,0 +1,78 @@
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu/dolibarr-edu
+
+# Cambiar la URL al dominio real
+sed -i "s|^DOLI_URL_ROOT=.*|DOLI_URL_ROOT=https://erp1.iesmmg.es|" .env
+sed -i "s|^DOLI_DOMAIN=.*|DOLI_DOMAIN=erp1.iesmmg.es|" .env
+sed -i "s|^DOLIBARR_BASE_URL=.*|DOLIBARR_BASE_URL=https://erp1.iesmmg.es|" .env
+
+# Verificar
+grep -E "DOLI_URL_ROOT|DOLI_DOMAIN|DOLIBARR_BASE_URL" .env
+
+# Recrear el contenedor con la nueva config
+docker compose up -d --force-recreate dolibarr
+DOLI_URL_ROOT=https://erp1.iesmmg.es
+DOLI_DOMAIN=erp1.iesmmg.es
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+[+] up 2/2
+ ✔ Container dolibarr_db  Healthy                                                                                                                       2.2s
+ ✔ Container dolibarr_app Recreated                                                                                                                     1.7s
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu
+
+# 1. Traer los cambios nuevos
+git pull origin main
+
+# 2. Añadir las variables que le faltan al .env
+cd dolibarr-edu
+
+PANEL_DB_PASS=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 24)
+SESSION_KEY=$(openssl rand -base64 48)
+
+echo "PANEL_DB_PASSWORD=$PANEL_DB_PASS"     >> .env
+echo "SESSION_SECRET=$SESSION_KEY"           >> .env
+echo "DOLIBARR_BASE_URL=https://erp1.iesmmg.es" >> .env
+echo "PANEL_PORT=8068"                       >> .env
+
+# 3. Construir las imágenes (tarda ~5 min la primera vez)
+docker compose build panel_api panel_web
+
+# 4. Arrancar los nuevos servicios
+docker compose up -d panel_db panel_api panel_web
+
+# 5. Aplicar el schema de base de datos
+sleep 10
+docker compose exec panel_api node -e "
+  const { drizzle } = require('drizzle-orm/node-postgres');
+  console.log('DB conectada');
+" 2>/dev/null || true
+
+# Ver que todo está en marcha
+docker compose ps
+remote: Enumerating objects: 14, done.
+remote: Counting objects: 100% (14/14), done.
+remote: Compressing objects: 100% (6/6), done.
+remote: Total 10 (delta 9), reused 5 (delta 4), pack-reused 0 (from 0)
+Unpacking objects: 100% (10/10), 4.97 KiB | 1018.00 KiB/s, done.
+From https://github.com/innovafpiesmmg/Dolibarr-Edu
+ * branch            main       -> FETCH_HEAD
+   e672471..672d791  main       -> origin/main
+Updating e672471..672d791
+Fast-forward
+ dolibarr-edu/install.sh | 255 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-------------------------------------------------------------
+ install.sh              | 236 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-------------------------------------------------------
+ 2 files changed, 253 insertions(+), 238 deletions(-)
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+no such service: panel_web
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+no such service: panel_db
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+NAME                   IMAGE                           COMMAND                  SERVICE          CREATED          STATUS                          PORTS
+dolibarr_app           dolibarr/dolibarr:latest        "docker-run.sh apach…"   dolibarr         6 minutes ago    Up 6 minutes                    127.0.0.1:8069->80/tcp
+dolibarr_collabora     collabora/code:latest           "/start-collabora-on…"   collabora        2 hours ago      Up 2 hours                      127.0.0.1:9980->9980/tcp
+dolibarr_db            mariadb:10.11                   "docker-entrypoint.s…"   db               9 hours ago      Up 9 hours (healthy)            3306/tcp
+dolibarr_op_db         postgres:16-alpine              "docker-entrypoint.s…"   openproject_db   9 hours ago      Up 9 hours (healthy)            5432/tcp
+dolibarr_openproject   openproject/openproject:15      "./docker/prod/entry…"   openproject      2 hours ago      Restarting (1) 28 seconds ago   
+dolibarr_tunnel        cloudflare/cloudflared:latest   "cloudflared --no-au…"   cloudflared      17 minutes ago   Up 17 minutes                   
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu
+docker compose run --rm panel_api sh -c "cd /app && node -e \"require('./dist/index.mjs')\""
+no configuration file provided: not found
+root@dolibarredu:/opt/dolibarr-edu# 
