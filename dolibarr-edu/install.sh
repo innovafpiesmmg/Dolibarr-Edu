@@ -286,6 +286,47 @@ if [[ "${START_NOW,,}" != "n" && "${START_NOW,,}" != "no" ]]; then
   info "Arrancando todos los servicios..."
   docker compose up -d
 
+  # ── Esperar a que Dolibarr complete la instalación inicial ──────────────
+  info "Esperando a que Dolibarr inicialice la base de datos (puede tardar 1-3 minutos)..."
+  DOLI_READY=false
+  for i in {1..60}; do
+    if docker compose exec -T db sh -c \
+         'mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "SHOW TABLES LIKE \"llx_user\";" 2>/dev/null | grep -q llx_user' \
+         < /dev/null 2>/dev/null; then
+      DOLI_READY=true
+      success "Dolibarr inicializado"
+      break
+    fi
+    sleep 5
+  done
+
+  if [[ "$DOLI_READY" == "true" ]]; then
+    # ── Sincronizar contraseña admin con .env (fuente de verdad) ──────────
+    DOLI_PASS=$(grep "^DOLI_ADMIN_PASSWORD=" "$WORK_DIR/.env" | cut -d'=' -f2-)
+    info "Sincronizando contraseña del admin de Dolibarr..."
+    if docker compose exec -T dolibarr php /var/www/html/scripts/users/changepass.php admin "$DOLI_PASS" \
+         < /dev/null > /dev/null 2>&1; then
+      success "Contraseña admin sincronizada con .env"
+    else
+      warn "No se pudo cambiar la contraseña automáticamente. Hazlo desde Dolibarr → Usuarios → admin."
+    fi
+
+    # ── Activar módulo REST API (idempotente) ─────────────────────────────
+    info "Activando módulo REST API de Dolibarr..."
+    if docker compose exec -T db sh -c \
+         'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "INSERT INTO llx_const (name, value, type, visible, note, entity) VALUES (\"MAIN_MODULE_API\", \"1\", \"chaine\", 0, \"\", 0) ON DUPLICATE KEY UPDATE value=\"1\";"' \
+         < /dev/null > /dev/null 2>&1; then
+      success "Módulo REST API activo"
+    else
+      warn "No se pudo activar el módulo REST API (actívalo desde Dolibarr → Inicio → Configuración → Módulos → Web Services REST)"
+    fi
+
+    # Reiniciar panel_api para que recoja el estado actualizado
+    docker compose restart panel_api > /dev/null 2>&1 || true
+  else
+    warn "Dolibarr está tardando demasiado en iniciar. Vuelve a ejecutar update.sh en unos minutos para completar la sincronización."
+  fi
+
   echo ""
   docker compose ps
   echo ""

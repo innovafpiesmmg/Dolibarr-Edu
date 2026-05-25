@@ -171,26 +171,48 @@ docker compose build panel_migrator panel_api panel_web
 info "Reiniciando servicios..."
 docker compose up -d --remove-orphans
 
-# ── Esperar a que Dolibarr esté listo ────────────────────────────────────────
-info "Esperando a que Dolibarr esté listo..."
-for i in {1..30}; do
-  if docker compose exec -T dolibarr sh -c 'test -f /var/www/html/index.php' < /dev/null 2>/dev/null; then
-    success "Dolibarr listo"
+# ── Esperar a que la BD de Dolibarr esté inicializada ───────────────────────
+info "Esperando a que la base de datos de Dolibarr esté lista..."
+DOLI_READY=false
+for i in {1..60}; do
+  if docker compose exec -T db sh -c \
+       'mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "SHOW TABLES LIKE \"llx_user\";" 2>/dev/null | grep -q llx_user' \
+       < /dev/null 2>/dev/null; then
+    DOLI_READY=true
+    success "BD de Dolibarr lista"
     break
   fi
-  sleep 3
+  sleep 5
 done
 
-# ── Activar el módulo REST API de Dolibarr (idempotente) ─────────────────────
-# DOLI_MODULES solo se aplica al primer arranque, así que en instalaciones
-# ya existentes hay que activar el módulo via SQL.
-info "Activando módulo REST API de Dolibarr..."
-if docker compose exec -T db sh -c \
-     'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "INSERT INTO llx_const (name, value, type, visible, note, entity) VALUES (\"MAIN_MODULE_API\", \"1\", \"chaine\", 0, \"\", 0) ON DUPLICATE KEY UPDATE value=\"1\";"' \
-     < /dev/null > /dev/null 2>&1; then
-  success "Módulo REST API activo"
+if [[ "$DOLI_READY" == "true" ]]; then
+  # ── Sincronizar contraseña admin Dolibarr ↔ .env (fuente de verdad) ────
+  DOLI_PASS=$(grep "^DOLI_ADMIN_PASSWORD=" "$WORK_DIR/.env" | cut -d'=' -f2-)
+  if [[ -n "$DOLI_PASS" ]]; then
+    info "Sincronizando contraseña del admin de Dolibarr..."
+    if docker compose exec -T dolibarr php /var/www/html/scripts/users/changepass.php admin "$DOLI_PASS" \
+         < /dev/null > /dev/null 2>&1; then
+      success "Contraseña admin sincronizada"
+    else
+      warn "No se pudo cambiar la contraseña automáticamente"
+    fi
+  fi
+
+  # ── Activar módulo REST API (idempotente) ─────────────────────────────
+  info "Activando módulo REST API de Dolibarr..."
+  if docker compose exec -T db sh -c \
+       'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "INSERT INTO llx_const (name, value, type, visible, note, entity) VALUES (\"MAIN_MODULE_API\", \"1\", \"chaine\", 0, \"\", 0) ON DUPLICATE KEY UPDATE value=\"1\";"' \
+       < /dev/null > /dev/null 2>&1; then
+    success "Módulo REST API activo"
+  else
+    warn "No se pudo activar el módulo REST API (actívalo desde Dolibarr → Configuración → Módulos)"
+  fi
+
+  # Reiniciar panel_api para que recoja todo limpio
+  docker compose restart panel_api > /dev/null 2>&1 || true
+  success "panel_api reiniciado"
 else
-  warn "No se pudo activar el módulo REST API automáticamente (actívalo manualmente desde Dolibarr → Inicio → Configuración → Módulos)"
+  warn "Dolibarr no respondió a tiempo. Ejecuta de nuevo update.sh dentro de unos minutos."
 fi
 
 # ── Esperar a que OpenProject esté listo ─────────────────────────────────────

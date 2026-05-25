@@ -65,7 +65,10 @@ services:
     volumes:
       - op_db_data:/var/lib/postgresql/data
     networks:
-      - dolibarr_net
+      dolibarr_net:
+        # Alias sin guion bajo: Ruby URI (OpenProject) rechaza hostnames con "_"
+        aliases:
+          - openprojectdb
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U openproject"]
       interval: 10s
@@ -82,10 +85,14 @@ services:
         condition: service_healthy
     environment:
       OPENPROJECT_HOST__NAME: ${OP_HOST}
-      OPENPROJECT_HTTPS: "false"
+      OPENPROJECT_HTTPS: "true"
+      OPENPROJECT_RAILS__RELATIVE__URL__ROOT: ""
       OPENPROJECT_DEFAULT__LANGUAGE: "es"
       OPENPROJECT_EDITION: "community"
-      DATABASE_URL: "postgres://openproject:${OP_DB_PASSWORD}@openproject_db/openproject"
+      # Confiar en el túnel Cloudflare como proxy HTTPS
+      OPENPROJECT_RAILS__FORCE__SSL: "false"
+      USE_PUMA: "true"
+      DATABASE_URL: "postgres://openproject:${OP_DB_PASSWORD}@openprojectdb/openproject"
       SECRET_KEY_BASE: ${OP_SECRET_KEY}
       RAILS_ENV: production
       RAILS_SERVE_STATIC_FILES: "true"
@@ -157,9 +164,12 @@ services:
       MYSQL_PASSWORD: ${NC_DB_PASSWORD}
       NEXTCLOUD_ADMIN_USER: ${NC_ADMIN_USER}
       NEXTCLOUD_ADMIN_PASSWORD: ${NC_ADMIN_PASSWORD}
-      NEXTCLOUD_TRUSTED_DOMAINS: ${NC_HOST}
+      # Lista separada por espacios: dominio público + nombre interno Docker para panel_api
+      NEXTCLOUD_TRUSTED_DOMAINS: "${NC_HOST} nextcloud localhost"
+      TRUSTED_PROXIES: "172.16.0.0/12 10.0.0.0/8"
       OVERWRITEPROTOCOL: https
       OVERWRITEHOST: ${NC_HOST}
+      OVERWRITECLIURL: "https://${NC_HOST}"
       NEXTCLOUD_DEFAULT_LANGUAGE: es
       NEXTCLOUD_DEFAULT_LOCALE: es_ES
     volumes:
