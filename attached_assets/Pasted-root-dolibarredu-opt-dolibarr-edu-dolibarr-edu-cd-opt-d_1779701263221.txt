@@ -1,0 +1,78 @@
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu/dolibarr-edu
+
+# Ver cómo quedó la sección cloudflared
+grep -A 10 "cloudflared:" docker-compose.yml
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: dolibarr_tunnel
+    restart: unless-stopped
+    command: tunnel run --token ${CLOUDFLARE_TOKEN}
+    volumes:
+    depends_on:
+      - dolibarr
+      - openproject
+      - collabora
+    networks:
+      - dolibarr_net
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu/dolibarr-edu
+
+python3 - <<'EOF'
+import re
+
+with open("docker-compose.yml", "r") as f:
+    content = f.read()
+
+old = r"""  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: dolibarr_tunnel
+    restart: unless-stopped
+    command: tunnel run --token \${CLOUDFLARE_TOKEN}
+    volumes:
+    depends_on:
+      - dolibarr
+      - openproject
+      - collabora
+    networks:
+      - dolibarr_net"""
+
+new = """  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: dolibarr_tunnel
+    restart: unless-stopped
+    command: tunnel run --token ${CLOUDFLARE_TOKEN}
+    networks:
+      - dolibarr_net"""
+
+content = content.replace(
+    "  cloudflared:\n    image: cloudflare/cloudflared:latest\n    container_name: dolibarr_tunnel\n    restart: unless-stopped\n    command: tunnel run --token ${CLOUDFLARE_TOKEN}\n    volumes:\n    depends_on:\n      - dolibarr\n      - openproject\n      - collabora\n    networks:\n      - dolibarr_net",
+    new
+)
+
+with open("docker-compose.yml", "w") as f:
+docker compose logs cloudflared --tail=10udflared
+OK
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: dolibarr_tunnel
+    restart: unless-stopped
+    command: tunnel run --token ${CLOUDFLARE_TOKEN}
+    networks:
+      - dolibarr_net
+
+volumes:
+  db_data:
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+[+] up 1/1
+ ✔ Container dolibarr_tunnel Recreated                                                                                                                  0.5s
+WARN[0000] /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+dolibarr_tunnel  | 2026-05-25T09:26:56Z INF Starting metrics server on [::]:20241/metrics
+dolibarr_tunnel  | 2026-05-25T09:26:56Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveID(65074) CurveP256] connIndex=0 event=0 ip=198.41.192.67
+dolibarr_tunnel  | 2026/05/25 09:26:56 failed to sufficiently increase receive buffer size (was: 208 kiB, wanted: 7168 kiB, got: 416 kiB). See https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes for details.
+dolibarr_tunnel  | 2026-05-25T09:26:56Z INF Registered tunnel connection connIndex=0 connection=f5f24519-97e2-47e7-9947-8a52f6703126 event=0 ip=198.41.192.67 location=mad06 protocol=quic
+dolibarr_tunnel  | 2026-05-25T09:26:56Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveID(65074) CurveP256] connIndex=1 event=0 ip=198.41.200.23
+dolibarr_tunnel  | 2026-05-25T09:26:56Z INF Updated to new configuration config="{\"ingress\":[{\"hostname\":\"erp1.iesmmg.es\",\"service\":\"http://192.168.1.122\"},{\"service\":\"http_status:404\"}],\"warp-routing\":{\"enabled\":false}}" version=1
+dolibarr_tunnel  | 2026-05-25T09:26:57Z INF Registered tunnel connection connIndex=1 connection=62ca3eeb-3fef-4aa9-acc0-ba83722910ba event=0 ip=198.41.200.23 location=mad05 protocol=quic
+dolibarr_tunnel  | 2026-05-25T09:26:57Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveID(65074) CurveP256] connIndex=2 event=0 ip=198.41.200.33
+dolibarr_tunnel  | 2026-05-25T09:26:58Z INF Registered tunnel connection connIndex=2 connection=3f5315a5-20cf-424f-b59c-276d25716064 event=0 ip=198.41.200.33 location=mad05 protocol=quic
+dolibarr_tunnel  | 2026-05-25T09:26:58Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveID(65074) CurveP256] connIndex=3 event=0 ip=198.41.192.227
+root@dolibarredu:/opt/dolibarr-edu/dolibarr-edu# 
