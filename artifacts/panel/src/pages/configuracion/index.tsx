@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Settings, Globe, Euro, Receipt, FolderKanban, FileSpreadsheet, Cloud, Server } from "lucide-react";
+import { CheckCircle2, Settings, Globe, Euro, Receipt, Server } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TaxSystem = "iva" | "igic";
@@ -34,23 +34,17 @@ export default function Configuracion() {
 
   const [taxSystem, setTaxSystem] = useState<TaxSystem>("igic");
   const [baseDomain, setBaseDomain] = useState("");
-  const [openprojectUrl, setOpenprojectUrl] = useState("");
-  const [collaboraUrl, setCollaboraUrl] = useState("");
-  const [nextcloudUrl, setNextcloudUrl] = useState("");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (!settings) return;
     if (settings.taxSystem) setTaxSystem(settings.taxSystem as TaxSystem);
     if (settings.baseDomain !== undefined) setBaseDomain(settings.baseDomain);
-    if (settings.openprojectUrl !== undefined) setOpenprojectUrl(settings.openprojectUrl);
-    if (settings.collaboraUrl !== undefined) setCollaboraUrl(settings.collaboraUrl);
-    if ((settings as any).nextcloudUrl !== undefined) setNextcloudUrl((settings as any).nextcloudUrl);
   }, [settings]);
 
   const handleSave = () => {
     updateSettings(
-      { data: { taxSystem, baseDomain, openprojectUrl, collaboraUrl, nextcloudUrl } as any },
+      { data: { taxSystem, baseDomain } },
       {
         onSuccess: () => {
           setSaved(true);
@@ -62,10 +56,7 @@ export default function Configuracion() {
 
   const isDirty =
     settings?.taxSystem !== taxSystem ||
-    settings?.baseDomain !== baseDomain ||
-    settings?.openprojectUrl !== openprojectUrl ||
-    settings?.collaboraUrl !== collaboraUrl ||
-    (settings as any)?.nextcloudUrl !== nextcloudUrl;
+    settings?.baseDomain !== baseDomain;
 
   return (
     <div className="space-y-6">
@@ -160,67 +151,6 @@ export default function Configuracion() {
                 </p>
               )}
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* URLs de herramientas externas */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Globe className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-base">URLs de herramientas</CardTitle>
-          </div>
-          <CardDescription>
-            Direcciones públicas de OpenProject y Collabora Online. Se usan en los enlaces del
-            panel y en la landing page del alumno. Incluye el protocolo (ej: <code>https://proyectos.micentro.es</code>).
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {isLoading ? (
-            <div className="space-y-3">
-              <div className="h-10 rounded-lg bg-muted animate-pulse" />
-              <div className="h-10 rounded-lg bg-muted animate-pulse" />
-            </div>
-          ) : (
-            <>
-              <div className="space-y-1.5">
-                <Label className="flex items-center gap-1.5">
-                  <FolderKanban className="h-3.5 w-3.5" />
-                  OpenProject
-                </Label>
-                <Input
-                  value={openprojectUrl}
-                  onChange={(e) => setOpenprojectUrl(e.target.value)}
-                  placeholder="https://proyectos.micentro.es"
-                  type="url"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="flex items-center gap-1.5">
-                  <FileSpreadsheet className="h-3.5 w-3.5" />
-                  Collabora Online (LibreOffice)
-                </Label>
-                <Input
-                  value={collaboraUrl}
-                  onChange={(e) => setCollaboraUrl(e.target.value)}
-                  placeholder="https://office.micentro.es"
-                  type="url"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="flex items-center gap-1.5">
-                  <Cloud className="h-3.5 w-3.5" />
-                  Nextcloud
-                </Label>
-                <Input
-                  value={nextcloudUrl}
-                  onChange={(e) => setNextcloudUrl(e.target.value)}
-                  placeholder="https://cloud.micentro.es"
-                  type="url"
-                />
-              </div>
-            </>
           )}
         </CardContent>
       </Card>

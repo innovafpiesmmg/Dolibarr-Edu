@@ -40,128 +40,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── Base de datos OpenProject (PostgreSQL) ───────────────────────────────────
-  openproject_db:
-    image: postgres:16-alpine
-    container_name: dolibarr_op_db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: openproject
-      POSTGRES_USER: openproject
-      POSTGRES_PASSWORD: ${OP_DB_PASSWORD}
-    volumes:
-      - op_db_data:/var/lib/postgresql/data
-    networks:
-      dolibarr_net:
-        # Alias sin guion bajo: Ruby URI (OpenProject) rechaza hostnames con "_"
-        aliases:
-          - openprojectdb
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U openproject"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ── OpenProject (gestión de proyectos) ───────────────────────────────────────
-  openproject:
-    image: openproject/openproject:15
-    container_name: dolibarr_openproject
-    restart: unless-stopped
-    depends_on:
-      openproject_db:
-        condition: service_healthy
-    environment:
-      OPENPROJECT_HOST__NAME: ${OP_HOST}
-      OPENPROJECT_HTTPS: "true"
-      OPENPROJECT_RAILS__RELATIVE__URL__ROOT: ""
-      OPENPROJECT_DEFAULT__LANGUAGE: "es"
-      OPENPROJECT_EDITION: "community"
-      OPENPROJECT_RAILS__FORCE__SSL: "false"
-      USE_PUMA: "true"
-      DATABASE_URL: "postgres://openproject:${OP_DB_PASSWORD}@openprojectdb/openproject"
-      SECRET_KEY_BASE: ${OP_SECRET_KEY}
-      RAILS_ENV: production
-      RAILS_SERVE_STATIC_FILES: "true"
-    volumes:
-      - op_data:/var/openproject/assets
-    ports:
-      - "127.0.0.1:${OP_PORT:-8070}:80"
-    networks:
-      - dolibarr_net
-
-  # ── Collabora Online (LibreOffice en el navegador) ───────────────────────────
-  collabora:
-    image: collabora/code:latest
-    container_name: dolibarr_collabora
-    restart: unless-stopped
-    environment:
-      aliasgroup1: "https://${OP_HOST}|https://${NC_HOST:-no-nextcloud.local}"
-      DONT_GEN_SSL_CERT: "YES"
-      extra_params: >-
-        --o:ssl.enable=false
-        --o:ssl.termination=true
-        --o:welcome.enable=false
-        --o:logging.level=warning
-      username: ${COLLABORA_ADMIN:-admin}
-      password: ${COLLABORA_PASSWORD}
-    ports:
-      - "127.0.0.1:${COLLABORA_PORT:-9980}:9980"
-    networks:
-      - dolibarr_net
-    cap_add:
-      - MKNOD
-
-  # ── Base de datos Nextcloud (MariaDB) ────────────────────────────────────────
-  nextcloud_db:
-    profiles: ["nextcloud"]
-    image: mariadb:10.11
-    container_name: dolibarr_nc_db
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ${NC_DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: nextcloud
-      MYSQL_USER: nextcloud
-      MYSQL_PASSWORD: ${NC_DB_PASSWORD}
-    volumes:
-      - nc_db_data:/var/lib/mysql
-    networks:
-      - dolibarr_net
-    healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ── Nextcloud — Almacenamiento en la nube ─────────────────────────────────────
-  nextcloud:
-    profiles: ["nextcloud"]
-    image: nextcloud:29
-    container_name: dolibarr_nextcloud
-    restart: unless-stopped
-    depends_on:
-      nextcloud_db:
-        condition: service_healthy
-    environment:
-      MYSQL_HOST: nextcloud_db
-      MYSQL_DATABASE: nextcloud
-      MYSQL_USER: nextcloud
-      MYSQL_PASSWORD: ${NC_DB_PASSWORD}
-      NEXTCLOUD_ADMIN_USER: ${NC_ADMIN_USER}
-      NEXTCLOUD_ADMIN_PASSWORD: ${NC_ADMIN_PASSWORD}
-      NEXTCLOUD_TRUSTED_DOMAINS: "${NC_HOST} nextcloud localhost"
-      TRUSTED_PROXIES: "172.16.0.0/12 10.0.0.0/8"
-      OVERWRITEPROTOCOL: https
-      OVERWRITEHOST: ${NC_HOST}
-      OVERWRITECLIURL: "https://${NC_HOST}"
-      NEXTCLOUD_DEFAULT_LANGUAGE: es
-      NEXTCLOUD_DEFAULT_LOCALE: es_ES
-    volumes:
-      - nc_data:/var/www/html
-    ports:
-      - "127.0.0.1:${NC_PORT:-8071}:80"
-    networks:
-      - dolibarr_net
-
   # ── Base de datos del Panel (PostgreSQL) ──────────────────────────────────────
   panel_db:
     image: postgres:16-alpine
@@ -233,18 +111,12 @@ services:
       MARIADB_HOST: db
       MARIADB_PORT: "3306"
       MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-
-      # Nextcloud (opcional)
-      NEXTCLOUD_URL: ${NEXTCLOUD_URL:-http://nextcloud:80}
-      NC_ADMIN_USER: ${NC_ADMIN_USER:-admin}
-      NC_ADMIN_PASSWORD: ${NC_ADMIN_PASSWORD:-}
-      NC_HOST: ${NC_HOST:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - dolibarr_net
 
-  # ── Panel Web (React + Nginx) ─────────────────────────────────────────────────
+  # ── Panel Web (React + Nginx) — sirve panel + landing ────────────────────────
   panel_web:
     build:
       context: ../
@@ -259,7 +131,7 @@ services:
     networks:
       - dolibarr_net
 
-  # ── Cloudflare Tunnel ─────────────────────────────────────────────────────────
+  # ── Cloudflare Tunnel — acceso público al panel y a los Dolibarr de alumnos ──
   cloudflared:
     profiles: ["cloudflare"]
     image: cloudflare/cloudflared:latest
@@ -271,10 +143,6 @@ services:
 
 volumes:
   db_data:
-  op_db_data:
-  op_data:
-  nc_db_data:
-  nc_data:
   panel_db_data:
 
 networks:

@@ -9,9 +9,6 @@ const DEFAULTS: Record<string, string> = {
   currency: "EUR",
   language: "es_ES",
   baseDomain: process.env.BASE_DOMAIN ?? "",
-  openprojectUrl: process.env.OP_HOST ? `https://${process.env.OP_HOST}` : "",
-  collaboraUrl: process.env.COLLABORA_DOMAIN ? `https://${process.env.COLLABORA_DOMAIN}` : "",
-  nextcloudUrl: process.env.NC_HOST ? `https://${process.env.NC_HOST}` : "",
 };
 
 async function getSetting(key: string): Promise<string> {
@@ -32,29 +29,23 @@ export async function getBaseDomain(): Promise<string> {
 }
 
 async function getAllSettings() {
-  const [taxSystem, currency, language, baseDomain, openprojectUrl, collaboraUrl, nextcloudUrl] = await Promise.all([
+  const [taxSystem, currency, language, baseDomain] = await Promise.all([
     getSetting("taxSystem"),
     getSetting("currency"),
     getSetting("language"),
     getSetting("baseDomain"),
-    getSetting("openprojectUrl"),
-    getSetting("collaboraUrl"),
-    getSetting("nextcloudUrl"),
   ]);
-  return { taxSystem, currency, language, baseDomain, openprojectUrl, collaboraUrl, nextcloudUrl };
+  return { taxSystem, currency, language, baseDomain };
 }
 
-router.get("/settings", async (req, res) => {
+router.get("/settings", async (_req, res) => {
   res.json(await getAllSettings());
 });
 
 router.patch("/settings", async (req, res) => {
-  const { taxSystem, baseDomain, openprojectUrl, collaboraUrl, nextcloudUrl } = req.body as {
+  const { taxSystem, baseDomain } = req.body as {
     taxSystem?: string;
     baseDomain?: string;
-    openprojectUrl?: string;
-    collaboraUrl?: string;
-    nextcloudUrl?: string;
   };
 
   const updates: { key: string; value: string }[] = [];
@@ -75,10 +66,6 @@ router.patch("/settings", async (req, res) => {
     }
     updates.push({ key: "baseDomain", value: trimmed });
   }
-
-  if (openprojectUrl !== undefined) updates.push({ key: "openprojectUrl", value: openprojectUrl });
-  if (collaboraUrl !== undefined) updates.push({ key: "collaboraUrl", value: collaboraUrl });
-  if (nextcloudUrl !== undefined) updates.push({ key: "nextcloudUrl", value: nextcloudUrl });
 
   for (const { key, value } of updates) {
     await db

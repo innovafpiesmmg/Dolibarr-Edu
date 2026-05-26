@@ -11,12 +11,6 @@ import {
   ListTeacherGroupsParams,
 } from "@workspace/api-zod";
 import { createHash } from "crypto";
-import {
-  isNextcloudConfigured,
-  createNextcloudUser,
-  deleteNextcloudUser,
-  generateNcPassword,
-} from "../lib/nextcloud";
 
 const router: IRouter = Router();
 
@@ -90,29 +84,15 @@ router.post("/teachers", async (req, res) => {
       passwordHash: hashPassword(body.password),
       phone: body.phone ?? null,
     })
-    .returning();
-
-  // Fire-and-forget Nextcloud provisioning
-  if (isNextcloudConfigured()) {
-    void createNextcloudUser({
-      username: teacher.username,
-      password: generateNcPassword(teacher.username),
-      displayName: `${teacher.firstName} ${teacher.lastName}`,
-      email: teacher.email,
-    })
-      .then(() =>
-        db
-          .update(teachersTable)
-          .set({ nextcloudSyncStatus: "synced" })
-          .where(eq(teachersTable.id, teacher.id)),
-      )
-      .catch(() =>
-        db
-          .update(teachersTable)
-          .set({ nextcloudSyncStatus: "error" })
-          .where(eq(teachersTable.id, teacher.id)),
-      );
-  }
+    .returning({
+      id: teachersTable.id,
+      firstName: teachersTable.firstName,
+      lastName: teachersTable.lastName,
+      email: teachersTable.email,
+      username: teachersTable.username,
+      phone: teachersTable.phone,
+      createdAt: teachersTable.createdAt,
+    });
 
   res.status(201).json({
     ...teacher,
@@ -217,11 +197,6 @@ router.delete("/teachers/:id", async (req, res) => {
   }
 
   await db.delete(teachersTable).where(eq(teachersTable.id, id));
-
-  // Fire-and-forget Nextcloud cleanup
-  if (isNextcloudConfigured()) {
-    void deleteNextcloudUser(toDelete.username);
-  }
 
   res.status(204).send();
 });

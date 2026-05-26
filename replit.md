@@ -35,9 +35,8 @@ Plataforma de gestión para centros de FP de Administración de Empresas. **Cada
   - `teachers.ts`, `groups.ts`, `students.ts`, `stats.ts`
   - `deploy.ts` — despliegue + ciclo de vida del contenedor Dolibarr de cada alumno (deploy, start, stop, restart, destroy, state)
   - `employees.ts`, `payrolls.ts`, `ss.ts` — módulo de nóminas y Seguridad Social
-  - `settings.ts` — configuración del panel (taxSystem, baseDomain, currency, language, openprojectUrl, collaboraUrl, nextcloudUrl)
+  - `settings.ts` — configuración del panel (taxSystem, baseDomain, currency, language)
   - `auth.ts` — autenticación del panel y sesión de alumno (redirige a `https://{user}.{baseDomain}/`)
-  - `nextcloud.ts` — rutas de integración Nextcloud (status, users, provision/all)
 - `artifacts/api-server/src/lib/docker.ts` — wrapper de `dockerode` sobre el socket UNIX
   - `isDockerAvailable`, `ensureStudentContainer`, `start/stop/restart/remove`, `getContainerState`
 - `artifacts/api-server/src/lib/mariadb.ts` — wrapper de `mysql2/promise` sobre la MariaDB compartida
@@ -50,9 +49,6 @@ Plataforma de gestión para centros de FP de Administración de Empresas. **Cada
   - `createPayrollAccountingEntry` — asiento contable 640/642/465/476/4751
   - `paySSToBank` — asiento 476→572 (SS Tesorería)
   - `payIRPFToBank` — asiento 4751→572 (Hacienda, Modelo 111)
-- `artifacts/api-server/src/lib/nextcloud.ts` — integración con Nextcloud OCS API v2
-  - `pingNextcloud`, `createNextcloudUser`, `deleteNextcloudUser`
-  - `generateNcPassword` — contraseña determinista SHA-256(username + SESSION_SECRET)
 - `artifacts/panel/src/` — frontend React
   - `pages/landing.tsx` — página pública de presentación
   - `pages/dashboard/` — estadísticas generales
@@ -61,7 +57,7 @@ Plataforma de gestión para centros de FP de Administración de Empresas. **Cada
   - `pages/alumnos/` — CRUD alumnos
   - `pages/importar/` — importación masiva CSV
   - `pages/nominas/` — módulo nóminas: index, empleados, nueva, detalle, ss
-  - `pages/configuracion/` — configuración fiscal del panel
+  - `pages/configuracion/` — configuración fiscal y dominio base del panel
 - `dolibarr-edu/` — paquete Docker para servidores del centro (standalone, no es la app Node)
   - `install.sh` — instalador con una línea desde GitHub
   - `update.sh` — actualización desde GitHub
@@ -95,8 +91,7 @@ Plataforma de gestión para centros de FP de Administración de Empresas. **Cada
 - **Nueva nómina** (`/nominas/nueva`) — cálculo y registro de nómina mensual
 - **Detalle nómina** (`/nominas/:id`) — consulta y sincronización con Dolibarr HRM
 - **Liquidaciones SS** (`/nominas/ss`) — RNT, RLC, asientos SS e IRPF (Modelo 111) en Dolibarr
-- **Configuración** (`/configuracion`) — régimen fiscal (IGIC/IVA), **dominio base** para subdominios de Dolibarr, idioma y moneda del ERP; URLs de OpenProject, Collabora y Nextcloud
-- **Nextcloud** (`/nextcloud`) — estado de conexión, listado de usuarios con estado de sincronización, botón de aprovisionamiento masivo
+- **Configuración** (`/configuracion`) — régimen fiscal (IGIC/IVA), **dominio base** para subdominios de Dolibarr, idioma y moneda del ERP
 
 ## User preferences
 
@@ -106,29 +101,14 @@ Plataforma de gestión para centros de FP de Administración de Empresas. **Cada
 
 ## Cloudflare Tunnel — Public Hostnames
 
-Conectores a configurar en el túnel Cloudflare del centro. Solo son obligatorios los dos primeros; los demás dependen de los servicios instalados.
+Solo dos conectores a configurar en el túnel Cloudflare del centro (ambos obligatorios para acceso público).
 
-| Subdominio | Servicio Docker | ¿Obligatorio? |
+| Subdominio | Servicio Docker | Descripción |
 |---|---|---|
-| `panel.iesmmg.es` | `http://panel_web:80` | Sí — acceso al panel de gestión |
-| `*.erp.iesmmg.es` (comodín) | `http://traefik:8090` | Sí — un subdominio por alumno (`<usuario>.erp.iesmmg.es`) → su contenedor Dolibarr vía Traefik |
-| `proyectos.iesmmg.es` | `http://openproject:80` | Solo si se usa OpenProject |
-| `office.iesmmg.es` | `http://collabora:9980` | Solo si se usa Collabora Online |
-| `cloud.iesmmg.es` | `http://nextcloud:80` | Solo si se usa Nextcloud |
+| `panel.iesmmg.es` | `http://panel_web:80` | Panel de gestión + landing page (mismo container) |
+| `*.erp.iesmmg.es` (comodín) | `http://traefik:80` | Un subdominio por alumno (`<usuario>.erp.iesmmg.es`) → su contenedor Dolibarr vía Traefik |
 
-## Nextcloud — Variables de entorno en el servidor
-
-En `dolibarr-edu/.env`:
-```
-NC_HOST=cloud.micentro.es          # dominio público (sin https://)
-NC_PORT=8071                        # puerto local
-NC_DB_ROOT_PASSWORD=...             # generada por install.sh
-NC_DB_PASSWORD=...                  # generada por install.sh
-NC_ADMIN_USER=admin                 # admin de Nextcloud
-NC_ADMIN_PASSWORD=...               # generada por install.sh
-NEXTCLOUD_URL=http://nextcloud:80   # URL interna Docker (no cambiar)
-```
-La contraseña de cada usuario en Nextcloud es: `SHA256(username + SESSION_SECRET).slice(0,20)` — determinista y no se almacena.
+> Puerto interno de Traefik = `80` (el `TRAEFIK_PORT` del `.env` es solo el mapeo al host para `curl localhost`).
 
 ## Gotchas
 

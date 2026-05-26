@@ -84,21 +84,23 @@ if [[ ! -f "$WORK_DIR/.env" ]]; then
   cp "$WORK_DIR/.env.example" "$WORK_DIR/.env"
   info "Generando contraseñas aleatorias..."
 
-  sed -i "s|cambia_esta_contrasena_root|$(gen_pass 24)|g"             "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_contrasena_db|$(gen_pass 24)|g"               "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_contrasena_openproject|$(gen_pass 24)|g"      "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_clave_secreta_openproject|$(openssl rand -hex 64)|g" "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_contrasena_collabora|$(gen_pass 20)|g"        "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_contrasena_nc_root|$(gen_pass 24)|g"          "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_contrasena_nc_db|$(gen_pass 24)|g"            "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_contrasena_nc_admin|$(gen_pass 20)|g"         "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_contrasena_panel|$(gen_pass 24)|g"            "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_clave_sesion|$(gen_pass 48)|g"                "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_contrasena_root|$(gen_pass 24)|g"  "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_contrasena_panel|$(gen_pass 24)|g" "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_clave_sesion|$(gen_pass 48)|g"     "$WORK_DIR/.env"
 
   success ".env creado con contraseñas generadas"
 else
   warn ".env ya existe — se mantiene la configuración actual."
 fi
+
+_env_set() { # _env_set KEY VALUE
+  local key="$1" val="$2"
+  if grep -q "^${key}=" "$WORK_DIR/.env"; then
+    sed -i "s|^${key}=.*|${key}=${val}|" "$WORK_DIR/.env"
+  else
+    echo "${key}=${val}" >> "$WORK_DIR/.env"
+  fi
+}
 
 # ── Contraseña del panel web ──────────────────────────────────────────────────
 CURRENT_HASH=$(grep "^ADMIN_PASSWORD_HASH=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
@@ -117,11 +119,7 @@ if [[ -z "$CURRENT_HASH" ]]; then
     echo -e "  ${RED}Las contraseñas no coinciden o están vacías. Inténtalo de nuevo.${NC}"
   done
   PANEL_HASH=$(echo -n "$PANEL_PASS" | openssl dgst -sha256 | awk '{print $2}')
-  if grep -q "^ADMIN_PASSWORD_HASH=" "$WORK_DIR/.env"; then
-    sed -i "s|^ADMIN_PASSWORD_HASH=.*|ADMIN_PASSWORD_HASH=$PANEL_HASH|" "$WORK_DIR/.env"
-  else
-    echo "ADMIN_PASSWORD_HASH=$PANEL_HASH" >> "$WORK_DIR/.env"
-  fi
+  _env_set "ADMIN_PASSWORD_HASH" "$PANEL_HASH"
   success "Contraseña del panel configurada"
 else
   success "Contraseña del panel ya configurada"
@@ -146,65 +144,8 @@ CURRENT_PANEL_URL=$(grep "^PANEL_URL=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' 
 read -rp "  URL del Panel de gestión  [${CURRENT_PANEL_URL:-https://panel.micentro.es}]: " PANEL_URL < /dev/tty
 PANEL_URL="${PANEL_URL:-${CURRENT_PANEL_URL:-https://panel.micentro.es}}"
 
-CURRENT_OP_HOST=$(grep "^OP_HOST=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-read -rp "  Dominio de OpenProject    [${CURRENT_OP_HOST:-proyectos.micentro.es}]: " OP_HOST < /dev/tty
-OP_HOST="${OP_HOST:-${CURRENT_OP_HOST:-proyectos.micentro.es}}"
-
-CURRENT_OFFICE=$(grep "^OFFICE_HOST=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-read -rp "  Dominio de Collabora      [${CURRENT_OFFICE:-office.micentro.es}]: " OFFICE_HOST < /dev/tty
-OFFICE_HOST="${OFFICE_HOST:-${CURRENT_OFFICE:-office.micentro.es}}"
-
-# ── Nextcloud (opcional) ──────────────────────────────────────────────────────
-CURRENT_NC_HOST=$(grep "^NC_HOST=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-DEFAULT_NC_HOST="${CURRENT_NC_HOST:-cloud.micentro.es}"
-echo ""
-echo "  Nextcloud (opcional — déjalo vacío con un espacio para no instalarlo)"
-read -rp "  Dominio de Nextcloud      [${DEFAULT_NC_HOST}]: " NC_HOST < /dev/tty
-NC_HOST="${NC_HOST:-$DEFAULT_NC_HOST}"
-# Espacio en blanco = no instalar
-NC_HOST="$(echo "$NC_HOST" | xargs || true)"
-if [[ -n "$NC_HOST" ]]; then
-  INSTALL_NC=true
-else
-  INSTALL_NC=false
-fi
-
-_env_set() { # _env_set KEY VALUE
-  local key="$1" val="$2"
-  if grep -q "^${key}=" "$WORK_DIR/.env"; then
-    sed -i "s|^${key}=.*|${key}=${val}|" "$WORK_DIR/.env"
-  else
-    echo "${key}=${val}" >> "$WORK_DIR/.env"
-  fi
-}
-
-_env_set "BASE_DOMAIN"  "$BASE_DOMAIN_IN"
-_env_set "OP_HOST"      "$OP_HOST"
-_env_set "PANEL_URL"    "$PANEL_URL"
-_env_set "OFFICE_HOST"  "$OFFICE_HOST"
-
-if [[ "$INSTALL_NC" == true ]]; then
-  _env_set "NC_HOST"  "$NC_HOST"
-  # Generar contraseñas NC si son placeholder o faltan
-  _nc_pass() {
-    local key="$1"
-    local cur; cur=$(grep "^${key}=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-    if [[ -z "$cur" || "$cur" == cambia_* ]]; then
-      _env_set "$key" "$(gen_pass 24)"
-    fi
-  }
-  _nc_pass NC_DB_ROOT_PASSWORD
-  _nc_pass NC_DB_PASSWORD
-  _nc_pass NC_ADMIN_PASSWORD
-  # Asegurar resto de vars NC con valores por defecto si faltan
-  grep -q "^NC_PORT="          "$WORK_DIR/.env" || echo "NC_PORT=8071"                  >> "$WORK_DIR/.env"
-  grep -q "^NC_ADMIN_USER="    "$WORK_DIR/.env" || echo "NC_ADMIN_USER=admin"            >> "$WORK_DIR/.env"
-  grep -q "^NEXTCLOUD_URL="    "$WORK_DIR/.env" || echo "NEXTCLOUD_URL=http://nextcloud:80" >> "$WORK_DIR/.env"
-  success "Nextcloud activado → $NC_HOST"
-else
-  _env_set "NC_HOST" ""
-  info "Nextcloud no instalado (puedes activarlo más adelante con install.sh)"
-fi
+_env_set "BASE_DOMAIN" "$BASE_DOMAIN_IN"
+_env_set "PANEL_URL"   "$PANEL_URL"
 
 success "URLs configuradas"
 
@@ -226,45 +167,38 @@ else
   echo "  (Dashboard Cloudflare → Zero Trust → Networks → Tunnels → tu túnel"
   echo "   → Configure → Overview → copia el token del comando de instalación)"
   echo ""
+  echo "  Public Hostnames que debes crear en el dashboard del túnel:"
+  echo "    panel.<tu-dominio>    → http://panel_web:80   (panel + landing)"
+  echo "    *.$BASE_DOMAIN_IN   → http://traefik:80     (Dolibarr de cada alumno)"
+  echo ""
   read -rp "  Token de Cloudflare (o Enter para omitir): " CF_TOKEN < /dev/tty
   if [[ -n "$CF_TOKEN" ]]; then
-    if grep -q "^CLOUDFLARE_TOKEN=" "$WORK_DIR/.env"; then
-      sed -i "s|^CLOUDFLARE_TOKEN=.*|CLOUDFLARE_TOKEN=$CF_TOKEN|" "$WORK_DIR/.env"
-    else
-      echo "CLOUDFLARE_TOKEN=$CF_TOKEN" >> "$WORK_DIR/.env"
-    fi
+    _env_set "CLOUDFLARE_TOKEN" "$CF_TOKEN"
     success "Token de Cloudflare guardado"
   else
     info "Cloudflare omitido. Añade CLOUDFLARE_TOKEN en $WORK_DIR/.env cuando lo tengas."
-    # Asegurarse de que la clave existe aunque vacía
-    grep -q "^CLOUDFLARE_TOKEN=" "$WORK_DIR/.env" || echo "CLOUDFLARE_TOKEN=" >> "$WORK_DIR/.env"
+    _env_set "CLOUDFLARE_TOKEN" ""
   fi
 fi
 
-# ── Componer COMPOSE_PROFILES según servicios opcionales activos ─────────────
-# Combina "nextcloud" y "cloudflare" en una lista separada por comas.
-PROFILES=""
-[[ "$INSTALL_NC" == true ]] && PROFILES="nextcloud"
+# ── Componer COMPOSE_PROFILES ─────────────────────────────────────────────────
+# Solo "cloudflare" es opcional: activo si hay token.
 CF_TOKEN_VAL=$(grep "^CLOUDFLARE_TOKEN=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2-)
 if [[ -n "$CF_TOKEN_VAL" ]]; then
-  PROFILES="${PROFILES:+$PROFILES,}cloudflare"
+  _env_set "COMPOSE_PROFILES" "cloudflare"
+  info "Perfiles Compose activos: cloudflare"
+else
+  _env_set "COMPOSE_PROFILES" ""
+  info "Sin perfiles opcionales activos"
 fi
-_env_set "COMPOSE_PROFILES" "$PROFILES"
-[[ -n "$PROFILES" ]] && info "Perfiles Compose activos: $PROFILES" || info "Sin perfiles opcionales activos"
 
-# ── Resumen de credenciales ───────────────────────────────────────────────────
+# ── Resumen ───────────────────────────────────────────────────────────────────
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║        GUARDA ESTAS CREDENCIALES EN LUGAR SEGURO            ║"
-echo "╠══════════════════════════════════════════════════════════════╣"
-printf  "║  %-28s %-31s║\n" "OpenProject:" "admin / admin (cámbiala)"
-printf  "║  %-28s %-31s║\n" "Nextcloud:" "admin / (ver .env → NC_ADMIN_PASSWORD)"
+echo "║                  URLs de tu instalación                      ║"
 echo "╠══════════════════════════════════════════════════════════════╣"
 printf  "║  %-28s %-31s║\n" "Panel de gestión:" "$PANEL_URL"
 printf  "║  %-28s %-31s║\n" "Dolibarr alumnos:" "https://<usuario>.$BASE_DOMAIN_IN"
-printf  "║  %-28s %-31s║\n" "OpenProject:" "https://$OP_HOST"
-printf  "║  %-28s %-31s║\n" "Collabora Online:" "https://$OFFICE_HOST"
-printf  "║  %-28s %-31s║\n" "Nextcloud:" "https://$NC_HOST"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
 echo "  Cada alumno tendrá su propio Dolibarr aislado, creado desde el panel."

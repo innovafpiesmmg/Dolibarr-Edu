@@ -1033,9 +1033,6 @@ export const GetSettingsResponse = zod.object({
   "taxSystem": zod.enum(['iva', 'igic']),
   "currency": zod.string(),
   "language": zod.string(),
-  "openprojectUrl": zod.string(),
-  "collaboraUrl": zod.string(),
-  "nextcloudUrl": zod.string(),
   "baseDomain": zod.string().describe('Dominio base público para los Dolibarr de los alumnos (ej. erp.iesmmg.es). Cada alumno será accesible en https:\/\/{username}.{baseDomain}\/')
 })
 
@@ -1045,9 +1042,6 @@ export const GetSettingsResponse = zod.object({
  */
 export const UpdateSettingsBody = zod.object({
   "taxSystem": zod.enum(['iva', 'igic']).optional(),
-  "openprojectUrl": zod.string().optional(),
-  "collaboraUrl": zod.string().optional(),
-  "nextcloudUrl": zod.string().optional(),
   "baseDomain": zod.string().optional()
 })
 
@@ -1055,56 +1049,7 @@ export const UpdateSettingsResponse = zod.object({
   "taxSystem": zod.enum(['iva', 'igic']),
   "currency": zod.string(),
   "language": zod.string(),
-  "openprojectUrl": zod.string(),
-  "collaboraUrl": zod.string(),
-  "nextcloudUrl": zod.string(),
   "baseDomain": zod.string().describe('Dominio base público para los Dolibarr de los alumnos (ej. erp.iesmmg.es). Cada alumno será accesible en https:\/\/{username}.{baseDomain}\/')
-})
-
-
-/**
- * @summary Estado de la conexión con Nextcloud
- */
-export const GetNextcloudStatusResponse = zod.object({
-  "connected": zod.boolean(),
-  "configured": zod.boolean(),
-  "adminUser": zod.string().nullish()
-})
-
-
-/**
- * @summary Listado de profesores y alumnos con su estado en Nextcloud
- */
-export const GetNextcloudUsersResponse = zod.object({
-  "teachers": zod.array(zod.object({
-  "id": zod.number(),
-  "username": zod.string(),
-  "displayName": zod.string(),
-  "email": zod.string(),
-  "nextcloudSyncStatus": zod.string(),
-  "type": zod.enum(['teacher', 'student'])
-})),
-  "students": zod.array(zod.object({
-  "id": zod.number(),
-  "username": zod.string(),
-  "displayName": zod.string(),
-  "email": zod.string(),
-  "nextcloudSyncStatus": zod.string(),
-  "type": zod.enum(['teacher', 'student'])
-}))
-})
-
-
-/**
- * @summary Aprovisiona en Nextcloud todos los usuarios pendientes
- */
-export const ProvisionAllNextcloudResponse = zod.object({
-  "provisioned": zod.number(),
-  "total": zod.number(),
-  "errors": zod.array(zod.object({
-  "username": zod.string(),
-  "error": zod.string()
-}))
 })
 
 

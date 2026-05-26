@@ -500,9 +500,6 @@ export interface Settings {
   taxSystem: SettingsTaxSystem;
   currency: string;
   language: string;
-  openprojectUrl: string;
-  collaboraUrl: string;
-  nextcloudUrl: string;
   /** Dominio base público para los Dolibarr de los alumnos (ej. erp.iesmmg.es). Cada alumno será accesible en https://{username}.{baseDomain}/ */
   baseDomain: string;
 }
@@ -517,50 +514,7 @@ export const SettingsInputTaxSystem = {
 
 export interface SettingsInput {
   taxSystem?: SettingsInputTaxSystem;
-  openprojectUrl?: string;
-  collaboraUrl?: string;
-  nextcloudUrl?: string;
   baseDomain?: string;
-}
-
-export interface NextcloudStatus {
-  connected: boolean;
-  configured: boolean;
-  /** @nullable */
-  adminUser?: string | null;
-}
-
-export type NextcloudUserEntryType = typeof NextcloudUserEntryType[keyof typeof NextcloudUserEntryType];
-
-
-export const NextcloudUserEntryType = {
-  teacher: 'teacher',
-  student: 'student',
-} as const;
-
-export interface NextcloudUserEntry {
-  id: number;
-  username: string;
-  displayName: string;
-  email: string;
-  nextcloudSyncStatus: string;
-  type: NextcloudUserEntryType;
-}
-
-export interface NextcloudUsers {
-  teachers: NextcloudUserEntry[];
-  students: NextcloudUserEntry[];
-}
-
-export type NextcloudProvisionResultErrorsItem = {
-  username: string;
-  error: string;
-};
-
-export interface NextcloudProvisionResult {
-  provisioned: number;
-  total: number;
-  errors: NextcloudProvisionResultErrorsItem[];
 }
 
 export type StatsStudentsPerGroupItem = {

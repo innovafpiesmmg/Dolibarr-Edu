@@ -42,7 +42,7 @@ echo "╔═══════════════════════�
 echo "║            ERP EDU — Reinstalación limpia                   ║"
 echo "║                                                              ║"
 echo "║  ⚠  ESTA OPERACIÓN ELIMINA TODOS LOS DATOS  ⚠               ║"
-echo "║     Dolibarr · OpenProject · Nextcloud · Panel              ║"
+echo "║     Panel · Traefik · MariaDB · contenedores Dolibarr        ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
 

@@ -37,41 +37,7 @@ echo ""
 mkdir -p "$BACKUP_DIR"
 TIMESTAMP=$(date +%Y%m%d_%H%M)
 
-# ── Backfill de variables nuevas en .env ──────────────────────────────────────
-# Garantiza que el .env de instalaciones antiguas tenga las claves nuevas
-# que el panel_api necesita (login a Dolibarr, etc.).
-if [[ -f "$WORK_DIR/.env" ]]; then
-  info "Comprobando variables de entorno..."
-  _env_get() { grep "^${1}=" "$WORK_DIR/.env" 2>/dev/null | head -n1 | cut -d'=' -f2- || true; }
-  _env_set() {
-    local k="$1" v="$2"
-    if grep -q "^${k}=" "$WORK_DIR/.env"; then
-      sed -i "s|^${k}=.*|${k}=${v}|" "$WORK_DIR/.env"
-    else
-      echo "${k}=${v}" >> "$WORK_DIR/.env"
-    fi
-  }
-
-  ADDED=0
-  if [[ -z "$(_env_get BASE_DOMAIN)" ]]; then
-    # Migración: derivar del antiguo DOLI_URL_ROOT si existe
-    OLD_DOLI=$(_env_get DOLI_URL_ROOT)
-    DEFAULT_BD=$(echo "$OLD_DOLI" | sed 's|https\?://||' | cut -d'/' -f1)
-    [[ -z "$DEFAULT_BD" ]] && DEFAULT_BD="erp.micentro.es"
-    _env_set BASE_DOMAIN "$DEFAULT_BD"
-    warn "BASE_DOMAIN faltaba — establecido a '$DEFAULT_BD'. Cámbialo en .env si no es correcto."
-    ADDED=$((ADDED+1))
-  fi
-  if [[ -z "$(_env_get DOLIBARR_IMAGE)" ]]; then
-    _env_set DOLIBARR_IMAGE "dolibarr/dolibarr:latest"; ADDED=$((ADDED+1))
-  fi
-  if [[ -z "$(_env_get STUDENT_DOCKER_NETWORK)" ]]; then
-    _env_set STUDENT_DOCKER_NETWORK "dolibarr-edu_dolibarr_net"; ADDED=$((ADDED+1))
-  fi
-  [[ $ADDED -gt 0 ]] && success "Añadidas $ADDED variables nuevas al .env" || success "Variables OK"
-fi
-
-# ── Backup previo ─────────────────────────────────────────────────────────────
+# ── Backup previo (MariaDB con todas las BDs de alumnos) ──────────────────────
 cd "$WORK_DIR"
 
 info "Realizando backup completo de MariaDB (incluye BDs de todos los alumnos)..."
@@ -81,15 +47,6 @@ if docker compose exec -T db sh -c 'exec mysqldump -u root -p"$MYSQL_ROOT_PASSWO
   success "Backup MariaDB → $BACKUP_FILE_DOLI"
 else
   warn "No se pudo hacer backup de MariaDB (puede que no esté en marcha)."
-fi
-
-info "Realizando backup de la base de datos de OpenProject..."
-BACKUP_FILE_OP="$BACKUP_DIR/openproject_${TIMESTAMP}.sql"
-if docker compose exec -T openproject_db sh -c \
-     'pg_dump -U openproject openproject' < /dev/null > "$BACKUP_FILE_OP" 2>/dev/null; then
-  success "Backup OpenProject → $BACKUP_FILE_OP"
-else
-  warn "No se pudo hacer backup de OpenProject (puede que no esté activo)."
 fi
 
 # ── Guardar .env ──────────────────────────────────────────────────────────────
@@ -106,7 +63,6 @@ LATEST=$(git rev-parse "origin/$BRANCH")
 
 if [[ "$CURRENT" == "$LATEST" ]]; then
   success "Ya estás en la última versión. No hay actualizaciones."
-  # Ejecutar igualmente la migración del .env por si faltan claves nuevas
 else
   COMMITS=$(git log --oneline "$CURRENT..$LATEST" | wc -l)
   info "Se aplicarán $COMMITS commit(s) nuevos:"
@@ -137,34 +93,24 @@ _ensure_key() {
   fi
 }
 
-# Claves Nextcloud (introducidas en versiones recientes)
-_ensure_key "NC_HOST"             ""
-_ensure_key "NC_PORT"             "8071"
-_ensure_key "NC_DB_ROOT_PASSWORD" "$(gen_pass 24)"
-_ensure_key "NC_DB_PASSWORD"      "$(gen_pass 24)"
-_ensure_key "NC_ADMIN_USER"       "admin"
-_ensure_key "NC_ADMIN_PASSWORD"   "$(gen_pass 20)"
-_ensure_key "NEXTCLOUD_URL"       "http://nextcloud:80"
-_ensure_key "COMPOSE_PROFILES"    ""
-
-# Clave OFFICE_HOST (introducida en versiones recientes)
-_ensure_key "OFFICE_HOST"         "office.micentro.es"
-
-# Orquestación de Dolibarr por alumno (pivot a contenedor-por-alumno)
+# Orquestación de Dolibarr por alumno
 _ensure_key "BASE_DOMAIN"            "erp.micentro.es"
 _ensure_key "DOLIBARR_IMAGE"         "dolibarr/dolibarr:latest"
 _ensure_key "STUDENT_DOCKER_NETWORK" "dolibarr-edu_dolibarr_net"
+_ensure_key "TRAEFIK_PORT"           "8090"
+_ensure_key "PANEL_PORT"             "8068"
+_ensure_key "COMPOSE_PROFILES"       ""
 
-# ── Recomponer COMPOSE_PROFILES según servicios opcionales activos ──────────
-# nextcloud  → si NC_HOST tiene valor
-# cloudflare → si CLOUDFLARE_TOKEN tiene valor (evita restart loop de cloudflared)
-NC_HOST_VAL=$(_get NC_HOST)
+# ── Recomponer COMPOSE_PROFILES ─────────────────────────────────────────────
+# Solo "cloudflare" es opcional: activo si hay token (evita restart loop de cloudflared).
 CF_TOKEN_VAL=$(_get CLOUDFLARE_TOKEN)
-NEW_PROFILES=""
-[[ -n "$NC_HOST_VAL"  ]] && NEW_PROFILES="nextcloud"
-[[ -n "$CF_TOKEN_VAL" ]] && NEW_PROFILES="${NEW_PROFILES:+$NEW_PROFILES,}cloudflare"
-_set "COMPOSE_PROFILES" "$NEW_PROFILES"
-[[ -n "$NEW_PROFILES" ]] && info "Perfiles Compose activos: $NEW_PROFILES" || info "Sin perfiles opcionales activos"
+if [[ -n "$CF_TOKEN_VAL" ]]; then
+  _set "COMPOSE_PROFILES" "cloudflare"
+  info "Perfiles Compose activos: cloudflare"
+else
+  _set "COMPOSE_PROFILES" ""
+  info "Sin perfiles opcionales activos"
+fi
 
 success "Migración del .env completada"
 
@@ -182,51 +128,8 @@ docker compose build --no-cache panel_migrator panel_api panel_web
 info "Reiniciando servicios..."
 docker compose up -d --remove-orphans
 
-# ── Esperar a que la BD de Dolibarr esté inicializada ───────────────────────
-info "Esperando a que la base de datos de Dolibarr esté lista..."
-DOLI_READY=false
-for i in {1..60}; do
-  if docker compose exec -T db sh -c \
-       'mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "SHOW TABLES LIKE \"llx_user\";" 2>/dev/null | grep -q llx_user' \
-       < /dev/null 2>/dev/null; then
-    DOLI_READY=true
-    success "BD de Dolibarr lista"
-    break
-  fi
-  sleep 5
-done
-
-if [[ "$DOLI_READY" == "true" ]]; then
-  # ── Reset de alumnos a 'pending' al migrar a contenedor-por-alumno ──────
-  # En la arquitectura nueva, el campo legacy dolibarrEntityId apunta al
-  # tercero de un Dolibarr global que ya no usamos. Marcar como 'pending'
-  # fuerza re-despliegue como contenedor propio cuando el profesor lo pida.
-  info "Marcando alumnos con estado legacy como 'pending' para re-despliegue..."
-  docker compose exec -T panel_db sh -c \
-    "psql -U panel -d panel -c \"UPDATE students SET dolibarr_sync_status='pending', dolibarr_entity_id=NULL, dolibarr_user_id=NULL WHERE dolibarr_sync_status='synced' AND dolibarr_entity_id IS NOT NULL;\"" \
-    < /dev/null > /dev/null 2>&1 || \
-    warn "No se pudo aplicar el reset automático (puedes hacerlo manualmente desde el panel)."
-
-  # Reiniciar panel_api para que recoja todo limpio
-  docker compose restart panel_api > /dev/null 2>&1 || true
-  success "panel_api reiniciado"
-else
-  warn "MariaDB no respondió a tiempo. Ejecuta de nuevo update.sh dentro de unos minutos."
-fi
-
-# ── Esperar a que OpenProject esté listo ─────────────────────────────────────
-info "Esperando a que OpenProject esté listo..."
-for i in {1..60}; do
-  if docker compose exec -T openproject sh -c 'curl -sf http://localhost/health > /dev/null 2>&1' < /dev/null 2>/dev/null; then
-    success "OpenProject listo"
-    break
-  fi
-  sleep 5
-done
-
 # ── Limpieza de backups antiguos (guarda los últimos 5) ──────────────────────
-ls -t "$BACKUP_DIR"/dolibarr_*.sql    2>/dev/null | tail -n +6 | xargs -r rm --
-ls -t "$BACKUP_DIR"/openproject_*.sql 2>/dev/null | tail -n +6 | xargs -r rm --
+ls -t "$BACKUP_DIR"/mariadb_*.sql 2>/dev/null | tail -n +6 | xargs -r rm --
 
 echo ""
 echo "════════════════════════════════════════════════════════════════"
