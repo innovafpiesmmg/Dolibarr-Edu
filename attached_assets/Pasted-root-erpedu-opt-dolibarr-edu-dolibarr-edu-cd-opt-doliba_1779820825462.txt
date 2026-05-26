@@ -1,0 +1,120 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu
+
+# 1) Descarta los cambios locales (no los necesitas, ya están en GitHub)
+sudo git checkout -- artifacts/api-server/build.mjs
+sudo git pull origin main
+
+# 2) Verifica que el compose tiene "name: dolibarr_net"
+grep -A 2 "^  dolibarr_net:" dolibarr-edu/docker-compose.yml
+# Esperado:
+#   dolibarr_net:
+#     name: dolibarr_net
+#     driver: bridge
+
+# 3) Asegura el valor correcto en el .env del servidor
+sudo sed -i 's|^STUDENT_DOCKER_NETWORK=.*|STUDENT_DOCKER_NETWORK=dolibarr_net|' dolibarr-edu/.env
+
+# 4) Recrea todo
+cd dolibarr-edu
+sudo docker rm -f dolibarr_alu_juanperez 2>/dev/null
+sudo docker compose down
+sudo docker network rm dolibarr-edu_dolibarr_net 2>/dev/null
+# Esperado: HTTP/1.1 302 Found ... Location: /index.php?...1 \{end}}'o "Restarting")
+remote: Enumerating objects: 6, done.
+remote: Counting objects: 100% (6/6), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 4 (delta 2), reused 4 (delta 2), pack-reused 0 (from 0)
+Unpacking objects: 100% (4/4), 1.81 KiB | 1.81 MiB/s, done.
+From https://github.com/innovafpiesmmg/Dolibarr-Edu
+ * branch            main       -> FETCH_HEAD
+   c007c08..8b3ccc7  main       -> origin/main
+Updating 355bae9..8b3ccc7
+Fast-forward
+ artifacts/api-server/build.mjs                                            |  1 -
+ artifacts/api-server/src/lib/student-deploy.ts                            |  2 +-
+ ...t-erpedu-opt-dolibarr-edu-dolibarr-edu-cd-opt-doliba_1779818173126.txt | 91 +++++++++++++++++++++++++++++++++++
+ ...t-erpedu-opt-dolibarr-edu-dolibarr-edu-cd-opt-doliba_1779820647189.txt | 61 +++++++++++++++++++++++
+ dolibarr-edu/.env.example                                                 |  2 +-
+ dolibarr-edu/docker-compose.yml                                           |  3 +-
+ dolibarr-edu/update.sh                                                    |  7 ++-
+ 7 files changed, 162 insertions(+), 5 deletions(-)
+ create mode 100644 attached_assets/Pasted-root-erpedu-opt-dolibarr-edu-dolibarr-edu-cd-opt-doliba_1779818173126.txt
+ create mode 100644 attached_assets/Pasted-root-erpedu-opt-dolibarr-edu-dolibarr-edu-cd-opt-doliba_1779820647189.txt
+  dolibarr_net:
+    name: dolibarr_net
+    driver: bridge
+[+] down 8/8
+ ✔ Container dolibarr_tunnel         Removed                                                                   1.6ss
+ ✔ Container dolibarr_traefik        Removed                                                                   1.6ss
+ ✔ Container dolibarr_panel_web      Removed                                                                   1.5ss
+ ✔ Container dolibarr_panel_api      Removed                                                                   10.7s
+ ✔ Container dolibarr_db             Removed                                                                   1.1s
+ ✔ Container dolibarr_panel_migrator Removed                                                                   0.1s
+ ✔ Container dolibarr_panel_db       Removed                                                                   1.0s
+ ! Network dolibarr_net              No resource found to remove                                               0.0s
+dolibarr-edu_dolibarr_net
+[+] up 8/8
+ ✔ Network dolibarr_net              Created                                                                   0.1ss
+ ✔ Container dolibarr_db             Healthy                                                                   13.7s
+ ✔ Container dolibarr_panel_db       Healthy                                                                   13.7s
+ ✔ Container dolibarr_tunnel         Created                                                                   1.0ss
+ ✔ Container dolibarr_traefik        Created                                                                   0.8ss
+ ✔ Container dolibarr_panel_migrator Exited                                                                    16.2s
+ ✔ Container dolibarr_panel_api      Created                                                                   0.4ss
+ ✔ Container dolibarr_panel_web      Created                                                                   0.2ss
+ae288ab2ba6b   dolibarr_net   bridge    local
+[+] Building 40.3s (19/19) FINISHED                                                                                 
+ => [internal] load local bake definitions                                                                     0.0s
+ => => reading from stdin 1.06kB                                                                               0.0s
+ => [internal] load build definition from Dockerfile.api                                                       0.0s
+ => => transferring dockerfile: 1.59kB                                                                         0.0s
+ => [internal] load metadata for docker.io/library/node:24-alpine                                              1.0s
+ => [internal] load .dockerignore                                                                              0.0s
+ => => transferring context: 146B                                                                              0.0s
+ => [internal] load build context                                                                              0.1s
+ => => transferring context: 110.41kB                                                                          0.0s
+ => [builder  1/10] FROM docker.io/library/node:24-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392f  0.2s
+ => => resolve docker.io/library/node:24-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab  0.2s
+ => CACHED [builder  2/10] WORKDIR /workspace                                                                  0.0s
+ => [builder  3/10] RUN corepack enable && corepack prepare pnpm@latest --activate                             3.6s
+ => CACHED [api 2/3] WORKDIR /app                                                                              0.0s
+ => [builder  4/10] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./                                    0.4s 
+ => [builder  5/10] COPY tsconfig*.json ./                                                                     0.2s
+ => [builder  6/10] COPY lib/ ./lib/                                                                           0.3s
+ => [builder  7/10] COPY artifacts/api-server/ ./artifacts/api-server/                                         0.4s
+ => [builder  8/10] RUN pnpm install --frozen-lockfile --ignore-scripts                                       15.0s
+ => [builder  9/10] RUN pnpm run typecheck:libs                                                               11.2s 
+ => [builder 10/10] RUN pnpm --filter @workspace/api-server run build                                          3.5s
+ => [api 3/3] COPY --from=builder /workspace/artifacts/api-server/dist ./dist                                  0.8s
+ => exporting to image                                                                                         2.9s
+ => => exporting layers                                                                                        1.4s
+ => => exporting manifest sha256:0dad729f71c5e8f08e1110ca7320e9560a1298b204f76c8d810df104c81afa8d              0.1s
+ => => exporting config sha256:8e12f4547302c094ff096771e7e9b8b646a769c3083e1f8fdb81b5aa86b3ec46                0.1s
+ => => exporting attestation manifest sha256:14ec356dd829808c0102fae2f9e6dd2092d884869624d0bc77b706fff7c68750  0.1s
+ => => exporting manifest list sha256:575f245ba5fe40a0c7b839745ecef6067913d5d11a5a56d7088383072cdc63a5         0.1s
+ => => naming to docker.io/library/dolibarr-edu-panel-api:latest                                               0.0s
+ => => unpacking to docker.io/library/dolibarr-edu-panel-api:latest                                            1.0s
+ => resolving provenance for metadata file                                                                     0.0s
+[+] build 1/2
+ ⠙ Image dolibarr-edu-panel-migrator Building                                                                  40.4s
+ ✔ Image dolibarr-edu-panel-api      Built                                                                     40.4s
+[+] up 4/4
+ ✔ Container dolibarr_panel_db       Healthy                                                                   12.6s
+ ✔ Container dolibarr_db             Healthy                                                                   12.6s
+ ✔ Container dolibarr_panel_api      Recreated                                                                 11.2s
+ ✔ Container dolibarr_panel_migrator Exited                                                                    3.7s
+NAME                 IMAGE                           COMMAND                  SERVICE       CREATED              STATUS                        PORTS
+dolibarr_db          mariadb:10.11                   "docker-entrypoint.s…"   db            About a minute ago   Up About a minute (healthy)   3306/tcp
+dolibarr_panel_api   dolibarr-edu-panel-api          "docker-entrypoint.s…"   panel_api     16 seconds ago       Up Less than a second         
+dolibarr_panel_db    postgres:16-alpine              "docker-entrypoint.s…"   panel_db      About a minute ago   Up About a minute (healthy)   5432/tcp
+dolibarr_panel_web   dolibarr-edu-panel-web          "/docker-entrypoint.…"   panel_web     About a minute ago   Up 57 seconds                 127.0.0.1:8068->80/tcp
+dolibarr_traefik     traefik:v3.1                    "/entrypoint.sh --pr…"   traefik       About a minute ago   Up About a minute             127.0.0.1:8090->80/tcp
+dolibarr_tunnel      cloudflare/cloudflared:latest   "cloudflared --no-au…"   cloudflared   About a minute ago   Up About a minute             
+
+error: no such object: dolibarr_alu_juanperez
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+Date: Tue, 26 May 2026 18:40:07 GMT
+Content-Length: 19
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 
