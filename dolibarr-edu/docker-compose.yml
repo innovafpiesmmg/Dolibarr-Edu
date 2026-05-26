@@ -5,22 +5,44 @@ services:
   # mediante etiquetas Docker. Acepta tráfico HTTP del túnel Cloudflare; TLS
   # lo termina Cloudflare. Solo escucha en localhost (los puertos los expone
   # el túnel hacia el exterior).
+  # Proxy del socket Docker: traduce la API entre Traefik (cuyo SDK Go
+  # negocia siempre /v1.24/...) y el daemon moderno (Engine 25+/29+ que
+  # rechaza versiones <1.44). También limita los permisos: Traefik solo
+  # puede LEER contenedores, no controlar el host.
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy:0.3.0
+    container_name: dolibarr_docker_proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: "1"
+      SERVICES: "1"
+      TASKS: "1"
+      NETWORKS: "1"
+      EVENTS: "1"
+      PING: "1"
+      VERSION: "1"
+      INFO: "1"
+      POST: "0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - dolibarr_net
+
   traefik:
-    # v3.3+ trae un Docker SDK que soporta API >= 1.44 (necesario para
-    # Docker Engine 25+/26+/29+ que rechazan clientes antiguos).
     image: traefik:v3.3
     container_name: dolibarr_traefik
     restart: unless-stopped
+    depends_on:
+      - docker-proxy
     command:
       - "--providers.docker=true"
+      - "--providers.docker.endpoint=tcp://docker-proxy:2375"
       - "--providers.docker.exposedByDefault=false"
       - "--providers.docker.network=dolibarr_net"
       - "--entrypoints.web.address=:80"
       - "--log.level=WARN"
     ports:
       - "127.0.0.1:${TRAEFIK_PORT:-8090}:80"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - dolibarr_net
 
