@@ -1,5 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { rebuildAllRoutes, isTraefikConfigEnabled } from "./lib/traefik-config";
+import { getBaseDomain } from "./routes/settings";
 
 const rawPort = process.env["PORT"];
 
@@ -22,4 +24,12 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  // Reconstruye las rutas Traefik desde la BD al arrancar (idempotente).
+  // Así sobrevivimos a reinicios del panel y a montajes nuevos del volumen.
+  if (isTraefikConfigEnabled()) {
+    getBaseDomain()
+      .then((baseDomain) => rebuildAllRoutes(baseDomain || null))
+      .catch((e) => logger.warn({ err: e }, "Fallo reconstruyendo rutas Traefik al arrancar"));
+  }
 });

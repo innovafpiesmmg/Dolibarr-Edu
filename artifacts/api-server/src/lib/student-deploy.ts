@@ -27,6 +27,7 @@ import {
   invalidateTokenCache,
   sanitize,
 } from "./student-dolibarr";
+import { writeStudentRoute, removeStudentRoute } from "./traefik-config";
 
 export interface DeployContext {
   baseDomain: string;
@@ -132,6 +133,12 @@ export async function deployStudentDolibarr(
   }
 
   const state = await getContainerState(cName);
+
+  // 4) Publicar ruta Traefik (file provider) — Traefik la detecta en caliente
+  await writeStudentRoute(username, ctx.baseDomain).catch((err) =>
+    logger.warn({ err, username }, "No se pudo escribir ruta Traefik (continuando)"),
+  );
+
   logger.info({ username, state }, "Dolibarr de alumno desplegado");
 
   return {
@@ -152,6 +159,9 @@ export async function destroyStudentDolibarr(username: string): Promise<void> {
   if (isMariaDBConfigured()) {
     await dropStudentDatabase(dbName(username), dbUser(username));
   }
+  await removeStudentRoute(username).catch((err) =>
+    logger.warn({ err, username }, "No se pudo eliminar ruta Traefik"),
+  );
   invalidateTokenCache(username);
 }
 

@@ -5,44 +5,23 @@ services:
   # mediante etiquetas Docker. Acepta tráfico HTTP del túnel Cloudflare; TLS
   # lo termina Cloudflare. Solo escucha en localhost (los puertos los expone
   # el túnel hacia el exterior).
-  # Proxy del socket Docker: traduce la API entre Traefik (cuyo SDK Go
-  # negocia siempre /v1.24/...) y el daemon moderno (Engine 25+/29+ que
-  # rechaza versiones <1.44). También limita los permisos: Traefik solo
-  # puede LEER contenedores, no controlar el host.
-  docker-proxy:
-    image: tecnativa/docker-socket-proxy:0.3.0
-    container_name: dolibarr_docker_proxy
-    restart: unless-stopped
-    environment:
-      CONTAINERS: "1"
-      SERVICES: "1"
-      TASKS: "1"
-      NETWORKS: "1"
-      EVENTS: "1"
-      PING: "1"
-      VERSION: "1"
-      INFO: "1"
-      POST: "0"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - dolibarr_net
-
+  # Traefik con FILE PROVIDER: lee rutas de un directorio que el panel
+  # mantiene actualizado. NO usa el socket Docker (su Go SDK negocia API
+  # 1.24 y los daemons Engine 25+/29+ la rechazan). El panel es la única
+  # fuente de verdad sobre qué alumnos existen, así que es más limpio.
   traefik:
     image: traefik:v3.3
     container_name: dolibarr_traefik
     restart: unless-stopped
-    depends_on:
-      - docker-proxy
     command:
-      - "--providers.docker=true"
-      - "--providers.docker.endpoint=tcp://docker-proxy:2375"
-      - "--providers.docker.exposedByDefault=false"
-      - "--providers.docker.network=dolibarr_net"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
       - "--entrypoints.web.address=:80"
       - "--log.level=WARN"
     ports:
       - "127.0.0.1:${TRAEFIK_PORT:-8090}:80"
+    volumes:
+      - traefik_dynamic:/etc/traefik/dynamic:ro
     networks:
       - dolibarr_net
 
@@ -135,8 +114,13 @@ services:
       MARIADB_HOST: db
       MARIADB_PORT: "3306"
       MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+      # Directorio compartido con Traefik (file provider) — el panel
+      # escribe aquí un .json por alumno desplegado.
+      TRAEFIK_DYNAMIC_DIR: /etc/traefik/dynamic
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - traefik_dynamic:/etc/traefik/dynamic
     networks:
       - dolibarr_net
 
@@ -167,6 +151,7 @@ services:
 
 volumes:
   db_data:
+  traefik_dynamic:
   panel_db_data:
 
 networks:

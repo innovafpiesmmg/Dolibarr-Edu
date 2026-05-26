@@ -1,0 +1,45 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu/dolibarr-edu
+
+sudo tee docker-compose.override.yml > /dev/null <<'EOF'
+services:
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy:0.3.0
+    container_name: dolibarr_docker_proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: "1"
+      SERVICES: "1"
+      TASKS: "1"
+      NETWORKS: "1"
+      EVENTS: "1"
+      PING: "1"
+      VERSION: "1"
+      INFO: "1"
+      POST: "0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+  http://juanperez.erp1.iesmmg.es:8090/ | head -50:127.0.0.1 \
+[+] pull 10/10
+ ✔ Image tecnativa/docker-socket-proxy:0.3.0 Pulled                                                             8.0s
+[+] up 1/1
+ ✔ Container dolibarr_docker_proxy Created                                                                      0.6s
+[+] up 2/2
+ ✔ Container dolibarr_docker_proxy Running                                                                      0.0s
+ ✔ Container dolibarr_traefik      Recreated                                                                    1.3s
+2026-05-26T18:54:07Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:54:07Z ERR Provider error, retrying in 622.162428ms error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:54:07Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:54:07Z ERR Provider error, retrying in 632.215277ms error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:54:08Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:54:08Z ERR Provider error, retrying in 625.532223ms error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:54:09Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:54:09Z ERR Provider error, retrying in 2.196717313s error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:54:11Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:54:11Z ERR Provider error, retrying in 3.169896437s error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+Date: Tue, 26 May 2026 18:54:12 GMT
+Content-Length: 19
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 
