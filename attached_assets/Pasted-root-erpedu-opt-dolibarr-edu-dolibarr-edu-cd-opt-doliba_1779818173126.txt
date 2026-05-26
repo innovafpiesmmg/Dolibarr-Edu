@@ -1,0 +1,91 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu/dolibarr-edu
+sudo docker compose logs --tail=80 panel_api
+sudo docker compose ps
+dolibarr_panel_api  |   code: 'ERR_MODULE_NOT_FOUND'
+dolibarr_panel_api  | }
+dolibarr_panel_api  | 
+dolibarr_panel_api  | Node.js v24.16.0
+dolibarr_panel_api  | node:internal/modules/package_json_reader:301
+dolibarr_panel_api  |   throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+dolibarr_panel_api  |         ^
+dolibarr_panel_api  | 
+dolibarr_panel_api  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'mysql2' imported from /app/dist/index.mjs
+dolibarr_panel_api  |     at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+dolibarr_panel_api  |     at packageResolve (node:internal/modules/esm/resolve:768:81)
+dolibarr_panel_api  |     at moduleResolve (node:internal/modules/esm/resolve:859:18)
+dolibarr_panel_api  |     at defaultResolve (node:internal/modules/esm/resolve:992:11)
+dolibarr_panel_api  |     at #cachedDefaultResolve (node:internal/modules/esm/loader:691:20)
+dolibarr_panel_api  |     at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:708:38)
+dolibarr_panel_api  |     at ModuleLoader.resolveSync (node:internal/modules/esm/loader:740:52)
+dolibarr_panel_api  |     at #resolve (node:internal/modules/esm/loader:673:17)
+dolibarr_panel_api  |     at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:593:35)
+dolibarr_panel_api  |     at ModuleJob.syncLink (node:internal/modules/esm/module_job:163:33) {
+dolibarr_panel_api  |   code: 'ERR_MODULE_NOT_FOUND'
+dolibarr_panel_api  | }
+dolibarr_panel_api  | 
+dolibarr_panel_api  | Node.js v24.16.0
+dolibarr_panel_api  | node:internal/modules/package_json_reader:301
+dolibarr_panel_api  |   throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+dolibarr_panel_api  |         ^
+dolibarr_panel_api  | 
+dolibarr_panel_api  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'mysql2' imported from /app/dist/index.mjs
+dolibarr_panel_api  |     at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+dolibarr_panel_api  |     at packageResolve (node:internal/modules/esm/resolve:768:81)
+dolibarr_panel_api  |     at moduleResolve (node:internal/modules/esm/resolve:859:18)
+dolibarr_panel_api  |     at defaultResolve (node:internal/modules/esm/resolve:992:11)
+dolibarr_panel_api  |     at #cachedDefaultResolve (node:internal/modules/esm/loader:691:20)
+dolibarr_panel_api  |     at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:708:38)
+dolibarr_panel_api  |     at ModuleLoader.resolveSync (node:internal/modules/esm/loader:740:52)
+dolibarr_panel_api  |     at #resolve (node:internal/modules/esm/loader:673:17)
+dolibarr_panel_api  |     at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:593:35)
+dolibarr_panel_api  |     at ModuleJob.syncLink (node:internal/modules/esm/module_job:163:33) {
+dolibarr_panel_api  |   code: 'ERR_MODULE_NOT_FOUND'
+dolibarr_panel_api  | }
+dolibarr_panel_api  | 
+dolibarr_panel_api  | Node.js v24.16.0
+dolibarr_panel_api  | node:internal/modules/package_json_reader:301
+dolibarr_panel_api  |   throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+dolibarr_panel_api  |         ^
+dolibarr_panel_api  | 
+dolibarr_panel_api  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'mysql2' imported from /app/dist/index.mjs
+dolibarr_panel_api  |     at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+dolibarr_panel_api  |     at packageResolve (node:internal/modules/esm/resolve:768:81)
+dolibarr_panel_api  |     at moduleResolve (node:internal/modules/esm/resolve:859:18)
+dolibarr_panel_api  |     at defaultResolve (node:internal/modules/esm/resolve:992:11)
+dolibarr_panel_api  |     at #cachedDefaultResolve (node:internal/modules/esm/loader:691:20)
+dolibarr_panel_api  |     at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:708:38)
+dolibarr_panel_api  |     at ModuleLoader.resolveSync (node:internal/modules/esm/loader:740:52)
+dolibarr_panel_api  |     at #resolve (node:internal/modules/esm/loader:673:17)
+dolibarr_panel_api  |     at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:593:35)
+dolibarr_panel_api  |     at ModuleJob.syncLink (node:internal/modules/esm/module_job:163:33) {
+dolibarr_panel_api  |   code: 'ERR_MODULE_NOT_FOUND'
+dolibarr_panel_api  | }
+dolibarr_panel_api  | 
+dolibarr_panel_api  | Node.js v24.16.0
+dolibarr_panel_api  | node:internal/modules/package_json_reader:301
+dolibarr_panel_api  |   throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+dolibarr_panel_api  |         ^
+dolibarr_panel_api  | 
+dolibarr_panel_api  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'mysql2' imported from /app/dist/index.mjs
+dolibarr_panel_api  |     at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+dolibarr_panel_api  |     at packageResolve (node:internal/modules/esm/resolve:768:81)
+dolibarr_panel_api  |     at moduleResolve (node:internal/modules/esm/resolve:859:18)
+dolibarr_panel_api  |     at defaultResolve (node:internal/modules/esm/resolve:992:11)
+dolibarr_panel_api  |     at #cachedDefaultResolve (node:internal/modules/esm/loader:691:20)
+dolibarr_panel_api  |     at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:708:38)
+dolibarr_panel_api  |     at ModuleLoader.resolveSync (node:internal/modules/esm/loader:740:52)
+dolibarr_panel_api  |     at #resolve (node:internal/modules/esm/loader:673:17)
+dolibarr_panel_api  |     at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:593:35)
+dolibarr_panel_api  |     at ModuleJob.syncLink (node:internal/modules/esm/module_job:163:33) {
+dolibarr_panel_api  |   code: 'ERR_MODULE_NOT_FOUND'
+dolibarr_panel_api  | }
+dolibarr_panel_api  | 
+dolibarr_panel_api  | Node.js v24.16.0
+NAME                 IMAGE                           COMMAND                  SERVICE       CREATED         STATUS                          PORTS
+dolibarr_db          mariadb:10.11                   "docker-entrypoint.s…"   db            3 minutes ago   Up 3 minutes (healthy)          3306/tcp
+dolibarr_panel_api   dolibarr-edu-panel-api          "docker-entrypoint.s…"   panel_api     3 minutes ago   Restarting (1) 36 seconds ago   
+dolibarr_panel_db    postgres:16-alpine              "docker-entrypoint.s…"   panel_db      3 minutes ago   Up 3 minutes (healthy)          5432/tcp
+dolibarr_panel_web   dolibarr-edu-panel-web          "/docker-entrypoint.…"   panel_web     3 minutes ago   Up 3 minutes                    127.0.0.1:8068->80/tcp
+dolibarr_traefik     traefik:v3.1                    "/entrypoint.sh --pr…"   traefik       3 minutes ago   Up 3 minutes                    127.0.0.1:8090->80/tcp
+dolibarr_tunnel      cloudflare/cloudflared:latest   "cloudflared --no-au…"   cloudflared   3 minutes ago   Up 3 minutes                    
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 
