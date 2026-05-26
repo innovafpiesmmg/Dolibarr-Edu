@@ -1,0 +1,61 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu
+sudo git pull origin main
+cd dolibarr-edu
+
+# 1) Elimina el contenedor del alumno actual (la red vieja no se puede renombrar)
+sudo docker rm -f dolibarr_alu_juanperez 2>/dev/null
+
+# 2) Recrea el stack con la red ya con nombre fijo
+sudo docker compose down                    # baja todos los servicios (BD persiste en volúmenes)
+sudo docker network rm dolibarr-edu_dolibarr_net 2>/dev/null || true
+sudo docker compose up -d                   # crea la red como "dolibarr_net" (sin prefijo)
+
+# 3) Verifica
+sudo docker network ls | grep dolibarr_net
+# Debe aparecer una sola línea: "dolibarr_net   bridge   local"
+
+# 4) Desde el panel del profesor → ficha juanperez → Desplegar
+
+# 5) Test
+curl -i -s --resolve juanperez.erp1.iesmmg.es:8090:127.0.0.1 \
+  http://juanperez.erp1.iesmmg.es:8090/ | head -5
+# Esperado: HTTP/1.1 302 Found ... Location: /index.php?...
+remote: Enumerating objects: 21, done.
+remote: Counting objects: 100% (21/21), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 11 (delta 9), reused 11 (delta 9), pack-reused 0 (from 0)
+Unpacking objects: 100% (11/11), 1.38 KiB | 94.00 KiB/s, done.
+From https://github.com/innovafpiesmmg/Dolibarr-Edu
+ * branch            main       -> FETCH_HEAD
+   a64b749..c007c08  main       -> origin/main
+Updating 355bae9..c007c08
+error: Your local changes to the following files would be overwritten by merge:
+        artifacts/api-server/build.mjs
+Please commit your changes or stash them before you merge.
+Aborting
+dolibarr_alu_juanperez
+[+] down 8/8
+ ✔ Container dolibarr_traefik        Removed                                                                   0.6ss
+ ✔ Container dolibarr_panel_web      Removed                                                                   0.7ss
+ ✔ Container dolibarr_tunnel         Removed                                                                   0.7ss
+ ✔ Container dolibarr_panel_api      Removed                                                                   10.6s
+ ✔ Container dolibarr_panel_migrator Removed                                                                   0.1s
+ ✔ Container dolibarr_db             Removed                                                                   5.0s
+ ✔ Container dolibarr_panel_db       Removed                                                                   2.7s
+ ✔ Network dolibarr-edu_dolibarr_net Removed                                                                   0.1s
+[+] up 8/8
+ ✔ Network dolibarr-edu_dolibarr_net Created                                                                   0.1ss
+ ✔ Container dolibarr_panel_db       Healthy                                                                   14.4s
+ ✔ Container dolibarr_tunnel         Created                                                                   0.9ss
+ ✔ Container dolibarr_traefik        Created                                                                   1.1ss
+ ✔ Container dolibarr_db             Healthy                                                                   14.4s
+ ✔ Container dolibarr_panel_migrator Exited                                                                    17.1s
+ ✔ Container dolibarr_panel_api      Created                                                                   0.3ss
+ ✔ Container dolibarr_panel_web      Created                                                                   0.2ss
+aba135c75298   dolibarr-edu_dolibarr_net   bridge    local
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+Date: Tue, 26 May 2026 18:37:11 GMT
+Content-Length: 19
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 
