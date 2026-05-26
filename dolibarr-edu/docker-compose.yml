@@ -9,6 +9,10 @@ services:
     image: traefik:v3.1
     container_name: dolibarr_traefik
     restart: unless-stopped
+    environment:
+      # Fuerza a Traefik a usar una versión moderna de la API Docker.
+      # Sin esto negocia 1.24 (de 2016) y daemons modernos la rechazan.
+      DOCKER_API_VERSION: "1.44"
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedByDefault=false"

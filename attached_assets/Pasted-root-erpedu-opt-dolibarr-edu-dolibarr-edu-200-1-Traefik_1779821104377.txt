@@ -1,0 +1,55 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# ^[[200~# 1) ¿Traefik vio el contenedor del alumno?
+-bash: syntax error near unexpected token `)'
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# sudo docker logs dolibarr_traefik 2>&1 | grep -iE "juanperez|error|warn" | tail -20
+lumno
+sudo docker inspect dolibarr_alu_juanperez --format \
+  '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}={{$v.IPAddress}}{{"\n"}}{{end}}'
+
+# 4) Desde dentro de Traefik, ¿alcanza al contenedor del alumno por nombre?
+sudo docker exec dolibarr_traefik wget -qO- --timeout=3 http://dolibarr_alu_juanperez/ 2>&1 | head -3
+# Esperado: HTML de Dolibarr o redirección 302. Si dice "bad address" → no están en la misma red operativa.
+
+# 5) Estado del contenedor del alumno
+sudo docker ps --filter name=dolibarr_alu_juanperez \
+  --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+
+# 6) ¿Apache dentro del alumno responde?
+sudo docker exec dolibarr_alu_juanperez wget -qO- --timeout=3 http://localhost/ 2>&1 | head -32026-05-26T18:44:06Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:06Z ERR Provider error, retrying in 312.195676ms error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:06Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:06Z ERR Provider error, retrying in 724.597495ms error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:07Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:07Z ERR Provider error, retrying in 1.281966006s error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:08Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:08Z ERR Provider error, retrying in 2.502606226s error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:10Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:10Z ERR Provider error, retrying in 1.707163528s error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:12Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:12Z ERR Provider error, retrying in 3.440728065s error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:16Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:16Z ERR Provider error, retrying in 3.383306975s error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:19Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:19Z ERR Provider error, retrying in 5.041075052s error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:24Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:24Z ERR Provider error, retrying in 10.504948721s error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:34Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:44:34Z ERR Provider error, retrying in 27.752931957s error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# # 2) Habilita el dashboard/API de Traefik en caliente para inspección
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# sudo docker exec dolibarr_traefik wget -qO- http://localhost:8080/api/http/routers 2>/dev/null \
+>   || echo "API no expuesta — la activamos a continuación"
+
+# 3) Inspecciona qué networks ve Traefik del contenedor del alumno
+sudo docker inspect dolibarr_alu_juanperez --format \
+  '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}={{$v.IPAddress}}{{"\n"}}{{end}}'
+
+# 4) Desde dentro de Traefik, ¿alcanza al contenedor del alumno por nombre?
+sudo docker exec dolibarr_traefik wget -qO- --timeout=3 http://dolibarr_alu_juanperez/ 2>&1 | head -3
+# Esperado: HTML de Dolibarr o redirección 302. Si dice "bad address" → no están en la misma red operativa.
+
+# 5) Estado del contenedor del alumno
+sudo docker ps --filter name=dolibarr_alu_juanperez \
+  --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+
+# 6) ¿Apache dentro del alumno responde?
+sudo docker exec dolibarr_alu_juanperez wget -qO- --timeout=3 http://localhost/ 2>&1 | head -3API no expuesta — la activamos a continuación
