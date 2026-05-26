@@ -1,0 +1,42 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu/dolibarr-edu
+
+# 1) Crea un override que añade DOCKER_API_VERSION a Traefik
+sudo tee docker-compose.override.yml > /dev/null <<'EOF'
+services:
+  traefik:
+    environment:
+      DOCKER_API_VERSION: "1.44"
+EOF
+
+# 2) Recrea Traefik (compose ahora fusiona ambos archivos)
+sudo docker compose up -d --force-recreate traefik
+
+# 3) Verifica que la env var está dentro del contenedor
+sudo docker exec dolibarr_traefik env | grep DOCKER_API_VERSION
+# Esperado: DOCKER_API_VERSION=1.44
+
+# 4) Logs (ya no debe haber ERR de "client version 1.24")
+sleep 5
+sudo docker logs --tail 20 dolibarr_traefik 2>&1
+
+# 5) Test final
+  http://juanperez.erp1.iesmmg.es:8090/ | head -50:127.0.0.1 \
+[+] up 1/1
+ ✔ Container dolibarr_traefik Recreated                                                                         1.3s
+DOCKER_API_VERSION=1.44
+2026-05-26T18:47:51Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:47:51Z ERR Provider error, retrying in 731.820367ms error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:47:52Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:47:52Z ERR Provider error, retrying in 601.832193ms error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:47:52Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:47:52Z ERR Provider error, retrying in 1.236337818s error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:47:54Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:47:54Z ERR Provider error, retrying in 1.75176772s error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:47:55Z ERR Failed to retrieve information of the docker client and server host error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+2026-05-26T18:47:55Z ERR Provider error, retrying in 1.358085561s error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version" providerName=docker
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+Date: Tue, 26 May 2026 18:47:56 GMT
+Content-Length: 19
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 
