@@ -96,7 +96,12 @@ _ensure_key() {
 # Orquestación de Dolibarr por alumno
 _ensure_key "BASE_DOMAIN"            "erp.micentro.es"
 _ensure_key "DOLIBARR_IMAGE"         "dolibarr/dolibarr:latest"
-_ensure_key "STUDENT_DOCKER_NETWORK" "dolibarr-edu_dolibarr_net"
+_ensure_key "STUDENT_DOCKER_NETWORK" "dolibarr_net"
+# Forzar valor correcto si .env tenía el nombre antiguo (con prefijo compose)
+if grep -q '^STUDENT_DOCKER_NETWORK=dolibarr-edu_dolibarr_net' "$ENV_FILE"; then
+  _set "STUDENT_DOCKER_NETWORK" "dolibarr_net"
+  info "STUDENT_DOCKER_NETWORK actualizado a dolibarr_net (nombre fijo)"
+fi
 _ensure_key "TRAEFIK_PORT"           "8090"
 _ensure_key "PANEL_PORT"             "8068"
 _ensure_key "COMPOSE_PROFILES"       ""

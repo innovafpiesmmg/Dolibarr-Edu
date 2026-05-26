@@ -39,7 +39,7 @@ export interface DeployContext {
 export function readDeployEnv(baseDomain: string): DeployContext {
   return {
     baseDomain,
-    network: process.env.STUDENT_DOCKER_NETWORK ?? "dolibarr-edu_dolibarr_net",
+    network: process.env.STUDENT_DOCKER_NETWORK ?? "dolibarr_net",
     mariadbHost: process.env.MARIADB_HOST ?? "db",
     image: process.env.DOLIBARR_IMAGE ?? "dolibarr/dolibarr:latest",
     modules: process.env.DOLIBARR_MODULES

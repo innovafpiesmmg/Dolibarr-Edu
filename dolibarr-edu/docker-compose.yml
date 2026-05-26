@@ -105,7 +105,7 @@ services:
       BASE_DOMAIN: ${BASE_DOMAIN}
       DOLIBARR_IMAGE: ${DOLIBARR_IMAGE:-dolibarr/dolibarr:latest}
       DOLIBARR_MODULES: ${DOLIBARR_MODULES:-modApi,modSociete,modFournisseur,modFacture,modProjet,modStock,modBanque,modContrat,modComptabilite,modHrm}
-      STUDENT_DOCKER_NETWORK: ${STUDENT_DOCKER_NETWORK:-dolibarr-edu_dolibarr_net}
+      STUDENT_DOCKER_NETWORK: ${STUDENT_DOCKER_NETWORK:-dolibarr_net}
 
       # MariaDB compartida
       MARIADB_HOST: db
@@ -147,4 +147,5 @@ volumes:
 
 networks:
   dolibarr_net:
+    name: dolibarr_net
     driver: bridge
