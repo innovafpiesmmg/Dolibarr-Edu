@@ -20,11 +20,7 @@ import {
   CalendarDays,
   ShieldCheck,
   Github,
-  FolderKanban,
-  FileSpreadsheet,
-  Globe,
   Play,
-  Cloud,
 } from "lucide-react";
 import { useStudentLogin } from "@workspace/api-client-react";
 import type { AlumnoSesion } from "@workspace/api-client-react";
@@ -304,9 +300,6 @@ export default function LandingPage() {
                     { label: "Multiempresa", icon: Building2 },
                     { label: "IGIC / IVA", icon: FileText },
                     { label: "Nóminas integradas", icon: Banknote },
-                    { label: "OpenProject", icon: FolderKanban },
-                    { label: "Collabora Online", icon: FileSpreadsheet },
-                    { label: "Nextcloud", icon: Cloud },
                   ].map(({ label, icon: Icon }) => (
                     <span
                       key={label}
@@ -612,23 +605,23 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ── Ecosistema de herramientas ────────────────────────────────────── */}
+        {/* ── Sobre Dolibarr ────────────────────────────────────────────────── */}
         <section className="py-24">
           <div className="mx-auto max-w-7xl px-6">
             <div className="text-center max-w-2xl mx-auto mb-14">
               <Badge variant="outline" className="mb-4 text-primary border-primary/30">
-                Ecosistema completo
+                Software libre
               </Badge>
               <h2 className="text-3xl font-bold mb-4">
-                Cuatro herramientas, un solo servidor
+                Construido sobre Dolibarr ERP/CRM
               </h2>
               <p className="text-muted-foreground">
-                ERP EDU integra en el mismo despliegue Docker el ERP, la gestión de proyectos,
-                la suite ofimática y el almacenamiento en la nube. Todo accesible desde el centro, sin depender de servicios externos.
+                ERP EDU despliega un Dolibarr aislado por alumno en el servidor del centro,
+                sin depender de servicios externos.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-1 gap-8 max-w-xl mx-auto">
 
               {/* Dolibarr */}
               <div className="bg-card border border-border rounded-2xl p-8 shadow-sm hover:shadow-md hover:border-primary/30 transition-all flex flex-col">
@@ -657,129 +650,20 @@ export default function LandingPage() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
                 >
-                  <Globe className="h-3.5 w-3.5" />
+                  <ExternalLink className="h-3.5 w-3.5" />
                   dolibarr.org
                 </a>
               </div>
-
-              {/* OpenProject */}
-              <div className="bg-card border border-border rounded-2xl p-8 shadow-sm hover:shadow-md hover:border-primary/30 transition-all flex flex-col">
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5">
-                  <FolderKanban className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-lg font-bold">OpenProject</h3>
-                  <Badge variant="secondary" className="text-xs">Proyectos</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed flex-1 mb-5">
-                  Gestión de proyectos al nivel de herramientas profesionales como Jira o Monday.
-                  Los alumnos planifican sprints, asignan tareas, registran horas y visualizan el progreso en Gantt.
-                </p>
-                <ul className="space-y-1.5 text-xs text-muted-foreground mb-6">
-                  {["Diagramas de Gantt", "Tableros de tareas", "Registro de horas", "Gestión de miembros y roles"].map(f => (
-                    <li key={f} className="flex items-center gap-2">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  href="https://www.openproject.org"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
-                >
-                  <Globe className="h-3.5 w-3.5" />
-                  openproject.org
-                </a>
-              </div>
-
-              {/* Collabora / LibreOffice */}
-              <div className="bg-card border border-border rounded-2xl p-8 shadow-sm hover:shadow-md hover:border-primary/30 transition-all flex flex-col">
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5">
-                  <FileSpreadsheet className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-lg font-bold">Collabora Online</h3>
-                  <Badge variant="secondary" className="text-xs">Ofimática</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed flex-1 mb-5">
-                  Suite ofimática completa en el navegador. Los alumnos crean y editan
-                  documentos, hojas de cálculo y presentaciones con formato LibreOffice
-                  sin instalar nada, desde cualquier dispositivo.
-                </p>
-                <ul className="space-y-1.5 text-xs text-muted-foreground mb-6">
-                  {["Writer, Calc e Impress", "Edición colaborativa en tiempo real", "Compatible con .docx / .xlsx / .pptx", "Integrado con Dolibarr y OpenProject"].map(f => (
-                    <li key={f} className="flex items-center gap-2">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  href="https://www.collaboraoffice.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
-                >
-                  <Globe className="h-3.5 w-3.5" />
-                  collaboraoffice.com
-                </a>
-              </div>
-
-              {/* Nextcloud */}
-              <div className="bg-card border border-border rounded-2xl p-8 shadow-sm hover:shadow-md hover:border-primary/30 transition-all flex flex-col">
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5">
-                  <Cloud className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-lg font-bold">Nextcloud</h3>
-                  <Badge variant="secondary" className="text-xs">Nube privada</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed flex-1 mb-5">
-                  Almacenamiento y colaboración en la nube del propio centro. Cada alumno
-                  y profesor dispone de su espacio privado para guardar, compartir y trabajar
-                  con archivos sin salir del servidor del instituto.
-                </p>
-                <ul className="space-y-1.5 text-xs text-muted-foreground mb-6">
-                  {["5 GB por cuenta, sin límite de usuarios", "Cuenta automática al dar de alta al alumno", "Acceso web y apps móviles nativas", "100 % en el servidor del centro"].map(f => (
-                    <li key={f} className="flex items-center gap-2">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  href="https://nextcloud.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
-                >
-                  <Globe className="h-3.5 w-3.5" />
-                  nextcloud.com
-                </a>
-              </div>
-
             </div>
 
             {/* Arquitectura simplificada */}
             <div className="mt-12 bg-card border border-border rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-2 font-medium text-foreground">
                 <Building2 className="h-4 w-4 text-primary" />
-                erp.micentro.es
-              </div>
-              <span className="text-border">·</span>
-              <div className="flex items-center gap-2 font-medium text-foreground">
-                <FolderKanban className="h-4 w-4 text-primary" />
-                proyectos.micentro.es
-              </div>
-              <span className="text-border">·</span>
-              <div className="flex items-center gap-2 font-medium text-foreground">
-                <FileSpreadsheet className="h-4 w-4 text-primary" />
-                collabora.micentro.es
+                <span className="font-mono">&lt;alumno&gt;.erp.micentro.es</span>
               </div>
               <span className="hidden sm:inline text-border">·</span>
-              <span className="text-xs">Un único servidor · Cloudflare Tunnel · HTTPS automático</span>
+              <span className="text-xs">Un contenedor por alumno · Cloudflare Tunnel · HTTPS automático</span>
             </div>
           </div>
         </section>
@@ -942,26 +826,6 @@ export default function LandingPage() {
             >
               <Building2 className="h-3.5 w-3.5" />
               Dolibarr ERP
-            </a>
-            <span>·</span>
-            <a
-              href="https://www.openproject.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 hover:text-white transition-colors"
-            >
-              <FolderKanban className="h-3.5 w-3.5" />
-              OpenProject
-            </a>
-            <span>·</span>
-            <a
-              href="https://www.collaboraoffice.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 hover:text-white transition-colors"
-            >
-              <FileSpreadsheet className="h-3.5 w-3.5" />
-              Collabora Online
             </a>
           </div>
         </div>

@@ -25,25 +25,20 @@ Internet
    ▼
 Cloudflare Tunnel
    │
-   ├── panel.micentro.es    → panel_web:80      (nginx + React)
-   ├── erp.micentro.es      → dolibarr:80       (PHP/Apache)
-   ├── proyectos.micentro.es→ openproject:80    (Rails)
-   ├── office.micentro.es   → collabora:9980    (CODE)
-   └── cloud.micentro.es    → nextcloud:80      (Nextcloud)
+   ├── panel.micentro.es           → panel_web:80    (nginx + React)
+   └── *.erp.micentro.es (wildcard) → traefik:80     (un contenedor por alumno)
 
 Servidor Ubuntu/Debian — red Docker interna (dolibarr_net)
-   ├── cloudflared       ← cliente del túnel Cloudflare
-   ├── panel_web         ← nginx sirviendo React + proxy /api→panel_api
-   ├── panel_api         ← Node.js/Express API REST (puerto host 8080 interno)
-   ├── panel_db          ← PostgreSQL exclusiva del panel
-   ├── dolibarr          ← Dolibarr ERP (puerto host 8069)
-   ├── db                ← MariaDB de Dolibarr
-   ├── openproject       ← OpenProject (puerto host 8070)
-   ├── openproject_db    ← PostgreSQL de OpenProject
-   ├── collabora         ← Collabora Online (puerto host 9980)
-   ├── nextcloud         ← Nextcloud (puerto host 8071)
-   └── nextcloud_db      ← MariaDB de Nextcloud
+   ├── cloudflared                ← cliente del túnel Cloudflare
+   ├── panel_web                  ← nginx sirviendo React + proxy /api → panel_api
+   ├── panel_api                  ← Node.js/Express; orquesta los contenedores vía /var/run/docker.sock
+   ├── panel_db                   ← PostgreSQL exclusiva del panel
+   ├── traefik                    ← reverse proxy por subdominio <alumno>.erp.micentro.es
+   ├── db                         ← MariaDB compartida (una BD por alumno)
+   └── dolibarr_alu_<usuario>     ← un contenedor Dolibarr aislado por alumno
 ```
+
+Cada alumno tiene su propio contenedor Dolibarr y su propia base de datos en la MariaDB compartida. El panel los crea, arranca, detiene y elimina bajo demanda.
 
 ---
 
@@ -53,7 +48,7 @@ Servidor Ubuntu/Debian — red Docker interna (dolibarr_net)
 |---|---|
 | SO | Ubuntu 22.04 LTS o Debian 12 |
 | CPU | 2 cores |
-| RAM | **4 GB** (OpenProject requiere al menos 2 GB para él solo) |
+| RAM | **16 GB** (soporta hasta ~30 contenedores Dolibarr simultáneos) |
 | Disco | 40 GB |
 | Software | Docker 24+ y Docker Compose 2+ |
 | Red | Conexión a internet; NO es necesario abrir puertos |
@@ -91,7 +86,7 @@ El instalador:
 - Instala Docker si no está presente
 - Clona el repositorio en `/opt/dolibarr-edu`
 - Genera contraseñas aleatorias para todos los servicios
-- Pide la contraseña del panel, los dominios y el token de Cloudflare
+- Pide la contraseña del panel, el dominio base de los alumnos y el token de Cloudflare
 - Ofrece construir y arrancar todos los servicios automáticamente
 
 ### Opción B — Manual
@@ -151,14 +146,9 @@ En el dashboard de Cloudflare → tu túnel → **Edit** → **Public Hostname**
 | Subdominio | Dominio | Servicio (URL interna) | Notas |
 |---|---|---|---|
 | `panel` | `micentro.es` | `http://panel_web:80` | Panel de gestión |
-| `erp` | `micentro.es` | `http://dolibarr:80` | Dolibarr ERP |
-| `proyectos` | `micentro.es` | `http://openproject:80` | OpenProject |
-| `office` | `micentro.es` | `http://collabora:9980` | Collabora Online |
-| `cloud` | `micentro.es` | `http://nextcloud:80` | Nextcloud |
+| `*` | `erp.micentro.es` | `http://traefik:80` | **Comodín** — un subdominio por alumno (`<usuario>.erp.micentro.es`) |
 
-> Los nombres de servicio (`panel_web`, `dolibarr`, `openproject`, `collabora`, `nextcloud`) son los hostnames internos de Docker. El contenedor `cloudflared` resuelve estos nombres automáticamente porque todos están en la red `dolibarr_net`.
-
-Cloudflare crea los registros DNS automáticamente al guardar cada entrada.
+> Para que el comodín funcione, el dominio `erp.micentro.es` debe estar gestionado por Cloudflare. El registro DNS comodín (`*.erp`) se crea automáticamente al guardar el Public Hostname.
 
 ### Verificar la conexión
 
@@ -166,94 +156,9 @@ Cloudflare crea los registros DNS automáticamente al guardar cada entrada.
 # Logs del túnel
 docker compose logs cloudflared --tail=20
 
-# Test local de cada servicio
-curl -sI http://localhost:8068 | head -1   # panel_web
-curl -sI http://localhost:8069 | head -1   # dolibarr
-curl -sI http://localhost:8070 | head -1   # openproject
-curl -sI http://localhost:9980 | head -1   # collabora
-curl -sI http://localhost:8071 | head -1   # nextcloud
-```
-
----
-
-## Configurar Nextcloud
-
-### Activar Nextcloud en una instalación ya existente
-
-Si ya tienes ERP EDU instalado y quieres añadir Nextcloud:
-
-```bash
-cd /opt/dolibarr-edu/dolibarr-edu
-
-# 1. Actualizar docker-compose.yml desde GitHub
-git -C /opt/dolibarr-edu pull
-
-# 2. Añadir las variables NC al .env
-nano .env
-```
-
-Añade o edita estas líneas en `.env`:
-
-```bash
-COMPOSE_PROFILES=nextcloud
-NC_HOST=cloud.micentro.es          # tu dominio real
-NC_PORT=8071
-NC_DB_ROOT_PASSWORD=<contraseña aleatoria>
-NC_DB_PASSWORD=<contraseña aleatoria>
-NC_ADMIN_USER=admin
-NC_ADMIN_PASSWORD=<contraseña aleatoria>
-NEXTCLOUD_URL=http://nextcloud:80
-```
-
-```bash
-# 3. Arrancar los nuevos contenedores (los demás no se ven afectados)
-docker compose up -d nextcloud_db nextcloud
-```
-
----
-
-### Paso 1 — Establecer el dominio en `.env`
-
-```bash
-# En /opt/dolibarr-edu/dolibarr-edu/.env
-NC_HOST=cloud.micentro.es   # sin https://
-```
-
-El contenedor aplica automáticamente `NC_HOST` como dominio de confianza (`trusted_domain`) al arrancar, por lo que no es necesario editar `config.php` manualmente.
-
-### Paso 2 — Primer acceso
-
-1. Abre `https://cloud.micentro.es` en el navegador.
-2. Inicia sesión con `NC_ADMIN_USER` / `NC_ADMIN_PASSWORD` (definidos en `.env`).
-3. Completa el asistente de bienvenida si aparece.
-
-### Paso 3 — Enlazar con el Panel EDU
-
-En el Panel → **Configuración** → campo **URL de Nextcloud**, introduce:
-
-```
-https://cloud.micentro.es
-```
-
-Guarda y ve a **Nextcloud** en el menú lateral para verificar que el estado muestra «Conectado».
-
-### Paso 4 — Aprovisionar cuentas
-
-El panel crea la cuenta Nextcloud de cada alumno y profesor automáticamente al darlos de alta. Para sincronizar los que ya existían antes de activar Nextcloud, usa el botón **Aprovisionar todos** en la página Nextcloud del panel.
-
-Las contraseñas son deterministas: `SHA-256(usuario + SESSION_SECRET).slice(0,20)`. No se almacenan — se pueden regenerar en cualquier momento sin perder datos.
-
-### Resolución de problemas frecuentes
-
-| Síntoma | Causa probable | Solución |
-|---|---|---|
-| «Access through untrusted domain» | `NC_HOST` no coincide con el dominio real | Corrige `NC_HOST` en `.env` y recrea el contenedor |
-| Panel muestra «Sin conexión» | `NC_ADMIN_USER`/`PASSWORD` incorrectos o URL errónea | Revisa variables y URL en Configuración |
-| Error al crear usuario | Nextcloud no arrancó del todo | `docker compose logs nextcloud --tail=30` |
-
-```bash
-# Recrear el contenedor tras cambiar NC_HOST
-docker compose up -d --force-recreate nextcloud
+# Test local
+curl -sI http://localhost:${PANEL_PORT:-8068} | head -1     # panel_web
+curl -sI http://localhost:${TRAEFIK_PORT:-8090} | head -1   # traefik (router de alumnos)
 ```
 
 ---
@@ -263,45 +168,17 @@ docker compose up -d --force-recreate nextcloud
 Fichero: `/opt/dolibarr-edu/dolibarr-edu/.env`
 
 ```bash
-# ── MariaDB (Dolibarr) ──────────────────────────────────
+# ── MariaDB compartida (una BD por alumno) ──────────────
 MYSQL_ROOT_PASSWORD=...
-MYSQL_DATABASE=dolibarr
-MYSQL_USER=dolibarr
-MYSQL_PASSWORD=...
 
-# ── Dolibarr ERP ────────────────────────────────────────
-DOLI_URL_ROOT=https://erp.micentro.es
-DOLI_DOMAIN=erp.micentro.es
-DOLI_ADMIN_LOGIN=admin
-DOLI_ADMIN_PASSWORD=...
-DOLI_ADMIN_EMAIL=admin@micentro.es
-DOLI_COMPANY_NAME=Centro FP Administración de Empresas
-APP_PORT=8069
-
-# ── OpenProject ─────────────────────────────────────────
-OP_HOST=proyectos.micentro.es
-OP_DB_PASSWORD=...
-OP_SECRET_KEY=...
-OP_PORT=8070
-
-# ── Collabora Online ────────────────────────────────────
-COLLABORA_ADMIN=admin
-COLLABORA_PASSWORD=...
-COLLABORA_PORT=9980
-
-# ── Nextcloud ────────────────────────────────────────────
-NC_HOST=cloud.micentro.es          # dominio público (sin https://)
-NC_PORT=8071                        # puerto local del host
-NC_DB_ROOT_PASSWORD=...             # generada por install.sh
-NC_DB_PASSWORD=...                  # generada por install.sh
-NC_ADMIN_USER=admin
-NC_ADMIN_PASSWORD=...               # generada por install.sh
-NEXTCLOUD_URL=http://nextcloud:80   # URL interna Docker (no cambiar)
+# ── Dominio base de los alumnos ─────────────────────────
+# Cada alumno será accesible en https://<usuario>.<BASE_DOMAIN>/
+BASE_DOMAIN=erp.micentro.es
+TRAEFIK_PORT=8090
 
 # ── Panel EDU (Node.js) ─────────────────────────────────
 PANEL_URL=https://panel.micentro.es
 PANEL_DB_PASSWORD=...
-DOLIBARR_BASE_URL=https://erp.micentro.es
 ADMIN_PASSWORD_HASH=<sha256 de la contraseña del panel>
 SESSION_SECRET=...
 PANEL_PORT=8068
@@ -333,8 +210,8 @@ docker compose ps
 
 # Ver logs de un servicio
 docker compose logs -f panel_api
-docker compose logs -f dolibarr
-docker compose logs -f openproject
+docker compose logs -f traefik
+docker compose logs -f db
 
 # Reiniciar un servicio
 docker compose restart panel_web
@@ -342,6 +219,9 @@ docker compose restart panel_web
 # Reconstruir imágenes del panel (tras actualización)
 docker compose build panel_api panel_web
 docker compose up -d panel_api panel_web
+
+# Ver contenedores Dolibarr de alumnos
+docker ps --filter "name=dolibarr_alu_"
 
 # Parar todo
 docker compose down
@@ -355,16 +235,10 @@ docker compose down -v
 ## Copias de seguridad
 
 ```bash
-# Backup de la BD de Dolibarr
+# Backup de TODAS las bases de datos de alumnos (MariaDB compartida)
 docker compose exec db mysqldump \
-  -u root -p"${MYSQL_ROOT_PASSWORD}" dolibarr \
-  > "backup_dolibarr_$(date +%Y%m%d_%H%M).sql"
-
-# Backup de documentos adjuntos de Dolibarr
-docker run --rm \
-  -v dolibarr-edu_dolibarr_docs:/data \
-  -v $(pwd)/backups:/backup \
-  alpine tar czf /backup/docs_$(date +%Y%m%d).tar.gz /data
+  -u root -p"${MYSQL_ROOT_PASSWORD}" --all-databases \
+  > "backup_alumnos_$(date +%Y%m%d_%H%M).sql"
 
 # Backup de la BD del panel
 docker compose exec panel_db pg_dump \
@@ -409,7 +283,7 @@ bash reset.sh --skip-backup --yes
 
 1. **Backup automático** en `~/erp-edu-backup-<fecha>/`:
    - `env_backup.txt` — copia del `.env` con todas las contraseñas
-   - `backup_dolibarr.sql` — volcado de la BD de Dolibarr
+   - `backup_alumnos.sql` — volcado de todas las BD de alumnos
    - `backup_panel.sql` — volcado de la BD del panel
 2. `docker compose down -v` — para contenedores y borra volúmenes
 3. Elimina imágenes Docker del panel
@@ -433,38 +307,31 @@ docker compose logs panel_api --tail=20
 
 Si `panel_api` está en `Restarting`, probablemente falta `ADMIN_PASSWORD_HASH` o `SESSION_SECRET` en el `.env`.
 
-### Dolibarr da "Internal Server Error"
-
-La causa más común es que `DOLI_URL_ROOT` no coincide con el dominio real. Corrígelo y recrea el contenedor:
+### Un alumno no abre su Dolibarr
 
 ```bash
-sed -i "s|^DOLI_URL_ROOT=.*|DOLI_URL_ROOT=https://TU_DOMINIO_REAL|" .env
-sed -i "s|^DOLI_DOMAIN=.*|DOLI_DOMAIN=TU_DOMINIO_REAL|" .env
-docker compose up -d --force-recreate dolibarr
+# Estado del contenedor del alumno
+docker ps -a --filter "name=dolibarr_alu_<usuario>"
+
+# Logs
+docker logs dolibarr_alu_<usuario> --tail=30
+
+# Comprobar enrutado de Traefik
+docker compose logs traefik --tail=30
 ```
+
+Desde el panel, en la ficha del alumno, los botones **Iniciar / Detener / Eliminar** y **Redesplegar** permiten regenerar el contenedor sin tocar la consola.
 
 ### El túnel Cloudflare da 502
 
 Verifica que el servicio de destino responde localmente:
 ```bash
-curl -I http://localhost:8068   # panel
-curl -I http://localhost:8069   # dolibarr
+curl -I http://localhost:${PANEL_PORT:-8068}     # panel
+curl -I http://localhost:${TRAEFIK_PORT:-8090}   # traefik
 ```
 
 Si responde localmente pero no desde Cloudflare, revisa que en el dashboard el servicio apunta a la URL correcta (con el nombre Docker interno, no `localhost`).
 
-### OpenProject en bucle de reinicios
+### Olvidé la contraseña de admin de un Dolibarr de alumno
 
-Suele ser falta de RAM. OpenProject necesita al menos 2 GB disponibles:
-```bash
-free -h
-docker compose logs openproject --tail=30
-```
-
-### Olvidé la contraseña de admin de Dolibarr
-
-```bash
-docker compose exec db mysql \
-  -u root -p"${MYSQL_ROOT_PASSWORD}" dolibarr \
-  -e "UPDATE llx_user SET pass_crypted=MD5('nueva_contrasena') WHERE login='admin';"
-```
+Desde el panel, en la ficha del alumno, el botón **Restablecer contraseña** regenera la credencial determinista del alumno y la muestra en pantalla.
