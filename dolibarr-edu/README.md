@@ -112,54 +112,100 @@ docker compose ps
 
 ## Configurar Cloudflare Tunnel
 
-### Paso 1 — Crear el túnel en el dashboard
+Cloudflare Tunnel publica el panel y los Dolibarr de los alumnos en Internet **sin abrir puertos** en el cortafuegos del centro. Solo dos public hostnames y dos registros DNS bastan para todo.
 
-1. Entra en [dash.cloudflare.com](https://dash.cloudflare.com)
-2. **Zero Trust → Networks → Tunnels → Create a tunnel**
-3. Elige **Cloudflared** · ponle un nombre (ej: `dolibarr-edu`)
-4. Copia el **token** que aparece en el comando de instalación:
-   ```
-   cloudflared service install eyJhIjoiMT...
-   ```
-   El token es la cadena larga que empieza por `eyJ`.
+### Requisitos previos
 
-### Paso 2 — Guardar el token en el servidor
+- Una cuenta de Cloudflare con el **dominio** (ej. `micentro.es`) ya añadido y con los **nameservers de Cloudflare activos** (en estado *Active* en la sección Overview del dominio).
+- El plan **Free** es suficiente. El SSL Universal (gratuito) cubre `*.micentro.es` (un nivel de subdominio) automáticamente.
+
+> ⚠ **Sobre la profundidad del wildcard:** SSL Universal **solo cubre un nivel** (`*.micentro.es` ✅) pero **no dos** (`*.erp.micentro.es` ❌, daría error de certificado). Si quieres aislar los alumnos en un subdominio propio (`<alumno>.erp.micentro.es`), necesitas el **Advanced Certificate Manager** de Cloudflare (de pago) o un certificado Let's Encrypt wildcard. La configuración recomendada y por defecto en este paquete es **`<alumno>.micentro.es`** (un nivel).
+
+### Paso 1 — Crear el túnel
+
+1. Entra en [dash.cloudflare.com](https://dash.cloudflare.com) → **Zero Trust → Networks → Tunnels → Create a tunnel**.
+2. Tipo: **Cloudflared**. Nombre sugerido: `dolibarr-edu` (o el nombre del centro).
+3. En la pantalla siguiente verás un comando de instalación con un token largo:
+   ```
+   docker run cloudflare/cloudflared:latest tunnel --no-autoupdate run --token eyJhIjoi...
+   ```
+   **Copia solo el token** (la cadena que empieza por `eyJ`).
+4. Apunta también el **UUID del túnel** — lo verás en la URL del navegador (`.../tunnels/<UUID>/...`) y en los logs de `cloudflared`. Lo necesitarás para el registro DNS del wildcard.
+
+### Paso 2 — Guardar el token y arrancar el túnel
 
 ```bash
 cd /opt/dolibarr-edu/dolibarr-edu
 
-# Añadir al .env
-echo "CLOUDFLARE_TOKEN=eyJhIjoiMT..." >> .env
+# Editar .env y poner el token
+nano .env
+# CLOUDFLARE_TOKEN=eyJhIjoi...
 
-# Arrancar el túnel
-docker compose up -d cloudflared
+# Arrancar el túnel (el perfil "cloudflare" del compose)
+docker compose --profile cloudflare up -d cloudflared
 sleep 5
 docker compose logs cloudflared --tail=15
 ```
 
-Cuando veas `Registered tunnel connection`, el túnel está activo y conectado.
+Debes ver líneas como:
+```
+INF Starting tunnel tunnelID=5998e43b-...
+INF Registered tunnel connection connIndex=0 ...
+```
 
-### Paso 3 — Configurar los conectores (Public Hostnames)
+El `tunnelID` que aparece **debe coincidir** con el UUID que viste en el dashboard. Si no coincide, el token pertenece a otro túnel — vuelve al Paso 1 y copia el token correcto.
 
-En el dashboard de Cloudflare → tu túnel → **Edit** → **Public Hostname** → **Add a public hostname**:
+### Paso 3 — Public Hostnames (en el túnel)
 
-| Subdominio | Dominio | Servicio (URL interna) | Notas |
+En el dashboard de Cloudflare → tu túnel → **Public Hostname → Add a public hostname**. Añade **exactamente estas dos entradas** (asumiendo dominio `micentro.es`; sustituye por el tuyo):
+
+| Subdominio | Dominio | Path | Type | Service URL |
+|---|---|---|---|---|
+| `panel` | `micentro.es` | *(vacío)* | HTTP | `panel_web:80` |
+| `*` | `micentro.es` | *(vacío)* | HTTP | `traefik:80` |
+
+- `panel.micentro.es` → panel de gestión + landing.
+- `*.micentro.es` → cualquier `<alumno>.micentro.es` cae en Traefik, que enruta al contenedor Dolibarr correcto por subdominio.
+
+> Las URLs internas (`panel_web`, `traefik`) son los **nombres de servicio del `docker-compose.yml`**, no nombres de contenedor ni IPs. Funcionan porque `cloudflared` está en la misma red Docker (`dolibarr_net`).
+
+### Paso 4 — Registros DNS (¡este es el paso que suele faltar!)
+
+Cloudflare crea **automáticamente** el registro DNS para subdominios concretos como `panel`, pero **NO para wildcards**. Hay que crear el `*` a mano.
+
+En **Dashboard → tu dominio → DNS → Records**, comprueba/crea estos registros:
+
+| Type | Name | Target | Proxy |
 |---|---|---|---|
-| `panel` | `micentro.es` | `http://panel_web:80` | Panel de gestión |
-| `*` | `erp.micentro.es` | `http://traefik:80` | **Comodín** — un subdominio por alumno (`<usuario>.erp.micentro.es`) |
+| CNAME | `panel` | `<UUID>.cfargotunnel.com` | 🟠 Proxied |
+| CNAME | `*` | `<UUID>.cfargotunnel.com` | 🟠 Proxied |
 
-> Para que el comodín funcione, el dominio `erp.micentro.es` debe estar gestionado por Cloudflare. El registro DNS comodín (`*.erp`) se crea automáticamente al guardar el Public Hostname.
+Donde `<UUID>` es el ID del túnel (ej. `5998e43b-736a-4c36-ad78-5019356d0c09`).
 
-### Verificar la conexión
+> ⚠ **Error frecuente:** dejar el wildcard como `CNAME * → micentro.es` (apuntando al propio dominio). Cloudflare lo acepta sin error pero las peticiones nunca llegan al túnel → da **error 524** silencioso y `cloudflared` no muestra tráfico en sus logs. **El destino tiene que ser `<UUID>.cfargotunnel.com`.**
+
+### Paso 5 — Verificar de extremo a extremo
 
 ```bash
-# Logs del túnel
-docker compose logs cloudflared --tail=20
+# 1) El túnel está conectado
+docker compose logs cloudflared --tail=10 | grep "Registered tunnel"
 
-# Test local
-curl -sI http://localhost:${PANEL_PORT:-8068} | head -1     # panel_web
-curl -sI http://localhost:${TRAEFIK_PORT:-8090} | head -1   # traefik (router de alumnos)
+# 2) El panel responde localmente
+curl -sI http://localhost:${PANEL_PORT:-8068} | head -1
+
+# 3) Traefik enruta correctamente al contenedor de un alumno
+sudo docker run --rm --network dolibarr_net alpine \
+  wget -qO- --timeout=5 -S --header="Host: <alumno>.micentro.es" \
+  http://traefik:80/ 2>&1 | head -3
 ```
+
+Y desde fuera (navegador o `curl`):
+- `https://panel.micentro.es/` → carga la landing y el panel.
+- `https://<alumno>.micentro.es/` → carga el Dolibarr del alumno (tras haberlo desplegado desde el panel).
+
+### Configuración en el panel
+
+Tras configurar Cloudflare, entra en el panel → **Configuración** y asegúrate de que el campo **Dominio base** vale `micentro.es` (el mismo dominio que has usado en los registros DNS). El panel usa ese valor para generar la URL pública de cada alumno y para escribir las reglas de Traefik.
 
 ---
 
@@ -331,6 +377,51 @@ curl -I http://localhost:${TRAEFIK_PORT:-8090}   # traefik
 ```
 
 Si responde localmente pero no desde Cloudflare, revisa que en el dashboard el servicio apunta a la URL correcta (con el nombre Docker interno, no `localhost`).
+
+### Cualquier subdominio de alumno da 524 (timeout)
+
+Casi siempre es **falta el registro DNS wildcard**, o está mal apuntado. El síntoma característico:
+
+- `https://panel.micentro.es/` funciona ✅
+- `https://<alumno>.micentro.es/` da 524 ❌
+- `docker compose logs cloudflared` **no muestra nada** cuando recargas la página del alumno → la petición ni siquiera llega al túnel.
+
+**Diagnóstico:**
+
+```bash
+# 1) Traefik responde al contenedor del alumno por dentro (descarta Traefik/Docker)
+sudo docker run --rm --network dolibarr_net alpine \
+  wget -qO- --timeout=5 -S --header="Host: <alumno>.micentro.es" \
+  http://traefik:80/ 2>&1 | head -3
+# Debe devolver 200 OK
+
+# 2) Mira los logs en directo mientras recargas la URL en el navegador
+docker compose logs --since 30s -f cloudflared | grep -iE "GET|<alumno>"
+# Si no aparece nada, la petición NO está llegando al túnel
+```
+
+**Fix:** en Cloudflare Dashboard → tu dominio → **DNS → Records**, comprueba el registro con `Name = *`:
+
+- Debe ser `CNAME` con destino **`<UUID>.cfargotunnel.com`** (mismo UUID que ves en `docker compose logs cloudflared`, línea `tunnelID=...`).
+- Debe estar **Proxied** (nube naranja).
+- Si está como `CNAME * → micentro.es` (apuntando al propio dominio), edítalo y cambia el destino al `cfargotunnel.com`.
+
+Tras editar el DNS, espera ~15 segundos y prueba de nuevo.
+
+### Error de certificado SSL en subdominios de alumno
+
+Si el navegador advierte que el certificado es para `*.otro-dominio` o "no válido para este host", significa que estás usando un nivel de subdominio que SSL Universal no cubre.
+
+SSL Universal (gratis) cubre `micentro.es` y `*.micentro.es` (un nivel). **No cubre** `*.erp.micentro.es` (dos niveles). Soluciones:
+
+- **Recomendado:** usar dominio base de un nivel (`BASE_DOMAIN=micentro.es` en el `.env`, alumnos en `<alumno>.micentro.es`).
+- **Alternativa:** contratar **Advanced Certificate Manager** en Cloudflare y pedir un certificado para `*.erp.micentro.es`.
+
+Tras cambiar `BASE_DOMAIN` en el `.env`:
+```bash
+docker compose restart panel_api
+```
+Y desde el panel, en **Configuración**, actualiza el campo **Dominio base** al mismo valor para que las URLs y reglas de Traefik se regeneren.
 
 ### Olvidé la contraseña de admin de un Dolibarr de alumno
 
