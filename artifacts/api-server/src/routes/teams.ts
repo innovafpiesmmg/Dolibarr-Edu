@@ -271,12 +271,15 @@ router.post("/teams/:id/members", async (req, res) => {
         username: team.teacherUsername,
         dolibarrPassword: team.teacherDolibarrPassword,
       });
-      // Usamos el passwordHash existente como semilla de contraseña aleatoria estable.
-      // En producción, se pediría al alumno restablecer su contraseña.
-      const password = createHash("sha256")
-        .update(`team-member:${student.username}:${team.teacherUsername}:${teamId}`)
-        .digest("hex")
-        .slice(0, 24);
+      // El alumno entra al Dolibarr del equipo con SU contraseña de registro
+      // (almacenada en student.dolibarrPassword al crearlo). Si por algún motivo
+      // no la tenemos (alumno legacy), derivamos una estable como fallback.
+      const password =
+        student.dolibarrPassword ??
+        createHash("sha256")
+          .update(`team-member:${student.username}:${team.teacherUsername}:${teamId}`)
+          .digest("hex")
+          .slice(0, 24);
       await createDolibarrUser(config, {
         login: student.username,
         password,
@@ -285,12 +288,14 @@ router.post("/teams/:id/members", async (req, res) => {
         email: student.email,
         admin: false,
       });
-      // Guardar la contraseña del Dolibarr de equipo en el campo dolibarrPassword del alumno
-      // (se usa también en student-login cuando hay teamId).
-      await db
-        .update(studentsTable)
-        .set({ dolibarrPassword: password })
-        .where(eq(studentsTable.id, studentId));
+      // Si era legacy y derivamos una contraseña, la guardamos para que
+      // student-login pueda devolverla.
+      if (!student.dolibarrPassword) {
+        await db
+          .update(studentsTable)
+          .set({ dolibarrPassword: password })
+          .where(eq(studentsTable.id, studentId));
+      }
       provisioned = true;
     } catch (err) {
       provisionError = err instanceof Error ? err.message : "Error provisionando usuario";
@@ -366,9 +371,12 @@ router.delete("/teams/:id/members/:studentId", async (req, res) => {
     }
   }
 
+  // Sacamos al alumno del equipo pero conservamos su dolibarrPassword
+  // (es su contraseña de registro, la sigue necesitando para entrar a su
+  // propio Dolibarr individual si lo redespliega).
   await db
     .update(studentsTable)
-    .set({ teamId: null, dolibarrPassword: null })
+    .set({ teamId: null })
     .where(eq(studentsTable.id, studentId));
 
   await logActivity({

@@ -85,7 +85,7 @@ export async function deployTeacherDolibarr(
       dbName: dbName(username),
       dbUser: dbUser(username),
       dbPassword: adminPassword,
-      adminLogin: "admin",
+      adminLogin: username,
       adminPassword,
       adminEmail: teacher.email,
       publicUrl: publicUrl(username, ctx.baseDomain),

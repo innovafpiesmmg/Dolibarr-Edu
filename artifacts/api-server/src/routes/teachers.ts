@@ -87,6 +87,7 @@ router.post("/teachers", async (req, res) => {
       email: body.email,
       username: body.username,
       passwordHash: hashPassword(body.password),
+      dolibarrPassword: body.password,
       phone: body.phone ?? null,
     })
     .returning({

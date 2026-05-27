@@ -94,7 +94,7 @@ router.get("/teacher/me/dolibarr", async (req, res) => {
     deployed: Boolean(deployed),
     publicUrl: deployed ? teacherPublicUrl(t.username, baseDomain!) : null,
     containerName: teacherContainerName(t.username),
-    dolibarrUsername: deployed ? "admin" : null,
+    dolibarrUsername: deployed ? t.username : null,
     dolibarrPassword: deployed ? t.dolibarrPassword : null,
   });
 });
