@@ -66,16 +66,26 @@ function StudentPortal() {
           <p className="text-primary font-medium mb-1">{session.companyName}</p>
         )}
         <p className="text-sm text-muted-foreground mb-6">Grupo: {session.groupName}</p>
-        {session.dolibarrUrl ? (
+        {session.dolibarrUrl && session.dolibarrPassword ? (
           <>
-            <Button asChild className="w-full h-12 text-base font-semibold">
-              <a href={session.dolibarrUrl} target="_blank" rel="noopener noreferrer">
+            <form
+              method="POST"
+              action={`${session.dolibarrUrl.replace(/\/+$/, "")}/index.php`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <input type="hidden" name="actionlogin" value="login" />
+              <input type="hidden" name="loginfunction" value="loginfunction" />
+              <input type="hidden" name="entity" value="1" />
+              <input type="hidden" name="username" value={session.dolibarrUsername} />
+              <input type="hidden" name="password" value={session.dolibarrPassword} />
+              <Button type="submit" className="w-full h-12 text-base font-semibold">
                 Acceder a mi empresa <ExternalLink className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
-            {session.dolibarrPassword && (
-              <div className="mt-4 text-left text-xs bg-muted/40 border border-border rounded-lg p-3 space-y-1">
-                <p className="text-muted-foreground">Usa estas credenciales para entrar:</p>
+              </Button>
+            </form>
+            <details className="mt-3 text-left text-xs text-muted-foreground">
+              <summary className="cursor-pointer hover:text-foreground">Ver mis credenciales</summary>
+              <div className="mt-2 bg-muted/40 border border-border rounded-lg p-3 space-y-1">
                 <p>
                   <span className="text-muted-foreground">Usuario:</span>{" "}
                   <span className="font-mono font-medium">{session.dolibarrUsername}</span>
@@ -85,7 +95,7 @@ function StudentPortal() {
                   <span className="font-mono font-medium select-all break-all">{session.dolibarrPassword}</span>
                 </p>
               </div>
-            )}
+            </details>
           </>
         ) : (
           <p className="text-sm text-muted-foreground">

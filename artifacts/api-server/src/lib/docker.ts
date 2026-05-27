@@ -224,19 +224,46 @@ export async function disableCsrfInConfPhp(containerName: string): Promise<void>
   //   - duplicados previos (rondas de auto-heal anteriores).
   //   - la versión "rota" con \" literales (`if (!defined(\"NOCSRFCHECK...`)
   //     que produjo el bug y deja a Dolibarr con HTTP 500 (parse error PHP).
+  // El truco fundamental: `NOCSRFCHECK` tiene que estar definido ANTES de que
+  // se cargue main.inc.php (es decir, antes que conf.php). Si lo definimos
+  // dentro de conf.php llegamos tarde porque algunas páginas (incluyendo el
+  // POST de login a /index.php) ya han hecho `define('CSRFCHECK_WITH_TOKEN',1)`
+  // en su cabecera y main.inc.php rechaza la petición con
+  // "constant CSRFCHECK_WITH_TOKEN is defined ... Token not provided".
+  //
+  // Solución: usar `auto_prepend_file` de PHP. Esa directiva hace que PHP
+  // ejecute un script tuyo ANTES de cualquier otro código en toda petición.
+  // Ahí definimos NOCSRFCHECK y todo queda bypaseado.
+  const prependFile = "/usr/local/etc/php/dolibarr-nocsrf.php";
+  const iniFile = "/usr/local/etc/php/conf.d/zzz-dolibarr-nocsrf.ini";
   const sh =
     `set -e; ` +
     `if [ ! -f ${confPath} ]; then echo no-conf; exit 0; fi; ` +
-    // Borra cualquier línea con la patata mala o duplicados nuestros previos.
+    // 1) Limpia overrides previos en conf.php (incluido el bug histórico con \" literales).
     `sed -i '/dolibarr_nocsrfcheck/d; /NOCSRFCHECK/d' ${confPath}; ` +
-    // Añade las dos directivas, una sola vez, con comillas dobles reales.
+    // 2) Añade $dolibarr_nocsrfcheck (cubre la rama MAIN_SECURITY_CSRF_WITH_TOKEN).
     `cat >> ${confPath} <<'EOF_DOLIBARR_CSRF'\n` +
     `$dolibarr_nocsrfcheck = 1;\n` +
-    `if (!defined("NOCSRFCHECK")) { define("NOCSRFCHECK", 1); }\n` +
     `EOF_DOLIBARR_CSRF\n` +
+    // 3) Escribe el auto_prepend_file con define('NOCSRFCHECK', 1).
+    //    Usamos heredoc con delimitador entre comillas simples para que el
+    //    shell no toque nada del cuerpo. Las comillas dobles dentro del PHP
+    //    llegan tal cual.
+    `cat > ${prependFile} <<'EOF_PHP_PREPEND'\n` +
+    `<?php if (!defined("NOCSRFCHECK")) { define("NOCSRFCHECK", 1); }\n` +
+    `EOF_PHP_PREPEND\n` +
+    // 4) Activa el auto_prepend_file en una ini de la carpeta conf.d/. El
+    //    nombre `zzz-` es para que se cargue después de todas las demás.
+    `echo 'auto_prepend_file = ${prependFile}' > ${iniFile}; ` +
+    // 5) Sanity-checks que SÍ vamos a ver en los logs del API server.
+    `php -l ${prependFile}; ` +
+    `php -l ${confPath}; ` +
+    `php -r 'require "${prependFile}"; echo defined("NOCSRFCHECK") ? "PREPEND_OK\\n" : "PREPEND_FAIL\\n";'; ` +
+    // 6) Recarga Apache para que la nueva ini surta efecto (mod_php no recarga ini en caliente).
+    `apache2ctl graceful 2>/dev/null || /usr/sbin/apache2ctl graceful 2>/dev/null || kill -USR1 1 2>/dev/null || true; ` +
     `echo applied`;
   const out = await execInContainer(containerName, ["sh", "-c", sh]);
-  logger.info({ containerName, result: out.trim() }, "CSRF desactivado en conf.php");
+  logger.info({ containerName, result: out.trim() }, "CSRF desactivado (auto_prepend_file + conf.php)");
 }
 
 export async function waitForHttpHealthy(internalUrl: string, timeoutMs = 180_000): Promise<void> {
