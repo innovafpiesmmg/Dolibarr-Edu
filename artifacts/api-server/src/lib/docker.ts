@@ -224,25 +224,16 @@ export async function disableCsrfInConfPhp(containerName: string): Promise<void>
   //   - duplicados previos (rondas de auto-heal anteriores).
   //   - la versión "rota" con \" literales (`if (!defined(\"NOCSRFCHECK...`)
   //     que produjo el bug y deja a Dolibarr con HTTP 500 (parse error PHP).
-  // 1) conf.php: $dolibarr_nocsrfcheck = 1 (cubre rama MAIN_SECURITY_CSRF_WITH_TOKEN).
-  // 2) auto_prepend_file: define('NOCSRFCHECK', 1) ANTES de cualquier PHP, así
-  //    cubrimos también la rama `defined('CSRFCHECK_WITH_TOKEN')` que algunas
-  //    páginas (incluyendo el login POST cross-origin desde el panel) definen
-  //    en su cabecera, ANTES de main.inc.php / conf.php.
-  const prependFile = "/usr/local/etc/php/dolibarr-nocsrf.php";
-  const iniFile = "/usr/local/etc/php/conf.d/zzz-dolibarr-nocsrf.ini";
   const sh =
     `set -e; ` +
     `if [ ! -f ${confPath} ]; then echo no-conf; exit 0; fi; ` +
+    // Borra cualquier línea con la patata mala o duplicados nuestros previos.
     `sed -i '/dolibarr_nocsrfcheck/d; /NOCSRFCHECK/d' ${confPath}; ` +
+    // Añade las dos directivas, una sola vez, con comillas dobles reales.
     `cat >> ${confPath} <<'EOF_DOLIBARR_CSRF'\n` +
     `$dolibarr_nocsrfcheck = 1;\n` +
+    `if (!defined("NOCSRFCHECK")) { define("NOCSRFCHECK", 1); }\n` +
     `EOF_DOLIBARR_CSRF\n` +
-    `cat > ${prependFile} <<'EOF_PHP_PREPEND'\n` +
-    `<?php if (!defined("NOCSRFCHECK")) { define("NOCSRFCHECK", 1); }\n` +
-    `EOF_PHP_PREPEND\n` +
-    `echo "auto_prepend_file = ${prependFile}" > ${iniFile}; ` +
-    `apache2ctl graceful 2>/dev/null || kill -USR1 1 2>/dev/null || true; ` +
     `echo applied`;
   const out = await execInContainer(containerName, ["sh", "-c", sh]);
   logger.info({ containerName, result: out.trim() }, "CSRF desactivado en conf.php");
