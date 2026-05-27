@@ -61,7 +61,6 @@ router.post("/auth/student-login", async (req, res) => {
       username: studentsTable.username,
       companyName: studentsTable.companyName,
       passwordHash: studentsTable.passwordHash,
-      dolibarrPassword: studentsTable.dolibarrPassword,
       dolibarrSyncStatus: studentsTable.dolibarrSyncStatus,
       groupName: groupsTable.name,
     })
@@ -71,16 +70,7 @@ router.post("/auth/student-login", async (req, res) => {
     .limit(1);
 
   const student = rows[0];
-  // Aceptamos cualquiera de las dos contraseñas del alumno:
-  //  - la que el profesor puso al crearlo (passwordHash en SHA-256)
-  //  - la determinista que ve en la ficha y que también es admin del Dolibarr
-  const matchesPanelPassword = !!student && student.passwordHash === inputHash;
-  const matchesDolibarrPassword =
-    !!student &&
-    !!student.dolibarrPassword &&
-    student.dolibarrPassword === parsed.data.password;
-
-  if (!student || (!matchesPanelPassword && !matchesDolibarrPassword)) {
+  if (!student || student.passwordHash !== inputHash) {
     res.status(401).json({ message: "Usuario o contraseña incorrectos" });
     return;
   }
