@@ -94,7 +94,11 @@ _ensure_key() {
 }
 
 # Orquestación de Dolibarr por alumno
-_ensure_key "BASE_DOMAIN"            "erp.micentro.es"
+# BASE_DOMAIN y PANEL_URL ya no se piden en el instalador: se configuran desde
+# el panel (Configuración → Dominio base). Dejamos las claves vacías por si
+# alguien quiere fijarlas a mano en el .env.
+_ensure_key "BASE_DOMAIN"            ""
+_ensure_key "PANEL_URL"              ""
 _ensure_key "DOLIBARR_IMAGE"         "dolibarr/dolibarr:latest"
 _ensure_key "STUDENT_DOCKER_NETWORK" "dolibarr_net"
 # Forzar valor correcto si .env tenía el nombre antiguo (con prefijo compose)

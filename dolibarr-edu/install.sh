@@ -126,28 +126,21 @@ else
 fi
 
 # ── URLs públicas ─────────────────────────────────────────────────────────────
-echo ""
-echo -e "${BOLD}┌─────────────────────────────────────────────────────────┐${NC}"
-echo -e "${BOLD}│           URLs públicas (dominios del centro)            │${NC}"
-echo -e "${BOLD}└─────────────────────────────────────────────────────────┘${NC}"
-echo ""
-echo "  Pulsa Enter para aceptar los valores por defecto."
-echo ""
+# El dominio base de Dolibarr y la URL del panel se configuran desde el propio
+# panel (Configuración → Dominio base) una vez arrancado. Aquí solo dejamos las
+# claves presentes en el .env por si quieres sobreescribirlas a mano más tarde.
+_ensure_env_key() {
+  local key="$1" default="$2"
+  if ! grep -q "^${key}=" "$WORK_DIR/.env" 2>/dev/null; then
+    echo "${key}=${default}" >> "$WORK_DIR/.env"
+  fi
+}
+_ensure_env_key "BASE_DOMAIN" ""
+_ensure_env_key "PANEL_URL"   ""
 
-echo "  Cada alumno tendrá su propio Dolibarr en https://<usuario>.<dominio-base>/"
-echo ""
-CURRENT_BASE_DOMAIN=$(grep "^BASE_DOMAIN=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-read -rp "  Dominio base de Dolibarr  [${CURRENT_BASE_DOMAIN:-erp.micentro.es}]: " BASE_DOMAIN_IN < /dev/tty
-BASE_DOMAIN_IN="${BASE_DOMAIN_IN:-${CURRENT_BASE_DOMAIN:-erp.micentro.es}}"
-
-CURRENT_PANEL_URL=$(grep "^PANEL_URL=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-read -rp "  URL del Panel de gestión  [${CURRENT_PANEL_URL:-https://panel.micentro.es}]: " PANEL_URL < /dev/tty
-PANEL_URL="${PANEL_URL:-${CURRENT_PANEL_URL:-https://panel.micentro.es}}"
-
-_env_set "BASE_DOMAIN" "$BASE_DOMAIN_IN"
-_env_set "PANEL_URL"   "$PANEL_URL"
-
-success "URLs configuradas"
+BASE_DOMAIN_IN=$(grep "^BASE_DOMAIN=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
+PANEL_URL=$(grep "^PANEL_URL=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
+info "Dominio base y URL del panel se configuran desde el panel (Configuración → Dominio base)."
 
 # ── Cloudflare Tunnel token (opcional) ────────────────────────────────────────
 echo ""
@@ -168,8 +161,9 @@ else
   echo "   → Configure → Overview → copia el token del comando de instalación)"
   echo ""
   echo "  Public Hostnames que debes crear en el dashboard del túnel:"
-  echo "    panel.<tu-dominio>    → http://panel_web:80   (panel + landing)"
-  echo "    *.$BASE_DOMAIN_IN   → http://traefik:80     (Dolibarr de cada alumno)"
+  echo "    panel.<tu-dominio>     → http://panel_web:80   (panel + landing)"
+  echo "    *.<tu-dominio-base>    → http://traefik:80     (Dolibarr de cada alumno)"
+  echo "  (El dominio base lo configurarás luego desde el propio panel.)"
   echo ""
   read -rp "  Token de Cloudflare (o Enter para omitir): " CF_TOKEN < /dev/tty
   if [[ -n "$CF_TOKEN" ]]; then
@@ -195,14 +189,17 @@ fi
 # ── Resumen ───────────────────────────────────────────────────────────────────
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║                  URLs de tu instalación                      ║"
+echo "║                  Próximos pasos                              ║"
 echo "╠══════════════════════════════════════════════════════════════╣"
-printf  "║  %-28s %-31s║\n" "Panel de gestión:" "$PANEL_URL"
-printf  "║  %-28s %-31s║\n" "Dolibarr alumnos:" "https://<usuario>.$BASE_DOMAIN_IN"
+echo "║  1. Accede al panel y entra con la contraseña que pusiste.   ║"
+echo "║  2. Ve a Configuración → Dominio base y pon el tuyo.         ║"
+echo "║  3. En Cloudflare crea los Public Hostnames del túnel:       ║"
+echo "║       panel.<tu-dominio>   → http://panel_web:80             ║"
+echo "║       *.<tu-dominio-base>  → http://traefik:80               ║"
+echo "║  4. Crea profesores, grupos y alumnos desde el panel.        ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
 echo "  Cada alumno tendrá su propio Dolibarr aislado, creado desde el panel."
-echo "  Configura el túnel Cloudflare con un comodín *.$BASE_DOMAIN_IN apuntando a traefik:80"
 
 # ── Arrancar servicios ────────────────────────────────────────────────────────
 echo ""
@@ -235,10 +232,10 @@ if [[ "${START_NOW,,}" != "n" && "${START_NOW,,}" != "no" ]]; then
   echo ""
   success "¡Todos los servicios en marcha!"
   echo ""
-  echo "  Panel de gestión: $PANEL_URL"
-  echo "  Cada alumno: https://<usuario>.$BASE_DOMAIN_IN/"
+  echo "  Configura el dominio base desde el panel (Configuración → Dominio base)."
+  echo "  Cada alumno tendrá su Dolibarr aislado en https://<usuario>.<tu-dominio-base>/"
   echo ""
-  echo "  Crea alumnos desde el panel; cada uno tendrá su Dolibarr aislado."
+  echo "  Crea profesores, grupos y alumnos desde el panel."
 else
   echo ""
   success "Configuración completada."
