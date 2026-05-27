@@ -14,6 +14,7 @@ import {
 import {
   ensureStudentDatabase,
   dropStudentDatabase,
+  enableModulesInStudentDb,
   isMariaDBConfigured,
 } from "./mariadb";
 import {
@@ -44,9 +45,46 @@ export function readDeployEnv(baseDomain: string): DeployContext {
     mariadbHost: process.env.MARIADB_HOST ?? "db",
     image: process.env.DOLIBARR_IMAGE ?? "dolibarr/dolibarr:latest",
     modules: process.env.DOLIBARR_MODULES
-      ?? "modApi,modSociete,modFournisseur,modFacture,modProjet,modStock,modBanque,modContrat,modComptabilite,modHrm,modSalaries",
+      ?? DEFAULT_DOLIBARR_MODULES.join(","),
   };
 }
+
+// ── Módulos Dolibarr activados por defecto en cada alumno ────────────────────
+// Cubre los flujos de: contabilidad doble entrada, facturación cliente/proveedor,
+// nóminas (HRM + Salaries), liquidaciones SS/IRPF (Tax) y pagos bancarios.
+//
+// El nombre `mod<Xxx>` se pasa a la imagen oficial vía `DOLI_MODULES` en el
+// primer arranque. Como fallback, tras el deploy escribimos las constantes
+// `MAIN_MODULE_<CONST>` en `llx_const` directamente (ver
+// `enableModulesInStudentDb`). La constante para cada módulo es el atributo
+// `$this->name` de su `modXxx.class.php` en MAYÚSCULAS — atención: para algunos
+// módulos no coincide con el nombre PHP (p.ej. `modProjet` → `PROJET`,
+// `modHolidays` → `HOLIDAY`).
+export const DOLIBARR_MODULES: ReadonlyArray<{ mod: string; const: string }> = [
+  { mod: "modApi",           const: "API" },           // REST API (obligatorio)
+  { mod: "modSociete",       const: "SOCIETE" },       // Terceros
+  { mod: "modProduct",       const: "PRODUCT" },       // Productos/servicios
+  { mod: "modCategorie",     const: "CATEGORIE" },     // Categorías
+  { mod: "modPropale",       const: "PROPALE" },       // Presupuestos
+  { mod: "modCommande",      const: "COMMANDE" },      // Pedidos cliente
+  { mod: "modFacture",       const: "FACTURE" },       // Facturación cliente
+  { mod: "modFournisseur",   const: "FOURNISSEUR" },   // Proveedores (compras+facturas)
+  { mod: "modProjet",        const: "PROJET" },        // Proyectos (¡PROJET, no PROJECT!)
+  { mod: "modContrat",       const: "CONTRAT" },       // Contratos
+  { mod: "modStock",         const: "STOCK" },         // Almacén
+  { mod: "modBanque",        const: "BANQUE" },        // Bancos
+  { mod: "modPrelevement",   const: "PRELEVEMENT" },   // Adeudos SEPA
+  { mod: "modAccounting",    const: "ACCOUNTING" },    // Contabilidad doble entrada
+  { mod: "modTax",           const: "TAX" },           // Cargas sociales e impuestos
+  { mod: "modHrm",           const: "HRM" },           // Recursos Humanos
+  { mod: "modSalaries",      const: "SALARIES" },      // Salarios / nóminas
+  { mod: "modExpenseReport", const: "EXPENSEREPORT" }, // Notas de gastos
+  { mod: "modHolidays",      const: "HOLIDAY" },       // Vacaciones (¡singular!)
+  { mod: "modLoan",          const: "LOAN" },          // Préstamos
+];
+
+export const DEFAULT_DOLIBARR_MODULES = DOLIBARR_MODULES.map((m) => m.mod);
+export const DEFAULT_DOLIBARR_MODULE_CONSTANTS = DOLIBARR_MODULES.map((m) => m.const);
 
 export interface StudentDeployRecord {
   username: string;
@@ -118,6 +156,12 @@ export async function deployStudentDolibarr(
 
     // 3) Esperar a que Dolibarr arranque y termine la instalación inicial
     await waitForHttpHealthy(internalUrl(username), 180_000);
+
+    // 3b) Asegurar activación de los módulos por SQL (fallback de DOLI_MODULES).
+    //     Es idempotente: si ya están activos, no pasa nada.
+    await enableModulesInStudentDb(dbName(username), DEFAULT_DOLIBARR_MODULE_CONSTANTS).catch((e) =>
+      logger.warn({ err: e, username }, "No se pudo activar módulos por SQL (continuando)"),
+    );
   } catch (err) {
     // Compensación: si el contenedor se creó pero el health-check falló, lo
     // dejamos *parado* (no destruimos) para diagnóstico, pero invalidamos token.
@@ -179,4 +223,17 @@ export async function stopStudentContainer(username: string): Promise<ContainerI
 
 export async function getStudentContainerInfo(username: string): Promise<ContainerInfo> {
   return getContainerInfo(containerName(username));
+}
+
+// Reaplica la activación de módulos sobre un alumno ya desplegado.
+// Útil tras ampliar DEFAULT_DOLIBARR_MODULE_CONSTANTS o si el primer arranque
+// se quedó corto. No reinicia el contenedor (Dolibarr lee llx_const al vuelo).
+export async function enableStudentModules(username: string): Promise<{ enabled: string[] }> {
+  const safe = sanitize(username);
+  if (!safe) throw new Error("username inválido");
+  if (!isMariaDBConfigured()) {
+    throw new Error("MariaDB no configurada — no se puede activar módulos.");
+  }
+  await enableModulesInStudentDb(dbName(username), DEFAULT_DOLIBARR_MODULE_CONSTANTS);
+  return { enabled: [...DEFAULT_DOLIBARR_MODULE_CONSTANTS] };
 }

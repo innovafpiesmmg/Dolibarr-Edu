@@ -7,6 +7,7 @@ import {
   startStudentContainer,
   stopStudentContainer,
   getStudentContainerInfo,
+  enableStudentModules,
   readDeployEnv,
   canOrchestrate,
 } from "../lib/student-deploy";
@@ -214,6 +215,29 @@ router.delete("/students/:id/dolibarr", async (req, res) => {
       details: `Contenedor Dolibarr y BD eliminados`,
     });
     res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
+  }
+});
+
+// Reaplica la activación de los módulos de Dolibarr (contabilidad, facturación,
+// nóminas, SS...) en la BD del alumno. Útil para alumnos desplegados antes de
+// que ampliáramos la lista por defecto, o si quieres reactivarlos tras toquetear.
+router.post("/students/:id/dolibarr/modules", async (req, res) => {
+  const studentId = parseStudentId(req.params.id);
+  if (!studentId) { res.status(400).json({ error: "ID inválido" }); return; }
+  const student = await loadStudent(studentId);
+  if (!student) { res.status(404).json({ error: "Alumno no encontrado" }); return; }
+  try {
+    const result = await enableStudentModules(student.username);
+    await logActivity({
+      action: "enable_student_modules",
+      entityType: "student",
+      entityId: studentId,
+      entityName: `${student.firstName} ${student.lastName}`,
+      details: `Módulos activados: ${result.enabled.join(", ")}`,
+    });
+    res.json({ studentId, enabled: result.enabled });
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
   }

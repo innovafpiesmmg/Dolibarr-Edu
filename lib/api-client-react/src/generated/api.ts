@@ -29,6 +29,7 @@ import type {
   DolibarrContainerState,
   Employee,
   EmployeeInput,
+  EnableStudentDolibarrModules200,
   ErrorResponse,
   GetSSSummaryParams,
   Group,
@@ -1997,6 +1998,76 @@ export const useDestroyStudentContainer = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDestroyStudentContainerMutationOptions(options));
+    }
+
+export const getEnableStudentDolibarrModulesUrl = (id: number,) => {
+
+
+
+
+  return `/api/students/${id}/dolibarr/modules`
+}
+
+/**
+ * @summary Reactivar los módulos Dolibarr (contabilidad, facturación, nóminas, SS) del alumno
+ */
+export const enableStudentDolibarrModules = async (id: number, options?: RequestInit): Promise<EnableStudentDolibarrModules200> => {
+
+  return customFetch<EnableStudentDolibarrModules200>(getEnableStudentDolibarrModulesUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getEnableStudentDolibarrModulesMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableStudentDolibarrModules>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof enableStudentDolibarrModules>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['enableStudentDolibarrModules'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableStudentDolibarrModules>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  enableStudentDolibarrModules(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EnableStudentDolibarrModulesMutationResult = NonNullable<Awaited<ReturnType<typeof enableStudentDolibarrModules>>>
+
+    export type EnableStudentDolibarrModulesMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Reactivar los módulos Dolibarr (contabilidad, facturación, nóminas, SS) del alumno
+ */
+export const useEnableStudentDolibarrModules = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableStudentDolibarrModules>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof enableStudentDolibarrModules>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getEnableStudentDolibarrModulesMutationOptions(options));
     }
 
 export const getResetStudentPasswordUrl = (id: number,) => {

@@ -1,3 +1,4 @@
 - [Traefik file provider — extensions](traefik-file-provider.md) — en modo `directory` ignora `.json` silenciosamente; usa `.yaml`/`.yml`/`.toml`.
 - [Traefik docker provider vs Docker Engine 25+](traefik-docker-provider-api.md) — el SDK Go de Traefik negocia API 1.24 y falla contra daemons con MinAPIVersion 1.44; usar file provider.
 - [Cloudflare Tunnel wildcard DNS](cloudflare-tunnel-wildcard-dns.md) — wildcards requieren CNAME manual a `<uuid>.cfargotunnel.com`; síntoma de mal apuntado = 524 silencioso, sin tráfico en el connector.
+- [Dolibarr — activación de módulos por SQL](dolibarr-module-activation.md) — escribir en `llx_const` con `entity=1` (NO 0), `ON DUPLICATE KEY UPDATE`, y los nombres no siempre coinciden (modProjet→PROJET).

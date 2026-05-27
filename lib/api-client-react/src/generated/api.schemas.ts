@@ -550,6 +550,11 @@ limit?: number;
 offset?: number;
 };
 
+export type EnableStudentDolibarrModules200 = {
+  studentId: number;
+  enabled: string[];
+};
+
 export type GetSSSummaryParams = {
 /**
  * @minimum 1

@@ -95,6 +95,70 @@ export async function ensureStudentDatabase(
   }
 }
 
+// Activa una lista de módulos Dolibarr en la BD del alumno insertando las
+// constantes `MAIN_MODULE_<NAME>` (y los flags estándar de menús/triggers/
+// hooks/login) en `llx_const`.
+//
+// IMPORTANTE: las constantes de módulo se almacenan con `entity=1` (la entidad
+// por defecto en instalaciones single-tenant). Con `entity=0` Dolibarr no las
+// reconoce como activación de módulo y los menús no aparecen.
+//
+// La operación es idempotente y reactivadora: usa `ON DUPLICATE KEY UPDATE
+// value='1'`, por lo que si un módulo estaba desactivado (value='0'), este
+// método vuelve a ponerlo a '1'. Dolibarr lee `llx_const` en cada request, así
+// que NO hace falta reiniciar el contenedor.
+export async function enableModulesInStudentDb(
+  dbName: string,
+  moduleNames: readonly string[],
+): Promise<void> {
+  const cfg = rootConfig();
+  if (!cfg) throw new Error("MariaDB no configurada");
+  assertIdent("dbName", dbName);
+
+  // Validar nombres de módulo: alfanuméricos, sin caracteres especiales.
+  const SAFE_MODULE = /^[A-Z][A-Z0-9_]{1,40}$/;
+  const names = moduleNames.filter((n) => {
+    const ok = SAFE_MODULE.test(n);
+    if (!ok) logger.warn({ module: n }, "Nombre de módulo Dolibarr ignorado (no válido)");
+    return ok;
+  });
+  if (names.length === 0) return;
+
+  // Por cada módulo activamos su flag principal y los sub-flags habituales
+  // que Dolibarr crea cuando se activa el módulo desde la UI.
+  const SUBFLAGS = ["TRIGGERS", "HOOKS", "LOGIN", "MENUS", "SUBSTITUTIONS"] as const;
+  const rows: string[] = [];
+  for (const name of names) {
+    rows.push(`('MAIN_MODULE_${name}', 1, '1', 'chaine', 0, NULL)`);
+    for (const sub of SUBFLAGS) {
+      rows.push(`('MAIN_MODULE_${name}_${sub}', 1, '1', 'chaine', 0, NULL)`);
+    }
+  }
+
+  const conn = await mysql.createConnection({ ...cfg, database: dbName });
+  try {
+    // Comprobación: la tabla `llx_const` debe existir (la crea el instalador de
+    // Dolibarr en el primer arranque). Si no existe abortamos limpiamente.
+    const [tables] = await conn.query<mysql.RowDataPacket[]>(
+      "SHOW TABLES LIKE 'llx_const'",
+    );
+    if (!Array.isArray(tables) || tables.length === 0) {
+      throw new Error(`Tabla llx_const no encontrada en ${dbName} (¿Dolibarr terminó su instalación inicial?)`);
+    }
+
+    // ON DUPLICATE KEY UPDATE garantiza que si el módulo ya existía como
+    // desactivado (value='0'), pase a activo (value='1'). Si no, lo inserta.
+    const sql =
+      `INSERT INTO llx_const (name, entity, value, type, visible, note) VALUES ` +
+      rows.join(", ") +
+      ` ON DUPLICATE KEY UPDATE value='1'`;
+    await conn.query(sql);
+    logger.info({ dbName, count: names.length }, "Módulos Dolibarr activados vía SQL");
+  } finally {
+    await conn.end().catch(() => {});
+  }
+}
+
 export async function dropStudentDatabase(dbName: string, dbUser: string): Promise<void> {
   const cfg = rootConfig();
   if (!cfg) throw new Error("MariaDB no configurada");

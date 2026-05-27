@@ -636,6 +636,40 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorResponse" }
 
+  /students/{id}/dolibarr/modules:
+    post:
+      operationId: enableStudentDolibarrModules
+      tags: [students]
+      summary: Reactivar los módulos Dolibarr (contabilidad, facturación, nóminas, SS) del alumno
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Módulos activados
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [studentId, enabled]
+                properties:
+                  studentId: { type: integer }
+                  enabled:
+                    type: array
+                    items: { type: string }
+        "404":
+          description: Alumno no encontrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "500":
+          description: Error al activar módulos
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
   /students/{id}/reset-password:
     post:
       operationId: resetStudentPassword

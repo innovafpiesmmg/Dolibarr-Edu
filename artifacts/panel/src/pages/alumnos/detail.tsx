@@ -10,9 +10,10 @@ import {
   useStartStudentContainer,
   useStopStudentContainer,
   useDestroyStudentContainer,
+  useEnableStudentDolibarrModules,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Building2, User, Mail, Server, Clock, Rocket, Copy, Check, AlertCircle, RefreshCw, KeyRound, Eye, Play, Square, Trash2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Building2, User, Mail, Server, Clock, Rocket, Copy, Check, AlertCircle, RefreshCw, KeyRound, Eye, Play, Square, Trash2, ExternalLink, Puzzle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -87,6 +88,7 @@ export default function StudentDetail() {
   const startMutation = useStartStudentContainer();
   const stopMutation = useStopStudentContainer();
   const destroyMutation = useDestroyStudentContainer();
+  const enableModulesMutation = useEnableStudentDolibarrModules();
   const [destroyOpen, setDestroyOpen] = useState(false);
 
   const invalidateAll = () => {
@@ -109,6 +111,21 @@ export default function StudentDetail() {
       onSuccess: () => { invalidateAll(); toast({ title: "Contenedor detenido" }); },
       onError: (err: unknown) => {
         const msg = (err as any)?.response?.data?.error ?? "No se pudo detener el contenedor.";
+        toast({ variant: "destructive", title: "Error", description: msg });
+      },
+    });
+  };
+
+  const handleEnableModules = () => {
+    enableModulesMutation.mutate({ id }, {
+      onSuccess: (result) => {
+        toast({
+          title: "Módulos Dolibarr activados",
+          description: `Se activaron ${result.enabled.length} módulos (contabilidad, facturación, nóminas, SS…). Refresca el Dolibarr del alumno para verlos en los menús.`,
+        });
+      },
+      onError: (err: unknown) => {
+        const msg = (err as any)?.response?.data?.error ?? "No se pudieron activar los módulos.";
         toast({ variant: "destructive", title: "Error", description: msg });
       },
     });
@@ -360,6 +377,19 @@ export default function StudentDetail() {
                     onClick={() => refetchContainer()}
                   >
                     <RefreshCw className="mr-2 h-3.5 w-3.5" /> Refrescar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleEnableModules}
+                    disabled={enableModulesMutation.isPending || !containerExists}
+                    title="Reactiva contabilidad, facturación, nóminas, SS y demás módulos en el Dolibarr del alumno. Se aplica directamente sobre la BD, no necesita el contenedor arrancado."
+                  >
+                    {enableModulesMutation.isPending ? (
+                      <><RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" /> Activando…</>
+                    ) : (
+                      <><Puzzle className="mr-2 h-3.5 w-3.5" /> Activar módulos</>
+                    )}
                   </Button>
                   <Button
                     size="sm"

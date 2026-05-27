@@ -536,6 +536,19 @@ export const DestroyStudentContainerParams = zod.object({
 
 
 /**
+ * @summary Reactivar los módulos Dolibarr (contabilidad, facturación, nóminas, SS) del alumno
+ */
+export const EnableStudentDolibarrModulesParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const EnableStudentDolibarrModulesResponse = zod.object({
+  "studentId": zod.number(),
+  "enabled": zod.array(zod.string())
+})
+
+
+/**
  * @summary Genera una nueva contraseña para el alumno y la sincroniza con Dolibarr
  */
 export const ResetStudentPasswordParams = zod.object({
