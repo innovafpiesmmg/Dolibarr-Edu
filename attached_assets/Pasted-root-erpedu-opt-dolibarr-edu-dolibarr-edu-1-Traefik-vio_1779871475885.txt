@@ -1,0 +1,36 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# # 1) ¿Traefik vio y cargó el fichero?
+aefik 2>&1 | root@erpedu:/opt/dolibarr-edu/dolibarr-edu# sudo docker logs dolibarr_traefik 2>&1 | tail -15
+sudo docker ps --filter name=dolibarr_alu_juanperez --format 'table {{.Names}}\t{{.Status}}'
+sudo docker inspect dolibarr_alu_juanperez --format \
+  '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}={{$v.IPAddress}}{{"\n"}}{{end}}'
+
+# 3) Desde Traefik, ¿se resuelve el nombre del contenedor del alumno?
+sudo docker exec dolibarr_traefik wget -qO- --timeout=3 http://dolibarr_alu_juanperez/ 2>&1 | head -3
+
+# 4) Si el paso 3 falla con "bad address": fuerza a Traefik a reentrar en la red
+sudo docker network inspect dolibarr_net --format \
+  '{{range .Containers}}{{.Name}}{{"\n"}}{{end}}'
+# Esperado: lista que incluya dolibarr_traefik Y dolibarr_alu_juanperez
+
+# 5) Reintenta curl
+curl -i -s --resolve juanperez.erp1.iesmmg.es:8090:127.0.0.1 \
+  http://juanperez.erp1.iesmmg.es:8090/ | head -52026-05-26T19:08:24Z WRN A new release of Traefik has been found: 3.7.1. Please consider updating.
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# # 2) ¿Está juanperez levantado y en la red correcta?
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# sudo docker ps --filter name=dolibarr_alu_juanperez --format 'table {{.Names}}\t{{.Status}}'
+sudo docker inspect dolibarr_alu_juanperez --format \
+  '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}={{$v.IPAddress}}{{"\n"}}{{end}}'
+
+# 3) Desde Traefik, ¿se resuelve el nombre del contenedor del alumno?
+sudo docker exec dolibarr_traefik wget -qO- --timeout=3 http://dolibarr_alu_juanperez/ 2>&1 | head -3
+
+# 4) Si el paso 3 falla con "bad address": fuerza a Traefik a reentrar en la red
+sudo docker network inspect dolibarr_net --format \
+  '{{range .Containers}}{{.Name}}{{"\n"}}{{end}}'
+# Esperado: lista que incluya dolibarr_traefik Y dolibarr_alu_juanperez
+
+# 5) Reintenta curl
+curl -i -s --resolve juanperez.erp1.iesmmg.es:8090:127.0.0.1 \
+  http://juanperez.erp1.iesmmg.es:8090/ | head -5NAMES                    STATUS
+dolibarr_alu_juanperez   Up 14 hours
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 
