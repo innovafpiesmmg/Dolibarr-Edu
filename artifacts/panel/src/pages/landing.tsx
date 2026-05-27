@@ -66,15 +66,25 @@ function StudentPortal() {
           <p className="text-primary font-medium mb-1">{session.companyName}</p>
         )}
         <p className="text-sm text-muted-foreground mb-6">Grupo: {session.groupName}</p>
-        {session.dolibarrUrl ? (
-          <Button asChild className="w-full h-12 text-base font-semibold">
-            <a href={session.dolibarrUrl} target="_blank" rel="noopener noreferrer">
+        {session.dolibarrUrl && session.dolibarrPassword ? (
+          <form
+            method="POST"
+            action={`${session.dolibarrUrl.replace(/\/+$/, "")}/index.php?mainmenu=home`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <input type="hidden" name="actionlogin" value="login" />
+            <input type="hidden" name="loginfunction" value="loginfunction" />
+            <input type="hidden" name="entity" value="1" />
+            <input type="hidden" name="username" value={session.dolibarrUsername} />
+            <input type="hidden" name="password" value={session.dolibarrPassword} />
+            <Button type="submit" className="w-full h-12 text-base font-semibold">
               Acceder a mi empresa <ExternalLink className="ml-2 h-4 w-4" />
-            </a>
-          </Button>
+            </Button>
+          </form>
         ) : (
           <p className="text-sm text-muted-foreground">
-            La URL de Dolibarr aún no está configurada. Consulta con tu profesor.
+            Tu empresa aún no está desplegada. Consulta con tu profesor.
           </p>
         )}
         <button

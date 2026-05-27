@@ -5,7 +5,7 @@ import { studentsTable, groupsTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { AdminLoginBody, StudentLoginBody } from "@workspace/api-zod";
 import { adminPasswordHash, generateAdminToken } from "../lib/auth";
-import { publicUrl } from "../lib/student-dolibarr";
+import { publicUrl, deterministicPassword } from "../lib/student-dolibarr";
 import { getBaseDomain } from "./settings";
 
 const router = Router();
@@ -62,6 +62,7 @@ router.post("/auth/student-login", async (req, res) => {
       companyName: studentsTable.companyName,
       passwordHash: studentsTable.passwordHash,
       dolibarrSyncStatus: studentsTable.dolibarrSyncStatus,
+      dolibarrPassword: studentsTable.dolibarrPassword,
       groupName: groupsTable.name,
     })
     .from(studentsTable)
@@ -76,10 +77,11 @@ router.post("/auth/student-login", async (req, res) => {
   }
 
   const baseDomain = await getBaseDomain();
-  const dolibarrUrl =
-    baseDomain && student.dolibarrSyncStatus === "synced"
-      ? publicUrl(student.username, baseDomain)
-      : "";
+  const deployed = baseDomain && student.dolibarrSyncStatus === "synced";
+  const dolibarrUrl = deployed ? publicUrl(student.username, baseDomain) : "";
+  const dolibarrPassword = deployed
+    ? (student.dolibarrPassword ?? deterministicPassword(student.username))
+    : "";
 
   res.json({
     firstName: student.firstName,
@@ -87,7 +89,8 @@ router.post("/auth/student-login", async (req, res) => {
     companyName: student.companyName ?? null,
     groupName: student.groupName ?? "",
     dolibarrUrl,
-    entityId: null,
+    dolibarrUsername: deployed ? "admin" : "",
+    dolibarrPassword,
   });
 });
 

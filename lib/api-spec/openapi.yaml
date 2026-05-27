@@ -1303,13 +1303,15 @@ components:
 
     AlumnoSesion:
       type: object
-      required: [firstName, lastName, groupName, dolibarrUrl]
+      required: [firstName, lastName, groupName, dolibarrUrl, dolibarrUsername, dolibarrPassword]
       properties:
-        firstName:   { type: string }
-        lastName:    { type: string }
-        companyName: { type: string, nullable: true }
-        groupName:   { type: string }
-        dolibarrUrl: { type: string, description: "URL pública del Dolibarr del alumno (https://{user}.{baseDomain}/)." }
+        firstName:        { type: string }
+        lastName:         { type: string }
+        companyName:      { type: string, nullable: true }
+        groupName:        { type: string }
+        dolibarrUrl:      { type: string, description: "URL pública del Dolibarr del alumno (https://{user}.{baseDomain}/)." }
+        dolibarrUsername: { type: string, description: "Usuario para auto-login en Dolibarr (admin del ERP del alumno)." }
+        dolibarrPassword: { type: string, description: "Contraseña para auto-login en Dolibarr. Se envía al navegador del alumno para postear al formulario de login del ERP." }
 
     # ── Employee ─────────────────────────────────────────
     Employee:

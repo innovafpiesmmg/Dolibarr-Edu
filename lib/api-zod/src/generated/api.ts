@@ -33,7 +33,9 @@ export const StudentLoginResponse = zod.object({
   "lastName": zod.string(),
   "companyName": zod.string().nullish(),
   "groupName": zod.string(),
-  "dolibarrUrl": zod.string().describe('URL pública del Dolibarr del alumno (https:\/\/{user}.{baseDomain}\/).')
+  "dolibarrUrl": zod.string().describe('URL pública del Dolibarr del alumno (https:\/\/{user}.{baseDomain}\/).'),
+  "dolibarrUsername": zod.string().describe('Usuario para auto-login en Dolibarr (admin del ERP del alumno).'),
+  "dolibarrPassword": zod.string().describe('Contraseña para auto-login en Dolibarr. Se envía al navegador del alumno para postear al formulario de login del ERP.')
 })
 
 

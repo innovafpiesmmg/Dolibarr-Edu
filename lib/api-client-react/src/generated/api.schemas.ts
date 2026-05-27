@@ -236,6 +236,10 @@ export interface AlumnoSesion {
   groupName: string;
   /** URL pública del Dolibarr del alumno (https://{user}.{baseDomain}/). */
   dolibarrUrl: string;
+  /** Usuario para auto-login en Dolibarr (admin del ERP del alumno). */
+  dolibarrUsername: string;
+  /** Contraseña para auto-login en Dolibarr. Se envía al navegador del alumno para postear al formulario de login del ERP. */
+  dolibarrPassword: string;
 }
 
 export type EmployeeContractType = typeof EmployeeContractType[keyof typeof EmployeeContractType];
