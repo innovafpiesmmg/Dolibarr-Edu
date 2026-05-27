@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { 
-  useListStudents, 
-  useDeleteStudent, 
+import {
+  useListStudents,
+  useCreateStudent,
+  useDeleteStudent,
   getListStudentsQueryKey,
-  useListGroups
+  useListGroups,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Search, Plus, Trash2, Edit, MoreVertical, AlertTriangle, Building2, Upload, FileDown } from "lucide-react";
@@ -13,24 +14,75 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const createSchema = z.object({
+  firstName: z.string().min(1, "El nombre es obligatorio"),
+  lastName: z.string().min(1, "Los apellidos son obligatorios"),
+  email: z.string().email("Correo electrónico inválido"),
+  username: z.string().min(3, "Mínimo 3 caracteres"),
+  password: z.string().min(6, "Mínimo 6 caracteres"),
+  groupId: z.coerce.number({ invalid_type_error: "Selecciona un grupo" }).int().positive("Selecciona un grupo"),
+  companyName: z.string().optional(),
+});
 
 export default function AlumnosList() {
   const [search, setSearch] = useState("");
   const [groupId, setGroupId] = useState<number | undefined>(undefined);
   
   const { data: students, isLoading } = useListStudents({ search, groupId });
-  const { data: groups } = useListGroups({});
+  const { data: groups, isLoading: isLoadingGroups } = useListGroups({});
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [studentToDelete, setStudentToDelete] = useState<number | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
+  const createStudent = useCreateStudent();
   const deleteStudent = useDeleteStudent();
+
+  const form = useForm<z.infer<typeof createSchema>>({
+    resolver: zodResolver(createSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      username: "",
+      password: "",
+      groupId: undefined as unknown as number,
+      companyName: "",
+    },
+  });
+
+  const onCreate = (values: z.infer<typeof createSchema>) => {
+    const payload = {
+      ...values,
+      companyName: values.companyName?.trim() ? values.companyName.trim() : undefined,
+    };
+    createStudent.mutate(
+      { data: payload },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListStudentsQueryKey() });
+          setIsCreateOpen(false);
+          form.reset();
+          toast({ title: "Alumno creado", description: "El alumno ha sido registrado correctamente." });
+        },
+        onError: (err: unknown) => {
+          const msg = (err as any)?.data?.error ?? (err as any)?.message ?? "No se pudo crear el alumno.";
+          toast({ variant: "destructive", title: "Error al crear el alumno", description: msg });
+        },
+      },
+    );
+  };
 
   const handleExportCSV = () => {
     const rows = (students ?? []).map((s) => ({
@@ -68,13 +120,141 @@ export default function AlumnosList() {
           <p className="text-muted-foreground">Listado global de estudiantes y empresas.</p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={handleExportCSV} disabled={!students?.length}>
             <FileDown className="mr-2 h-4 w-4" /> Exportar CSV
           </Button>
           <Button asChild variant="outline">
             <Link href="/importar"><Upload className="mr-2 h-4 w-4" /> Importación Masiva</Link>
           </Button>
+          <Dialog open={isCreateOpen} onOpenChange={(open) => { setIsCreateOpen(open); if (!open) form.reset(); }}>
+            <DialogTrigger asChild>
+              <Button className="shrink-0"><Plus className="mr-2 h-4 w-4" /> Nuevo Alumno</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[480px]">
+              <DialogHeader>
+                <DialogTitle>Añadir Alumno</DialogTitle>
+                <DialogDescription>
+                  Registra un nuevo alumno. Tras crearlo podrás desplegar su Dolibarr desde la ficha.
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onCreate)} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nombre</FormLabel>
+                          <FormControl><Input placeholder="Juan" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Apellidos</FormLabel>
+                          <FormControl><Input placeholder="Pérez García" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Correo Electrónico</FormLabel>
+                        <FormControl><Input type="email" placeholder="juan.perez@centro.edu" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Usuario</FormLabel>
+                          <FormControl><Input placeholder="juanperez" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Contraseña</FormLabel>
+                          <FormControl><Input type="password" placeholder="Mínimo 6 caracteres" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="groupId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Grupo</FormLabel>
+                        <Select
+                          value={field.value ? String(field.value) : ""}
+                          onValueChange={(v) => field.onChange(Number(v))}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona un grupo" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {isLoadingGroups ? (
+                              <div className="px-2 py-1.5 text-sm text-muted-foreground">Cargando grupos…</div>
+                            ) : groups?.length ? (
+                              groups.map((g) => (
+                                <SelectItem key={g.id} value={String(g.id)}>{g.name}</SelectItem>
+                              ))
+                            ) : (
+                              <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                                No hay grupos. Crea uno primero en Grupos.
+                              </div>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="companyName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Empresa simulada (opcional)</FormLabel>
+                        <FormControl><Input placeholder="Ej. JuanPérez S.L." {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={createStudent.isPending || !groups?.length}>
+                      {createStudent.isPending ? "Guardando..." : "Guardar Alumno"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
