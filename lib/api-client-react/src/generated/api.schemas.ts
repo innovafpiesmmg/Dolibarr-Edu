@@ -281,17 +281,34 @@ export interface AlumnoCredentials {
   password: string;
 }
 
+/**
+ * individual = Dolibarr propio del alumno; team = Dolibarr compartido del equipo (vive en el contenedor del profesor).
+ */
+export type AlumnoSesionMode = typeof AlumnoSesionMode[keyof typeof AlumnoSesionMode];
+
+
+export const AlumnoSesionMode = {
+  individual: 'individual',
+  team: 'team',
+} as const;
+
 export interface AlumnoSesion {
   firstName: string;
   lastName: string;
   companyName?: string | null;
   groupName: string;
-  /** URL pública del Dolibarr del alumno (https://{user}.{baseDomain}/). */
+  /** URL pública del Dolibarr del alumno o del equipo. */
   dolibarrUrl: string;
-  /** Usuario para auto-login en Dolibarr (admin del ERP del alumno). */
+  /** Usuario para auto-login en Dolibarr. */
   dolibarrUsername: string;
-  /** Contraseña para auto-login en Dolibarr. Se envía al navegador del alumno para postear al formulario de login del ERP. */
+  /** Contraseña para auto-login en Dolibarr. */
   dolibarrPassword: string;
+  /** individual = Dolibarr propio del alumno; team = Dolibarr compartido del equipo (vive en el contenedor del profesor). */
+  mode: AlumnoSesionMode;
+  /** Letra del equipo (A, B, C…). Solo si mode = team. */
+  teamLetter?: string | null;
+  /** Nombre del equipo. Solo si mode = team. */
+  teamName?: string | null;
 }
 
 export type EmployeeContractType = typeof EmployeeContractType[keyof typeof EmployeeContractType];

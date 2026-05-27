@@ -33,9 +33,12 @@ export const StudentLoginResponse = zod.object({
   "lastName": zod.string(),
   "companyName": zod.string().nullish(),
   "groupName": zod.string(),
-  "dolibarrUrl": zod.string().describe('URL pública del Dolibarr del alumno (https:\/\/{user}.{baseDomain}\/).'),
-  "dolibarrUsername": zod.string().describe('Usuario para auto-login en Dolibarr (admin del ERP del alumno).'),
-  "dolibarrPassword": zod.string().describe('Contraseña para auto-login en Dolibarr. Se envía al navegador del alumno para postear al formulario de login del ERP.')
+  "dolibarrUrl": zod.string().describe('URL pública del Dolibarr del alumno o del equipo.'),
+  "dolibarrUsername": zod.string().describe('Usuario para auto-login en Dolibarr.'),
+  "dolibarrPassword": zod.string().describe('Contraseña para auto-login en Dolibarr.'),
+  "mode": zod.enum(['individual', 'team']).describe('individual = Dolibarr propio del alumno; team = Dolibarr compartido del equipo (vive en el contenedor del profesor).'),
+  "teamLetter": zod.string().nullish().describe('Letra del equipo (A, B, C…). Solo si mode = team.'),
+  "teamName": zod.string().nullish().describe('Nombre del equipo. Solo si mode = team.')
 })
 
 

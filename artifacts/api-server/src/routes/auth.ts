@@ -158,6 +158,9 @@ router.post("/auth/student-login", async (req, res) => {
         dolibarrUrl: teamUrl,
         dolibarrUsername: student.username,
         dolibarrPassword: student.dolibarrPassword ?? "",
+        mode: "team" as const,
+        teamLetter: team.letter,
+        teamName: `Equipo ${team.letter}`,
       });
       return;
     }
@@ -180,6 +183,9 @@ router.post("/auth/student-login", async (req, res) => {
     dolibarrUrl,
     dolibarrUsername: deployed ? student.username : "",
     dolibarrPassword,
+    mode: "individual" as const,
+    teamLetter: null,
+    teamName: null,
   });
 });
 

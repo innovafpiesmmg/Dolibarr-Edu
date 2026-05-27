@@ -21,6 +21,8 @@ import {
   ShieldCheck,
   Github,
   Play,
+  UsersRound,
+  Info,
 } from "lucide-react";
 import { useStudentLogin } from "@workspace/api-client-react";
 import type { AlumnoSesion } from "@workspace/api-client-react";
@@ -53,11 +55,23 @@ function StudentPortal() {
   }
 
   if (session) {
+    const isTeam = session.mode === "team";
     return (
       <div className="bg-card border border-primary/20 rounded-2xl p-8 text-center shadow-lg max-w-sm w-full mx-auto">
         <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-          <Building2 className="h-7 w-7 text-primary" />
+          {isTeam ? <UsersRound className="h-7 w-7 text-primary" /> : <Building2 className="h-7 w-7 text-primary" />}
         </div>
+        {isTeam && (
+          <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-left text-xs">
+            <p className="flex items-center gap-1.5 font-semibold text-primary">
+              <UsersRound className="h-3.5 w-3.5" />
+              Acceso a equipo {session.teamLetter}
+            </p>
+            <p className="text-muted-foreground mt-1 leading-snug">
+              Vas a entrar al Dolibarr compartido de tu equipo. Tu empresa individual está pausada mientras dure el trabajo en grupo.
+            </p>
+          </div>
+        )}
         <p className="text-sm text-muted-foreground mb-1">Bienvenido,</p>
         <h3 className="text-xl font-bold mb-1">
           {session.firstName} {session.lastName}
@@ -430,6 +444,92 @@ export default function LandingPage() {
               </p>
             </div>
             <ErpShowcase />
+          </div>
+        </section>
+
+        {/* ── Trabajo en equipo ──────────────────────────────────────────────── */}
+        <section className="py-24 bg-gradient-to-b from-background to-card border-y border-border">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <Badge variant="outline" className="mb-4 text-primary border-primary/30">
+                Trabajo colaborativo
+              </Badge>
+              <h2 className="text-3xl font-bold mb-4">
+                Empresas individuales… y también en equipo
+              </h2>
+              <p className="text-muted-foreground">
+                El profesor puede agrupar a los alumnos en equipos para simular proyectos reales en los
+                que varias personas trabajan sobre la misma empresa. Cada equipo comparte un único Dolibarr
+                con su propio subdominio.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 mb-12">
+              {[
+                {
+                  icon: Building2,
+                  title: "Modo individual",
+                  desc: "Por defecto, cada alumno tiene su propia empresa Dolibarr aislada. Trabaja a su ritmo y solo él ve sus datos.",
+                },
+                {
+                  icon: UsersRound,
+                  title: "Modo equipo",
+                  desc: "Cuando el profesor te asigna a un equipo, accedes a un Dolibarr compartido con tus compañeros para llevar la contabilidad y la facturación de una empresa común.",
+                },
+                {
+                  icon: ShieldCheck,
+                  title: "Mismo usuario, misma contraseña",
+                  desc: "Te logueas siempre desde esta misma página con tus credenciales habituales. El sistema te lleva automáticamente al Dolibarr correcto (individual o de equipo).",
+                },
+              ].map(({ icon: Icon, title, desc }) => (
+                <div key={title} className="bg-card border border-border rounded-xl p-6">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="font-bold mb-2">{title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-card border border-border rounded-2xl p-8 max-w-3xl mx-auto">
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <Info className="h-5 w-5 text-primary" />
+                Cómo accedes según el modo
+              </h3>
+              <div className="grid sm:grid-cols-2 gap-6 text-sm">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building2 className="h-4 w-4 text-primary" />
+                    <span className="font-semibold">Si no estás en ningún equipo</span>
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Entras a <span className="font-mono text-foreground">tuusuario.erp.micentro.es</span> con tu usuario y contraseña.
+                    Es tu empresa simulada personal: nadie más la ve ni la edita.
+                  </p>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <UsersRound className="h-4 w-4 text-primary" />
+                    <span className="font-semibold">Si estás en un equipo</span>
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Entras a <span className="font-mono text-foreground">equipo-a-tugrupo.erp.micentro.es</span> con los mismos credenciales.
+                    Verás a tus compañeros como otros usuarios trabajando en la misma empresa.
+                    Tu Dolibarr individual queda pausado mientras estés en el equipo y se recupera intacto al salir.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6 pt-6 border-t border-border text-xs text-muted-foreground">
+                <p className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <span>
+                    El panel te avisa visualmente en cuanto haces login si estás entrando a tu empresa individual o
+                    al Dolibarr de un equipo. Si tienes dudas, pregunta a tu profesor: él controla en qué equipo estás.
+                  </span>
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
