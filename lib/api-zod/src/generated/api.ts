@@ -69,6 +69,9 @@ export const ListTeachersResponseItem = zod.object({
   "phone": zod.string().nullish(),
   "groupCount": zod.number().optional(),
   "studentCount": zod.number().optional(),
+  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncError": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del profesor.'),
   "createdAt": zod.coerce.date()
 })
 export const ListTeachersResponse = zod.array(ListTeachersResponseItem)
@@ -111,6 +114,9 @@ export const GetTeacherResponse = zod.object({
   "phone": zod.string().nullish(),
   "groupCount": zod.number().optional(),
   "studentCount": zod.number().optional(),
+  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncError": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del profesor.'),
   "createdAt": zod.coerce.date()
 })
 
@@ -142,6 +148,9 @@ export const UpdateTeacherResponse = zod.object({
   "phone": zod.string().nullish(),
   "groupCount": zod.number().optional(),
   "studentCount": zod.number().optional(),
+  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncError": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del profesor.'),
   "createdAt": zod.coerce.date()
 })
 
@@ -151,6 +160,96 @@ export const UpdateTeacherResponse = zod.object({
  */
 export const DeleteTeacherParams = zod.object({
   "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary Desplegar Dolibarr propio del profesor (crear BD + contenedor)
+ */
+export const DeployTeacherParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeployTeacherResponse = zod.object({
+  "teacherId": zod.number(),
+  "status": zod.enum(['synced', 'error', 'skipped']),
+  "containerName": zod.string().nullish(),
+  "publicUrl": zod.string().nullish(),
+  "containerState": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish(),
+  "error": zod.string().nullish()
+})
+
+
+/**
+ * @summary Estado del contenedor Dolibarr del profesor
+ */
+export const GetTeacherContainerStateParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTeacherContainerStateResponse = zod.object({
+  "teacherId": zod.number(),
+  "exists": zod.boolean(),
+  "state": zod.string(),
+  "publicUrl": zod.string().nullable(),
+  "containerName": zod.string(),
+  "startedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Arrancar el contenedor Dolibarr del profesor
+ */
+export const StartTeacherContainerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const StartTeacherContainerResponse = zod.object({
+  "teacherId": zod.number(),
+  "exists": zod.boolean(),
+  "state": zod.string(),
+  "publicUrl": zod.string().nullable(),
+  "containerName": zod.string(),
+  "startedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Detener el contenedor Dolibarr del profesor
+ */
+export const StopTeacherContainerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const StopTeacherContainerResponse = zod.object({
+  "teacherId": zod.number(),
+  "exists": zod.boolean(),
+  "state": zod.string(),
+  "publicUrl": zod.string().nullable(),
+  "containerName": zod.string(),
+  "startedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Eliminar contenedor y BD del Dolibarr del profesor (datos perdidos)
+ */
+export const DestroyTeacherContainerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary Reactivar los módulos Dolibarr del profesor
+ */
+export const EnableTeacherDolibarrModulesParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const EnableTeacherDolibarrModulesResponse = zod.object({
+  "teacherId": zod.number(),
+  "enabled": zod.array(zod.string())
 })
 
 

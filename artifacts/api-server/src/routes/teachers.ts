@@ -18,6 +18,21 @@ function hashPassword(password: string): string {
   return createHash("sha256").update(password).digest("hex");
 }
 
+const teacherSelectCols = {
+  id: teachersTable.id,
+  firstName: teachersTable.firstName,
+  lastName: teachersTable.lastName,
+  email: teachersTable.email,
+  username: teachersTable.username,
+  phone: teachersTable.phone,
+  dolibarrSyncStatus: teachersTable.dolibarrSyncStatus,
+  dolibarrSyncError: teachersTable.dolibarrSyncError,
+  dolibarrPassword: teachersTable.dolibarrPassword,
+  createdAt: teachersTable.createdAt,
+  groupCount: sql<number>`count(distinct ${groupsTable.id})::int`,
+  studentCount: sql<number>`count(distinct ${studentsTable.id})::int`,
+} as const;
+
 router.get("/teachers", async (req, res) => {
   const query = ListTeachersQueryParams.parse(req.query);
   const limit = query.limit ?? 50;
@@ -33,17 +48,7 @@ router.get("/teachers", async (req, res) => {
     : undefined;
 
   const teachers = await db
-    .select({
-      id: teachersTable.id,
-      firstName: teachersTable.firstName,
-      lastName: teachersTable.lastName,
-      email: teachersTable.email,
-      username: teachersTable.username,
-      phone: teachersTable.phone,
-      createdAt: teachersTable.createdAt,
-      groupCount: sql<number>`count(distinct ${groupsTable.id})::int`,
-      studentCount: sql<number>`count(distinct ${studentsTable.id})::int`,
-    })
+    .select(teacherSelectCols)
     .from(teachersTable)
     .leftJoin(groupsTable, eq(groupsTable.teacherId, teachersTable.id))
     .leftJoin(studentsTable, eq(studentsTable.groupId, groupsTable.id))
@@ -91,6 +96,9 @@ router.post("/teachers", async (req, res) => {
       email: teachersTable.email,
       username: teachersTable.username,
       phone: teachersTable.phone,
+      dolibarrSyncStatus: teachersTable.dolibarrSyncStatus,
+      dolibarrSyncError: teachersTable.dolibarrSyncError,
+      dolibarrPassword: teachersTable.dolibarrPassword,
       createdAt: teachersTable.createdAt,
     });
 
@@ -105,17 +113,7 @@ router.get("/teachers/:id", async (req, res) => {
   const { id } = GetTeacherParams.parse(req.params);
 
   const [row] = await db
-    .select({
-      id: teachersTable.id,
-      firstName: teachersTable.firstName,
-      lastName: teachersTable.lastName,
-      email: teachersTable.email,
-      username: teachersTable.username,
-      phone: teachersTable.phone,
-      createdAt: teachersTable.createdAt,
-      groupCount: sql<number>`count(distinct ${groupsTable.id})::int`,
-      studentCount: sql<number>`count(distinct ${studentsTable.id})::int`,
-    })
+    .select(teacherSelectCols)
     .from(teachersTable)
     .leftJoin(groupsTable, eq(groupsTable.teacherId, teachersTable.id))
     .leftJoin(studentsTable, eq(studentsTable.groupId, groupsTable.id))
@@ -151,17 +149,7 @@ router.patch("/teachers/:id", async (req, res) => {
   }
 
   const [row] = await db
-    .select({
-      id: teachersTable.id,
-      firstName: teachersTable.firstName,
-      lastName: teachersTable.lastName,
-      email: teachersTable.email,
-      username: teachersTable.username,
-      phone: teachersTable.phone,
-      createdAt: teachersTable.createdAt,
-      groupCount: sql<number>`count(distinct ${groupsTable.id})::int`,
-      studentCount: sql<number>`count(distinct ${studentsTable.id})::int`,
-    })
+    .select(teacherSelectCols)
     .from(teachersTable)
     .leftJoin(groupsTable, eq(groupsTable.teacherId, teachersTable.id))
     .leftJoin(studentsTable, eq(studentsTable.groupId, groupsTable.id))

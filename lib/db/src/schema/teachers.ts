@@ -10,6 +10,9 @@ export const teachersTable = pgTable("teachers", {
   username: varchar("username", { length: 100 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   phone: varchar("phone", { length: 50 }),
+  dolibarrPassword: varchar("dolibarr_password", { length: 255 }),
+  dolibarrSyncStatus: varchar("dolibarr_sync_status", { length: 20 }).notNull().default("pending"),
+  dolibarrSyncError: text("dolibarr_sync_error"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

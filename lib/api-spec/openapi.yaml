@@ -206,6 +206,147 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /teachers/{id}/deploy:
+    post:
+      operationId: deployTeacher
+      tags: [teachers]
+      summary: Desplegar Dolibarr propio del profesor (crear BD + contenedor)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Resultado del despliegue
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherDeployResult" }
+        "404":
+          description: Profesor no encontrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "503":
+          description: Docker o MariaDB no disponible / BASE_DOMAIN sin configurar
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /teachers/{id}/dolibarr/state:
+    get:
+      operationId: getTeacherContainerState
+      tags: [teachers]
+      summary: Estado del contenedor Dolibarr del profesor
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Estado actual del contenedor
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherContainerState" }
+        "404":
+          description: Profesor no encontrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /teachers/{id}/dolibarr/start:
+    post:
+      operationId: startTeacherContainer
+      tags: [teachers]
+      summary: Arrancar el contenedor Dolibarr del profesor
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Contenedor arrancado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherContainerState" }
+        "404":
+          description: Profesor o contenedor no encontrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /teachers/{id}/dolibarr/stop:
+    post:
+      operationId: stopTeacherContainer
+      tags: [teachers]
+      summary: Detener el contenedor Dolibarr del profesor
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Contenedor detenido
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherContainerState" }
+        "404":
+          description: Profesor o contenedor no encontrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /teachers/{id}/dolibarr:
+    delete:
+      operationId: destroyTeacherContainer
+      tags: [teachers]
+      summary: Eliminar contenedor y BD del Dolibarr del profesor (datos perdidos)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Contenedor y BD eliminados
+        "404":
+          description: Profesor no encontrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /teachers/{id}/dolibarr/modules:
+    post:
+      operationId: enableTeacherDolibarrModules
+      tags: [teachers]
+      summary: Reactivar los módulos Dolibarr del profesor
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Módulos activados
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [teacherId, enabled]
+                properties:
+                  teacherId: { type: integer }
+                  enabled:
+                    type: array
+                    items: { type: string }
+        "404":
+          description: Profesor no encontrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
   /teachers/{id}/groups:
     get:
       operationId: listTeacherGroups
@@ -1100,17 +1241,20 @@ components:
     # ── Teacher ──────────────────────────────────────────
     Teacher:
       type: object
-      required: [id, firstName, lastName, email, username, createdAt]
+      required: [id, firstName, lastName, email, username, dolibarrSyncStatus, createdAt]
       properties:
-        id:          { type: integer }
-        firstName:   { type: string }
-        lastName:    { type: string }
-        email:       { type: string }
-        username:    { type: string }
-        phone:       { type: ["string", "null"] }
-        groupCount:  { type: integer }
-        studentCount: { type: integer }
-        createdAt:   { type: string, format: date-time }
+        id:                 { type: integer }
+        firstName:          { type: string }
+        lastName:           { type: string }
+        email:              { type: string }
+        username:           { type: string }
+        phone:              { type: ["string", "null"] }
+        groupCount:         { type: integer }
+        studentCount:       { type: integer }
+        dolibarrSyncStatus: { type: string, enum: [pending, synced, error] }
+        dolibarrSyncError:  { type: ["string", "null"] }
+        dolibarrPassword:   { type: ["string", "null"], description: "Contraseña admin del Dolibarr propio del profesor." }
+        createdAt:          { type: string, format: date-time }
 
     TeacherInput:
       type: object
@@ -1261,6 +1405,29 @@ components:
         studentId:     { type: integer }
         exists:        { type: boolean }
         state:         { type: string, description: "running | exited | created | restarting | paused | dead | absent" }
+        publicUrl:     { type: ["string", "null"] }
+        containerName: { type: string }
+        startedAt:     { type: ["string", "null"], format: date-time }
+
+    TeacherDeployResult:
+      type: object
+      required: [teacherId, status]
+      properties:
+        teacherId:        { type: integer }
+        status:           { type: string, enum: [synced, error, skipped] }
+        containerName:    { type: ["string", "null"] }
+        publicUrl:        { type: ["string", "null"] }
+        containerState:   { type: ["string", "null"] }
+        dolibarrPassword: { type: ["string", "null"] }
+        error:            { type: ["string", "null"] }
+
+    TeacherContainerState:
+      type: object
+      required: [teacherId, exists, state, publicUrl, containerName]
+      properties:
+        teacherId:     { type: integer }
+        exists:        { type: boolean }
+        state:         { type: string }
         publicUrl:     { type: ["string", "null"] }
         containerName: { type: string }
         startedAt:     { type: ["string", "null"], format: date-time }

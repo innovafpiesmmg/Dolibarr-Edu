@@ -30,6 +30,7 @@ import type {
   Employee,
   EmployeeInput,
   EnableStudentDolibarrModules200,
+  EnableTeacherDolibarrModules200,
   ErrorResponse,
   GetSSSummaryParams,
   Group,
@@ -60,6 +61,8 @@ import type {
   StudentInput,
   StudentUpdate,
   Teacher,
+  TeacherContainerState,
+  TeacherDeployResult,
   TeacherInput,
   TeacherUpdate
 } from './api.schemas';
@@ -668,6 +671,433 @@ export const useDeleteTeacher = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeleteTeacherMutationOptions(options));
+    }
+
+export const getDeployTeacherUrl = (id: number,) => {
+
+
+
+
+  return `/api/teachers/${id}/deploy`
+}
+
+/**
+ * @summary Desplegar Dolibarr propio del profesor (crear BD + contenedor)
+ */
+export const deployTeacher = async (id: number, options?: RequestInit): Promise<TeacherDeployResult> => {
+
+  return customFetch<TeacherDeployResult>(getDeployTeacherUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getDeployTeacherMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deployTeacher>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deployTeacher>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deployTeacher'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deployTeacher>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deployTeacher(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeployTeacherMutationResult = NonNullable<Awaited<ReturnType<typeof deployTeacher>>>
+
+    export type DeployTeacherMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Desplegar Dolibarr propio del profesor (crear BD + contenedor)
+ */
+export const useDeployTeacher = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deployTeacher>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deployTeacher>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeployTeacherMutationOptions(options));
+    }
+
+export const getGetTeacherContainerStateUrl = (id: number,) => {
+
+
+
+
+  return `/api/teachers/${id}/dolibarr/state`
+}
+
+/**
+ * @summary Estado del contenedor Dolibarr del profesor
+ */
+export const getTeacherContainerState = async (id: number, options?: RequestInit): Promise<TeacherContainerState> => {
+
+  return customFetch<TeacherContainerState>(getGetTeacherContainerStateUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTeacherContainerStateQueryKey = (id: number,) => {
+    return [
+    `/api/teachers/${id}/dolibarr/state`
+    ] as const;
+    }
+
+
+export const getGetTeacherContainerStateQueryOptions = <TData = Awaited<ReturnType<typeof getTeacherContainerState>>, TError = ErrorType<ErrorResponse>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeacherContainerState>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTeacherContainerStateQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTeacherContainerState>>> = ({ signal }) => getTeacherContainerState(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTeacherContainerState>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTeacherContainerStateQueryResult = NonNullable<Awaited<ReturnType<typeof getTeacherContainerState>>>
+export type GetTeacherContainerStateQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Estado del contenedor Dolibarr del profesor
+ */
+
+export function useGetTeacherContainerState<TData = Awaited<ReturnType<typeof getTeacherContainerState>>, TError = ErrorType<ErrorResponse>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeacherContainerState>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTeacherContainerStateQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getStartTeacherContainerUrl = (id: number,) => {
+
+
+
+
+  return `/api/teachers/${id}/dolibarr/start`
+}
+
+/**
+ * @summary Arrancar el contenedor Dolibarr del profesor
+ */
+export const startTeacherContainer = async (id: number, options?: RequestInit): Promise<TeacherContainerState> => {
+
+  return customFetch<TeacherContainerState>(getStartTeacherContainerUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getStartTeacherContainerMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startTeacherContainer>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startTeacherContainer>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['startTeacherContainer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startTeacherContainer>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  startTeacherContainer(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartTeacherContainerMutationResult = NonNullable<Awaited<ReturnType<typeof startTeacherContainer>>>
+
+    export type StartTeacherContainerMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Arrancar el contenedor Dolibarr del profesor
+ */
+export const useStartTeacherContainer = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startTeacherContainer>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof startTeacherContainer>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getStartTeacherContainerMutationOptions(options));
+    }
+
+export const getStopTeacherContainerUrl = (id: number,) => {
+
+
+
+
+  return `/api/teachers/${id}/dolibarr/stop`
+}
+
+/**
+ * @summary Detener el contenedor Dolibarr del profesor
+ */
+export const stopTeacherContainer = async (id: number, options?: RequestInit): Promise<TeacherContainerState> => {
+
+  return customFetch<TeacherContainerState>(getStopTeacherContainerUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getStopTeacherContainerMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof stopTeacherContainer>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof stopTeacherContainer>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['stopTeacherContainer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof stopTeacherContainer>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  stopTeacherContainer(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StopTeacherContainerMutationResult = NonNullable<Awaited<ReturnType<typeof stopTeacherContainer>>>
+
+    export type StopTeacherContainerMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Detener el contenedor Dolibarr del profesor
+ */
+export const useStopTeacherContainer = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof stopTeacherContainer>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof stopTeacherContainer>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getStopTeacherContainerMutationOptions(options));
+    }
+
+export const getDestroyTeacherContainerUrl = (id: number,) => {
+
+
+
+
+  return `/api/teachers/${id}/dolibarr`
+}
+
+/**
+ * @summary Eliminar contenedor y BD del Dolibarr del profesor (datos perdidos)
+ */
+export const destroyTeacherContainer = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDestroyTeacherContainerUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDestroyTeacherContainerMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof destroyTeacherContainer>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof destroyTeacherContainer>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['destroyTeacherContainer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof destroyTeacherContainer>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  destroyTeacherContainer(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DestroyTeacherContainerMutationResult = NonNullable<Awaited<ReturnType<typeof destroyTeacherContainer>>>
+
+    export type DestroyTeacherContainerMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Eliminar contenedor y BD del Dolibarr del profesor (datos perdidos)
+ */
+export const useDestroyTeacherContainer = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof destroyTeacherContainer>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof destroyTeacherContainer>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDestroyTeacherContainerMutationOptions(options));
+    }
+
+export const getEnableTeacherDolibarrModulesUrl = (id: number,) => {
+
+
+
+
+  return `/api/teachers/${id}/dolibarr/modules`
+}
+
+/**
+ * @summary Reactivar los módulos Dolibarr del profesor
+ */
+export const enableTeacherDolibarrModules = async (id: number, options?: RequestInit): Promise<EnableTeacherDolibarrModules200> => {
+
+  return customFetch<EnableTeacherDolibarrModules200>(getEnableTeacherDolibarrModulesUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getEnableTeacherDolibarrModulesMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableTeacherDolibarrModules>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof enableTeacherDolibarrModules>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['enableTeacherDolibarrModules'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableTeacherDolibarrModules>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  enableTeacherDolibarrModules(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EnableTeacherDolibarrModulesMutationResult = NonNullable<Awaited<ReturnType<typeof enableTeacherDolibarrModules>>>
+
+    export type EnableTeacherDolibarrModulesMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Reactivar los módulos Dolibarr del profesor
+ */
+export const useEnableTeacherDolibarrModules = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableTeacherDolibarrModules>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof enableTeacherDolibarrModules>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getEnableTeacherDolibarrModulesMutationOptions(options));
     }
 
 export const getListTeacherGroupsUrl = (id: number,) => {

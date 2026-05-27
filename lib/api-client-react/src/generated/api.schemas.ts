@@ -13,6 +13,15 @@ export interface ErrorResponse {
   error: string;
 }
 
+export type TeacherDolibarrSyncStatus = typeof TeacherDolibarrSyncStatus[keyof typeof TeacherDolibarrSyncStatus];
+
+
+export const TeacherDolibarrSyncStatus = {
+  pending: 'pending',
+  synced: 'synced',
+  error: 'error',
+} as const;
+
 export interface Teacher {
   id: number;
   firstName: string;
@@ -23,6 +32,14 @@ export interface Teacher {
   phone?: string | null;
   groupCount?: number;
   studentCount?: number;
+  dolibarrSyncStatus: TeacherDolibarrSyncStatus;
+  /** @nullable */
+  dolibarrSyncError?: string | null;
+  /**
+     * Contraseña admin del Dolibarr propio del profesor.
+     * @nullable
+     */
+  dolibarrPassword?: string | null;
   createdAt: string;
 }
 
@@ -196,6 +213,41 @@ export interface DolibarrContainerState {
   studentId: number;
   exists: boolean;
   /** running | exited | created | restarting | paused | dead | absent */
+  state: string;
+  /** @nullable */
+  publicUrl: string | null;
+  containerName: string;
+  /** @nullable */
+  startedAt?: string | null;
+}
+
+export type TeacherDeployResultStatus = typeof TeacherDeployResultStatus[keyof typeof TeacherDeployResultStatus];
+
+
+export const TeacherDeployResultStatus = {
+  synced: 'synced',
+  error: 'error',
+  skipped: 'skipped',
+} as const;
+
+export interface TeacherDeployResult {
+  teacherId: number;
+  status: TeacherDeployResultStatus;
+  /** @nullable */
+  containerName?: string | null;
+  /** @nullable */
+  publicUrl?: string | null;
+  /** @nullable */
+  containerState?: string | null;
+  /** @nullable */
+  dolibarrPassword?: string | null;
+  /** @nullable */
+  error?: string | null;
+}
+
+export interface TeacherContainerState {
+  teacherId: number;
+  exists: boolean;
   state: string;
   /** @nullable */
   publicUrl: string | null;
@@ -538,6 +590,11 @@ export type ListTeachersParams = {
 search?: string;
 limit?: number;
 offset?: number;
+};
+
+export type EnableTeacherDolibarrModules200 = {
+  teacherId: number;
+  enabled: string[];
 };
 
 export type ListGroupsParams = {
