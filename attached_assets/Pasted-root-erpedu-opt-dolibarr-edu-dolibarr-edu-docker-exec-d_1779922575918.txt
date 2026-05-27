@@ -1,0 +1,53 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# docker exec dolibarr_traefik cat /etc/traefik/dynamic/student-juanperez.yaml | grep Host
+        "rule": "Host(`juanperez.iesmmg.es`)",
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# docker logs --tail 40 dolibarr_alu_juanperez 2>&1 | tail -25
+docker exec dolibarr_alu_juanperez tail -20 /var/www/html/conf/conf.php
+docker exec dolibarr_alu_juanperez php -l /var/www/html/conf/conf.php
+mariadb -uxxx -p'yyy' -h mariadb  with xxx in /run/secrets/mysql-user and yyy in /run/secrets/mysql-password if these files were used in docker-compose.yml
+ls /var/lib/mysql
+
+*** You can connect to the docker Dolibarr with:
+sudo docker exec -it nameofwebcontainer-web-1 bash
+ls /var/www/documents
+ls /var/www/html
+
+*** You can access persistent directory from the host with:
+ls /home/dolibarr_mariadb_latest
+ls /home/dolibarr_documents_latest
+ls /home/dolibarr_custom_latest
+
+*** You can connect to the running Dolibarr web application with:
+http://127.0.0.1:port
+
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Wed May 27 22:54:57.006401 2026] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.67 (Debian) configured -- resuming normal operations
+[Wed May 27 22:54:57.006460 2026] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+172.18.0.3 - - [27/May/2026:22:54:57 +0000] "GET / HTTP/1.1" 200 2953 "-" "node"
+172.18.0.3 - - [27/May/2026:22:54:58 +0000] "GET / HTTP/1.1" 200 2953 "-" "node"
+172.18.0.3 - - [27/May/2026:22:54:59 +0000] "GET / HTTP/1.1" 200 2952 "-" "node"
+[Wed May 27 22:55:05.389432 2026] [php:error] [pid 3335:tid 3335] [client 172.18.0.4:52688] PHP Parse error:  syntax error, unexpected token "\\" in /var/www/html/conf/conf.php on line 20
+172.18.0.4 - - [27/May/2026:22:55:05 +0000] "GET / HTTP/1.1" 500 169 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+$dolibarr_main_document_root='/var/www/html';
+$dolibarr_main_url_root_alt='/custom';
+$dolibarr_main_document_root_alt='/var/www/html/custom';
+$dolibarr_main_data_root='/var/www/documents';
+$dolibarr_main_db_port='3306';
+$dolibarr_main_db_name='doli_juanperez';
+$dolibarr_main_db_prefix='llx_';
+$dolibarr_main_db_user='doli_juanperez';
+$dolibarr_main_db_pass='3a66daed2d7035524baccc74';
+$dolibarr_main_db_type='mysqli';
+$dolibarr_main_authentication='dolibarr';
+$dolibarr_main_prod=1;
+$dolibarr_main_db_host='db';
+$dolibarr_main_instance_unique_id='myinstanceuniquekey';
+$dolibarr_main_db_character_set='utf8mb4';
+$dolibarr_main_db_collation='utf8mb4_unicode_ci';
+$dolibarr_nocsrfcheck = 1;
+if (!defined(\"NOCSRFCHECK\")) { define(\"NOCSRFCHECK\", 1); }
+if (!defined(\"NOCSRFCHECK\")) { define(\"NOCSRFCHECK\", 1); }
+if (!defined(\"NOCSRFCHECK\")) { define(\"NOCSRFCHECK\", 1); }
+Errors parsing /var/www/html/conf/conf.php
+PHP Parse error:  syntax error, unexpected token "\" in /var/www/html/conf/conf.php on line 20
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 

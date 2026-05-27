@@ -217,17 +217,24 @@ export async function disableCsrfInConfPhp(containerName: string): Promise<void>
   // Es seguro porque cada contenedor Dolibarr es del único alumno/profesor
   // dueño, no expone formularios públicos y todo acceso pasa por nuestra
   // autenticación previa en el panel. Idempotente.
+  // OJO con las comillas: queremos que PHP reciba comillas dobles REALES, no
+  // barras invertidas. Usamos here-doc + comillas simples en el delimitador
+  // para que el shell no interprete nada del cuerpo.
+  // Antes de añadir, limpiamos:
+  //   - duplicados previos (rondas de auto-heal anteriores).
+  //   - la versión "rota" con \" literales (`if (!defined(\"NOCSRFCHECK...`)
+  //     que produjo el bug y deja a Dolibarr con HTTP 500 (parse error PHP).
   const sh =
-    `if [ -f ${confPath} ]; then ` +
-    `  changed=0; ` +
-    `  if ! grep -q 'dolibarr_nocsrfcheck' ${confPath}; then ` +
-    `    echo '$dolibarr_nocsrfcheck = 1;' >> ${confPath}; changed=1; ` +
-    `  fi; ` +
-    `  if ! grep -q "define\\(.NOCSRFCHECK" ${confPath}; then ` +
-    `    echo 'if (!defined(\\"NOCSRFCHECK\\")) { define(\\"NOCSRFCHECK\\", 1); }' >> ${confPath}; changed=1; ` +
-    `  fi; ` +
-    `  if [ $changed -eq 1 ]; then echo applied; else echo skipped; fi; ` +
-    `else echo no-conf; fi`;
+    `set -e; ` +
+    `if [ ! -f ${confPath} ]; then echo no-conf; exit 0; fi; ` +
+    // Borra cualquier línea con la patata mala o duplicados nuestros previos.
+    `sed -i '/dolibarr_nocsrfcheck/d; /NOCSRFCHECK/d' ${confPath}; ` +
+    // Añade las dos directivas, una sola vez, con comillas dobles reales.
+    `cat >> ${confPath} <<'EOF_DOLIBARR_CSRF'\n` +
+    `$dolibarr_nocsrfcheck = 1;\n` +
+    `if (!defined("NOCSRFCHECK")) { define("NOCSRFCHECK", 1); }\n` +
+    `EOF_DOLIBARR_CSRF\n` +
+    `echo applied`;
   const out = await execInContainer(containerName, ["sh", "-c", sh]);
   logger.info({ containerName, result: out.trim() }, "CSRF desactivado en conf.php");
 }
