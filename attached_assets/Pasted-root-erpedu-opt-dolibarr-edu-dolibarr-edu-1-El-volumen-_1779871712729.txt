@@ -1,0 +1,56 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# # 1) ¿El volumen se montó correctamente DENTRO de Traefik?
+sudo docker exec dolibarr_traefik ls -la /etc/traefik/dynamic/
+
+# 2) Sube el log level un momento para ver qué hace el file provider
+sudo docker exec dolibarr_traefik wget -qO- --timeout=2 http://localhost:8080/api/http/routers 2>&1 | head -100
+# (probablemente "connection refused" porque la API no está expuesta)
+
+# 3) Test contundente: pídele a Traefik que LO recargue tocando el fichero
+sudo docker exec dolibarr_traefik sh -c "touch /etc/traefik/dynamic/student-juanperez.json"
+# Si dice "Read-only file system" es esperado (lo montamos ro). Tócalo desde panel_api:
+sudo docker exec dolibarr_panel_api sh -c "touch /etc/traefik/dynamic/student-juanperez.json"
+
+# 4) Sube logs de Traefik a DEBUG temporalmente (sin reiniciar nada)
+sudo docker compose stop traefik
+sudo docker run -d --rm --name dolibarr_traefik_debug \
+  --network dolibarr_net \
+  -p 127.0.0.1:8090:80 \
+  -v dolibarr-edu_traefik_dynamic:/etc/traefik/dynamic:ro \
+  traefik:v3.3 \
+  --providers.file.directory=/etc/traefik/dynamic \
+  --providers.file.watch=true \
+  --entrypoints.web.address=:80 \
+  --log.level=DEBUG
+
+sleep 3
+sudo docker logs dolibarr_traefik_debug 2>&1 | grep -iE "file|router|dolibarr|error" | head -30
+
+# 5) Test
+curl -i -s --resolve juanperez.erp1.iesmmg.es:8090:127.0.0.1 \
+  http://juanperez.erp1.iesmmg.es:8090/ | head -5
+
+# 6) Cuando termines, vuelve al Traefik del compose
+sudo docker rm -f dolibarr_traefik_debug
+sudo docker compose up -d traefik
+total 12
+drwxr-xr-x    2 root     root          4096 May 26 18:58 .
+drwxr-xr-x    3 root     root          4096 May 26 18:58 ..
+-rw-r--r--    1 root     root           481 May 26 18:58 student-juanperez.json
+wget: can't connect to remote host: Connection refused
+touch: /etc/traefik/dynamic/student-juanperez.json: Read-only file system
+[+] stop 1/1
+ ✔ Container dolibarr_traefik Stopped                                                                                                                   2.1s
+684f9abe9c6d6d7e65725b52203bb56e98c580971023ee2946a1787d48eed8a5
+2026-05-27T08:48:13Z DBG github.com/traefik/traefik/v3/cmd/traefik/traefik.go:113 > Static configuration loaded [json] staticConfiguration={"entryPoints":{"web":{"address":":80","forwardedHeaders":{},"http":{"maxHeaderBytes":1048576,"sanitizePath":true},"http2":{"maxConcurrentStreams":250},"transport":{"lifeCycle":{"graceTimeOut":"10s"},"respondingTimeouts":{"idleTimeout":"3m0s","readTimeout":"1m0s"}},"udp":{"timeout":"3s"}}},"global":{"checkNewVersion":true},"log":{"format":"common","level":"DEBUG"},"providers":{"file":{"directory":"/etc/traefik/dynamic","watch":true},"providersThrottleDuration":"2s"},"serversTransport":{"maxIdleConnsPerHost":200},"tcpServersTransport":{"dialKeepAlive":"15s","dialTimeout":"30s"}}
+2026-05-27T08:48:13Z INF github.com/traefik/traefik/v3/pkg/provider/aggregator/aggregator.go:202 > Starting provider *file.Provider
+2026-05-27T08:48:13Z DBG github.com/traefik/traefik/v3/pkg/provider/aggregator/aggregator.go:203 > *file.Provider provider configuration config={"directory":"/etc/traefik/dynamic","watch":true}
+2026-05-27T08:48:13Z DBG github.com/traefik/traefik/v3/pkg/provider/file/file.go:122 > add watcher on: /etc/traefik/dynamic
+2026-05-27T08:48:13Z DBG github.com/traefik/traefik/v3/pkg/provider/file/file.go:122 > add watcher on: /etc/traefik/dynamic/student-juanperez.json
+2026-05-27T08:48:13Z DBG github.com/traefik/traefik/v3/pkg/server/configurationwatcher.go:227 > Configuration received config={"http":{},"tcp":{},"tls":{},"udp":{}} providerName=file
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+Date: Wed, 27 May 2026 08:48:16 GMT
+Content-Length: 19
+dolibarr_traefik_debug
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 

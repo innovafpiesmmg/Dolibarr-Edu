@@ -11,7 +11,15 @@ export function isTraefikConfigEnabled(): boolean {
   return Boolean(process.env.TRAEFIK_DYNAMIC_DIR);
 }
 
+// IMPORTANTE: el file provider de Traefik en modo `directory` SOLO procesa
+// ficheros con extensión .toml/.yml/.yaml — ignora .json silenciosamente.
+// Usamos .yaml; JSON es YAML válido, así que escribimos JSON dentro.
 function fileFor(username: string): string {
+  return join(DYNAMIC_DIR, `student-${username}.yaml`);
+}
+
+// Limpieza de ficheros .json antiguos que pudieran quedar de versiones previas
+function legacyFileFor(username: string): string {
   return join(DYNAMIC_DIR, `student-${username}.json`);
 }
 
@@ -49,9 +57,11 @@ export async function writeStudentRoute(username: string, baseDomain: string): P
 
 export async function removeStudentRoute(username: string): Promise<void> {
   if (!isTraefikConfigEnabled()) return;
-  await unlink(fileFor(username)).catch((err: NodeJS.ErrnoException) => {
+  const ignoreMissing = (err: NodeJS.ErrnoException) => {
     if (err.code !== "ENOENT") throw err;
-  });
+  };
+  await unlink(fileFor(username)).catch(ignoreMissing);
+  await unlink(legacyFileFor(username)).catch(ignoreMissing);
   logger.info({ username }, "Ruta Traefik eliminada");
 }
 
@@ -63,11 +73,12 @@ export async function rebuildAllRoutes(baseDomain: string | null): Promise<void>
   }
   await mkdir(DYNAMIC_DIR, { recursive: true });
 
-  // Borra ficheros student-*.json existentes para empezar limpio
+  // Borra ficheros student-* existentes (.yaml actuales y .json legacy)
+  // para empezar limpio antes de regenerar.
   const existing = await readdir(DYNAMIC_DIR).catch(() => [] as string[]);
   await Promise.all(
     existing
-      .filter((f) => f.startsWith("student-") && f.endsWith(".json"))
+      .filter((f) => f.startsWith("student-") && (f.endsWith(".yaml") || f.endsWith(".json")))
       .map((f) => unlink(join(DYNAMIC_DIR, f)).catch(() => undefined)),
   );
 
