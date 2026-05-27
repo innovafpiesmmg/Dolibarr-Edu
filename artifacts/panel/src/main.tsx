@@ -10,7 +10,7 @@ const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 setAuthTokenGetter(() => {
   const path = window.location.pathname;
   const sub = path.startsWith(BASE) ? path.slice(BASE.length) : path;
-  if (sub.startsWith("/profesor")) return localStorage.getItem(TEACHER_KEY);
+  if (sub === "/profesor" || sub.startsWith("/profesor/")) return localStorage.getItem(TEACHER_KEY);
   return localStorage.getItem(ADMIN_KEY);
 });
 
