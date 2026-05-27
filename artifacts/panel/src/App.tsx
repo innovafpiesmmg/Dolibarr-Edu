@@ -13,11 +13,6 @@ import GroupDetail from "@/pages/grupos/detail";
 import AlumnosList from "@/pages/alumnos/index";
 import StudentDetail from "@/pages/alumnos/detail";
 import ImportarAlumnos from "@/pages/importar/index";
-import NominasIndex from "@/pages/nominas/index";
-import NominasEmpleados from "@/pages/nominas/empleados";
-import NuevaNomina from "@/pages/nominas/nueva";
-import NominaDetalle from "@/pages/nominas/detalle";
-import LiquidacionSS from "@/pages/nominas/ss";
 import Configuracion from "@/pages/configuracion/index";
 import EstadoSincronizacion from "@/pages/estado/index";
 import Actividad from "@/pages/actividad/index";
@@ -85,22 +80,6 @@ function Router() {
 
       <Route path="/importar">
         <ProtectedRoute><ImportarAlumnos /></ProtectedRoute>
-      </Route>
-
-      <Route path="/nominas">
-        <ProtectedRoute><NominasIndex /></ProtectedRoute>
-      </Route>
-      <Route path="/nominas/empleados">
-        <ProtectedRoute><NominasEmpleados /></ProtectedRoute>
-      </Route>
-      <Route path="/nominas/nueva">
-        <ProtectedRoute><NuevaNomina /></ProtectedRoute>
-      </Route>
-      <Route path="/nominas/ss">
-        <ProtectedRoute><LiquidacionSS /></ProtectedRoute>
-      </Route>
-      <Route path="/nominas/:id">
-        <ProtectedRoute><NominaDetalle /></ProtectedRoute>
       </Route>
 
       <Route path="/configuracion">
