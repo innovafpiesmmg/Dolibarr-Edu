@@ -43,8 +43,8 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
-      <SidebarHeader className="h-16 flex items-center px-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-sidebar-primary">
+      <SidebarHeader className="h-16 flex items-center justify-center px-4 border-b border-sidebar-border">
+        <div className="flex items-center justify-center gap-2 font-bold text-xl tracking-tight text-sidebar-primary">
           <div
             className="h-7 w-7 bg-sidebar-primary shrink-0"
             style={{
