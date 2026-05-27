@@ -810,9 +810,15 @@ export default function LandingPage() {
               />
               ERP EDU
             </div>
-            <span className="text-xs text-white/50">
-              © {new Date().getFullYear()} Atreyu Servicios Digitales
-            </span>
+            <div className="flex items-center gap-1.5 text-xs text-white/50">
+              <span>© {new Date().getFullYear()}</span>
+              <img
+                src="/images/atreyu-logo.png"
+                alt="Atreyu Servicios Digitales"
+                className="h-4 w-auto"
+              />
+              <span>Atreyu Servicios Digitales</span>
+            </div>
             <span className="text-xs text-white/40 text-center sm:text-left">
               Un proyecto del Departamento de Administración de empresas del IES Manuel Martín González
             </span>
