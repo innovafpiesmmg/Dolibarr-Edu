@@ -819,9 +819,15 @@ export default function LandingPage() {
               />
               <span>Atreyu Servicios Digitales</span>
             </div>
-            <span className="text-xs text-white/40 text-center sm:text-left">
-              Un proyecto del Departamento de Administración de empresas del IES Manuel Martín González
-            </span>
+            <div className="flex items-center gap-1.5 text-xs text-white/40 text-center sm:text-left">
+              <span>Un proyecto del Departamento de Administración de Empresas del</span>
+              <img
+                src="/images/ies-logo.png"
+                alt="IES Manuel Martín González"
+                className="h-4 w-auto"
+              />
+              <span>IES Manuel Martín González</span>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs text-white/50 justify-center sm:justify-end">
             <a
