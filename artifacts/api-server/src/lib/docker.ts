@@ -204,14 +204,32 @@ export async function execInContainer(
 // del panel. Idempotente: comprueba si la línea ya existe antes de añadirla.
 export async function disableCsrfInConfPhp(containerName: string): Promise<void> {
   const confPath = "/var/www/html/conf/conf.php";
-  // grep -q devuelve 0 si encuentra, 1 si no. Si ya está, no hacemos nada.
+  // Aplicamos DOS overrides porque distintas versiones de Dolibarr respetan uno
+  // u otro:
+  //
+  //  - `$dolibarr_nocsrfcheck = 1;` — bypassa la rama `MAIN_SECURITY_CSRF_WITH_TOKEN`
+  //    pero NO la rama `defined('CSRFCHECK_WITH_TOKEN')`.
+  //  - `define('NOCSRFCHECK', 1);` — bypassa AMBAS ramas, incluida la que
+  //    fuerzan ciertas páginas con `define('CSRFCHECK_WITH_TOKEN','1')` al
+  //    inicio (que es exactamente el error que ve el alumno haciendo SSO desde
+  //    el panel: "constant CSRFCHECK_WITH_TOKEN is defined ... Token not provided").
+  //
+  // Es seguro porque cada contenedor Dolibarr es del único alumno/profesor
+  // dueño, no expone formularios públicos y todo acceso pasa por nuestra
+  // autenticación previa en el panel. Idempotente.
   const sh =
-    `if [ -f ${confPath} ] && ! grep -q 'dolibarr_nocsrfcheck' ${confPath}; then ` +
-    `echo '$dolibarr_nocsrfcheck = 1;' >> ${confPath}; ` +
-    `echo applied; ` +
-    `else echo skipped; fi`;
+    `if [ -f ${confPath} ]; then ` +
+    `  changed=0; ` +
+    `  if ! grep -q 'dolibarr_nocsrfcheck' ${confPath}; then ` +
+    `    echo '$dolibarr_nocsrfcheck = 1;' >> ${confPath}; changed=1; ` +
+    `  fi; ` +
+    `  if ! grep -q "define\\(.NOCSRFCHECK" ${confPath}; then ` +
+    `    echo 'if (!defined(\\"NOCSRFCHECK\\")) { define(\\"NOCSRFCHECK\\", 1); }' >> ${confPath}; changed=1; ` +
+    `  fi; ` +
+    `  if [ $changed -eq 1 ]; then echo applied; else echo skipped; fi; ` +
+    `else echo no-conf; fi`;
   const out = await execInContainer(containerName, ["sh", "-c", sh]);
-  logger.info({ containerName, result: out.trim() }, "CSRF desactivado en conf.php del alumno");
+  logger.info({ containerName, result: out.trim() }, "CSRF desactivado en conf.php");
 }
 
 export async function waitForHttpHealthy(internalUrl: string, timeoutMs = 180_000): Promise<void> {

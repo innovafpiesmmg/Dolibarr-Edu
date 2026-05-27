@@ -6,9 +6,37 @@ import { eq } from "drizzle-orm";
 import { AdminLoginBody, StudentLoginBody, TeacherLoginBody } from "@workspace/api-zod";
 import { teachersTable, teamsTable } from "@workspace/db/schema";
 import { adminPasswordHash, generateAdminToken, generateTeacherToken } from "../lib/auth";
-import { publicUrl, deterministicPassword } from "../lib/student-dolibarr";
+import {
+  publicUrl,
+  deterministicPassword,
+  containerName as studentContainerName,
+  dbName as studentDbName,
+} from "../lib/student-dolibarr";
+import {
+  containerName as teacherContainerName,
+  dbName as teacherDbName,
+} from "../lib/teacher-dolibarr";
 import { publicUrl as teamPublicUrl, groupNameToSlug } from "../lib/team-dolibarr";
 import { getBaseDomain } from "./settings";
+import { disableCsrfInConfPhp, isDockerAvailable } from "../lib/docker";
+import { relaxStudentSecurityForSso, isMariaDBConfigured } from "../lib/mariadb";
+import { logger } from "../lib/logger";
+
+// Auto-cura contenedores ya desplegados antes de la era del fix CSRF:
+// reaplica los overrides en `conf.php` (define NOCSRFCHECK) y en `llx_const`
+// (MAIN_SECURITY_CSRF_WITH_TOKEN=0). Best-effort, no bloquea la respuesta.
+function autoHealCsrf(container: string, dbname: string): void {
+  if (isDockerAvailable()) {
+    disableCsrfInConfPhp(container).catch((err) =>
+      logger.warn({ err, container }, "auto-heal CSRF conf.php falló"),
+    );
+  }
+  if (isMariaDBConfigured()) {
+    relaxStudentSecurityForSso(dbname).catch((err) =>
+      logger.warn({ err, dbname }, "auto-heal CSRF llx_const falló"),
+    );
+  }
+}
 
 const router = Router();
 
@@ -103,6 +131,21 @@ router.post("/auth/student-login", async (req, res) => {
     if (team) {
       const groupSlug = groupNameToSlug(team.groupName ?? "");
       const teamUrl = teamPublicUrl(groupSlug, team.letter, baseDomain);
+      // Auto-heal CSRF en el contenedor del PROFESOR (host del Dolibarr de equipo).
+      // Necesitamos su username; lo buscamos a partir del groupId del alumno.
+      const [grp] = await db
+        .select({ teacherUsername: teachersTable.username })
+        .from(groupsTable)
+        .innerJoin(teachersTable, eq(teachersTable.id, groupsTable.teacherId))
+        .where(eq(groupsTable.id, (await db
+          .select({ groupId: studentsTable.groupId })
+          .from(studentsTable)
+          .where(eq(studentsTable.id, student.id))
+          .limit(1))[0]?.groupId ?? 0))
+        .limit(1);
+      if (grp?.teacherUsername) {
+        autoHealCsrf(teacherContainerName(grp.teacherUsername), teacherDbName(grp.teacherUsername));
+      }
       // La contraseña del Dolibarr de equipo se guardó en students.dolibarrPassword
       // cuando se aprovisionó el usuario dentro del contenedor del profesor.
       // Si por algún motivo no hay (provisión fallida), devolvemos cadena vacía:
@@ -121,6 +164,9 @@ router.post("/auth/student-login", async (req, res) => {
   }
 
   const deployed = baseDomain && student.dolibarrSyncStatus === "synced";
+  if (deployed) {
+    autoHealCsrf(studentContainerName(student.username), studentDbName(student.username));
+  }
   const dolibarrUrl = deployed ? publicUrl(student.username, baseDomain) : "";
   const dolibarrPassword = deployed
     ? (student.dolibarrPassword ?? deterministicPassword(student.username))
