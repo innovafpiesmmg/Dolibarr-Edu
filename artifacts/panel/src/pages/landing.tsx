@@ -69,7 +69,7 @@ function StudentPortal() {
         {session.dolibarrUrl && session.dolibarrPassword ? (
           <form
             method="POST"
-            action={`${session.dolibarrUrl.replace(/\/+$/, "")}/index.php?mainmenu=home`}
+            action={`${session.dolibarrUrl.replace(/\/+$/, "")}/index.php`}
             target="_blank"
             rel="noopener noreferrer"
           >
