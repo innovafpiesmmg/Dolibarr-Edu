@@ -110,7 +110,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <main className="flex-1 flex flex-col min-w-0">
-          <header className="h-16 border-b border-blue-900/40 bg-blue-700 text-white flex items-center px-6 gap-4 shrink-0">
+          <header className="h-16 border-b border-black/20 bg-[hsl(205,70%,32%)] text-white flex items-center px-6 gap-4 shrink-0">
             <SidebarTrigger className="text-white hover:bg-white/10 hover:text-white" />
             <div className="flex-1" />
             <Button
