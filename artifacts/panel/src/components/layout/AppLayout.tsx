@@ -93,10 +93,8 @@ export function AppSidebar() {
           </a>
         )}
 
-        <div className="border-t border-sidebar-border pt-3">
-          <div className="text-xs text-sidebar-foreground/40 text-center">
-            ERP EDU v1.0
-          </div>
+        <div className="text-xs text-sidebar-foreground/40 text-center">
+          ERP EDU v1.0
         </div>
       </SidebarFooter>
     </Sidebar>
