@@ -216,6 +216,13 @@ START_NOW="${START_NOW:-S}"
 if [[ "${START_NOW,,}" != "n" && "${START_NOW,,}" != "no" ]]; then
   cd "$WORK_DIR"
 
+  info "Descargando imágenes externas (traefik, mariadb, postgres, cloudflared)..."
+  # Pull explícito SOLO de las imágenes upstream. No usar `docker compose pull`
+  # global porque intentaría descargar `dolibarr-edu-panel-*`, que se construyen
+  # localmente y no existen en ningún registry (causa que el script aborte).
+  docker compose pull traefik db panel_db dolibarr_tunnel 2>/dev/null || \
+    warn "Algunas imágenes externas no se pudieron descargar; se reintentará al arrancar."
+
   info "Construyendo imágenes del panel (esto tarda unos minutos)..."
   docker compose build panel_migrator panel_api panel_web
 
