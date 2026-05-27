@@ -1,0 +1,136 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu && sudo bash update.sh
+
+╔══════════════════════════════════════════════════════════════╗
+║                  ERP EDU — Actualización                     ║
+║  https://github.com/innovafpiesmmg/Dolibarr-Edu              ║
+╚══════════════════════════════════════════════════════════════╝
+
+[INFO]  Realizando backup de la base de datos de Dolibarr...
+[WARN]  No se pudo hacer backup automático de Dolibarr. Continúa con precaución.
+[INFO]  Realizando backup de la base de datos de OpenProject...
+[WARN]  No se pudo hacer backup de OpenProject (puede que el servicio no esté activo).
+[INFO]  Configuración (.env) guardada temporalmente
+[INFO]  Comprobando actualizaciones desde GitHub (main)...
+remote: Enumerating objects: 190, done.
+remote: Counting objects: 100% (190/190), done.
+remote: Compressing objects: 100% (61/61), done.
+remote: Total 150 (delta 101), reused 136 (delta 87), pack-reused 0 (from 0)
+Receiving objects: 100% (150/150), 898.89 KiB | 1.79 MiB/s, done.
+Resolving deltas: 100% (101/101), completed with 27 local objects.
+From https://github.com/innovafpiesmmg/Dolibarr-Edu
+ * branch            main       -> FETCH_HEAD
+   a55c8a7..567739b  main       -> origin/main
+[INFO]  Se aplicarán 23 commit(s) nuevos:
+567739b (origin/main, origin/HEAD) Remove unnecessary payroll and social security access from the panel
+5b9d57d Remove redundant domain prompts from installation and update scripts
+d270f94 Adjust logo size and center it within the documentation
+f374bc2 Enable multiple Dolibarr modules by default for student companies
+f4b7391 Add ability for users to create new students through a form interface
+5599423 Revertir cambio que permit<C3><AD>a usar dos contrase<C3><B1>as para el login
+443ec7f Allow students to log in with either password
+6409375 Update documentation for Cloudflare Tunnel setup and troubleshooting
+58eab43 Document how to fix wildcard DNS issues with Cloudflare Tunnels
+57be4e8 Fix wildcard DNS configuration to correctly route subdomains
+4048c5f Update tunnel configuration to allow access to specific subdomains
+a91afe5 Update system to ensure services restart correctly after reboot
+3ac62c6 Add image to documentation about connection troubleshooting
+d9b5ac4 Fix connection timeout by ensuring the tunnel can reach the web server
+2ded26f Update the configuration for student company websites
+7234037 Fix error when accessing student-specific company websites
+00cee45 Fix issue where website content was not loading correctly
+a02bdad Add configuration details for application access and troubleshooting
+9760fd4 Add a CNAME record to enable wildcard subdomain access
+77835ee Add diagnostics for website access and tunnel connectivity issues
+dabf83f Update configuration to prevent race condition during server startup
+13f291e Address race condition and update documentation for routing
+1900568 Ensure Traefik configuration is applied before the server starts accepting requests
+
+From https://github.com/innovafpiesmmg/Dolibarr-Edu
+ * branch            main       -> FETCH_HEAD
+Updating a55c8a7..567739b
+Fast-forward
+ .agents/memory/MEMORY.md                                                                         |   4 +
+ .agents/memory/cloudflare-tunnel-wildcard-dns.md                                                 |  41 +++++
+ .agents/memory/dolibarr-module-activation.md                                                     |  60 +++++++
+ .agents/memory/traefik-docker-provider-api.md                                                    |  10 ++
+ .agents/memory/traefik-file-provider.md                                                          |  10 ++
+ README.md                                                                                        |   4 +-
+ artifacts/api-server/src/index.ts                                                                |  35 ++--
+ artifacts/api-server/src/lib/mariadb.ts                                                          |  64 +++++++
+ artifacts/api-server/src/lib/student-deploy.ts                                                   |  59 ++++++-
+ artifacts/api-server/src/routes/deploy.ts                                                        |  24 +++
+ artifacts/panel/src/App.tsx                                                                      |  21 ---
+ artifacts/panel/src/components/layout/AppLayout.tsx                                              |   4 -
+ artifacts/panel/src/pages/alumnos/detail.tsx                                                     |  32 +++-
+ artifacts/panel/src/pages/alumnos/index.tsx                                                      | 194 ++++++++++++++++++++-
+ artifacts/panel/src/pages/nominas/detalle.tsx                                                    | 269 ----------------------------
+ artifacts/panel/src/pages/nominas/empleados.tsx                                                  | 354 -------------------------------------
+ artifacts/panel/src/pages/nominas/index.tsx                                                      | 196 ---------------------
+ artifacts/panel/src/pages/nominas/nueva.tsx                                                      | 388 -----------------------------------------
+ artifacts/panel/src/pages/nominas/ss.tsx                                                         | 481 ---------------------------------------------------
+ attached_assets/Pasted--Ubuntu-25-04-erpedu-tty1-erpedu-login-root-Password-We_1779877089102.txt |  40 +++++
+ attached_assets/Pasted-root-erpedu-opt-dolibarr-edu-dolibarr-edu-1-Resuelve-el_1779874357953.txt |  39 +++++
+ attached_assets/Pasted-root-erpedu-opt-dolibarr-edu-dolibarr-edu-cd-opt-doliba_1779871931712.txt |  93 ++++++++++
+ attached_assets/image_1779872674012.png                                                          | Bin 0 -> 112219 bytes
+ attached_assets/image_1779873036689.png                                                          | Bin 0 -> 54290 bytes
+ attached_assets/image_1779875092758.png                                                          | Bin 0 -> 106932 bytes
+ attached_assets/image_1779875678917.png                                                          | Bin 0 -> 47995 bytes
+ attached_assets/image_1779875748752.png                                                          | Bin 0 -> 13171 bytes
+ attached_assets/image_1779875841529.png                                                          | Bin 0 -> 76256 bytes
+ attached_assets/image_1779876013819.png                                                          | Bin 0 -> 61059 bytes
+ attached_assets/image_1779876233207.png                                                          | Bin 0 -> 68102 bytes
+ attached_assets/image_1779876422596.png                                                          | Bin 0 -> 108343 bytes
+ attached_assets/image_1779876576647.png                                                          | Bin 0 -> 73006 bytes
+ attached_assets/image_1779884900763.png                                                          | Bin 0 -> 140806 bytes
+ attached_assets/image_1779885445682.png                                                          | Bin 0 -> 97734 bytes
+ dolibarr-edu/README.md                                                                           | 141 ++++++++++++---
+ dolibarr-edu/install.sh                                                                          |  57 +++---
+ dolibarr-edu/update.sh                                                                           |   6 +-
+ lib/api-client-react/src/generated/api.schemas.ts                                                |   5 +
+ lib/api-client-react/src/generated/api.ts                                                        |  71 ++++++++
+ lib/api-spec/openapi.yaml                                                                        |  34 ++++
+ lib/api-zod/src/generated/api.ts                                                                 |  13 ++
+ replit.md                                                                                        |   4 +-
+ 42 files changed, 961 insertions(+), 1792 deletions(-)
+ create mode 100644 .agents/memory/MEMORY.md
+ create mode 100644 .agents/memory/cloudflare-tunnel-wildcard-dns.md
+ create mode 100644 .agents/memory/dolibarr-module-activation.md
+ create mode 100644 .agents/memory/traefik-docker-provider-api.md
+ create mode 100644 .agents/memory/traefik-file-provider.md
+ delete mode 100644 artifacts/panel/src/pages/nominas/detalle.tsx
+ delete mode 100644 artifacts/panel/src/pages/nominas/empleados.tsx
+ delete mode 100644 artifacts/panel/src/pages/nominas/index.tsx
+ delete mode 100644 artifacts/panel/src/pages/nominas/nueva.tsx
+ delete mode 100644 artifacts/panel/src/pages/nominas/ss.tsx
+ create mode 100644 attached_assets/Pasted--Ubuntu-25-04-erpedu-tty1-erpedu-login-root-Password-We_1779877089102.txt
+ create mode 100644 attached_assets/Pasted-root-erpedu-opt-dolibarr-edu-dolibarr-edu-1-Resuelve-el_1779874357953.txt
+ create mode 100644 attached_assets/Pasted-root-erpedu-opt-dolibarr-edu-dolibarr-edu-cd-opt-doliba_1779871931712.txt
+ create mode 100644 attached_assets/image_1779872674012.png
+ create mode 100644 attached_assets/image_1779873036689.png
+ create mode 100644 attached_assets/image_1779875092758.png
+ create mode 100644 attached_assets/image_1779875678917.png
+ create mode 100644 attached_assets/image_1779875748752.png
+ create mode 100644 attached_assets/image_1779875841529.png
+ create mode 100644 attached_assets/image_1779876013819.png
+ create mode 100644 attached_assets/image_1779876233207.png
+ create mode 100644 attached_assets/image_1779876422596.png
+ create mode 100644 attached_assets/image_1779876576647.png
+ create mode 100644 attached_assets/image_1779884900763.png
+ create mode 100644 attached_assets/image_1779885445682.png
+[OK]    Código actualizado
+[OK]    .env restaurado (tu configuración se mantiene intacta)
+[INFO]  Descargando nuevas imágenes Docker (puede tardar varios minutos)...
+[+] pull 6/8
+ ! Image dolibarr-edu-panel-migrator        pull access denied for dolibarr-edu-panel-migrator, repository does not exist or may require 'docker login' 1.4s
+[+] pull 8/8ibarr-edu-panel-web             pull access denied for dolibarr-edu-panel-web, repository does not exist or may require 'docker login'      1.6s
+ ! Image dolibarr-edu-panel-migrator   pull access denied for dolibarr-edu-panel-migrator, repository does not exist or may require 'docker login'      1.4s
+ ! Image dolibarr-edu-panel-web        pull access denied for dolibarr-edu-panel-web, repository does not exist or may require 'docker login'           1.6s
+ ! Image dolibarr-edu-panel-api        pull access denied for dolibarr-edu-panel-api, repository does not exist or may require 'docker login'           1.4s
+ ✔ Image traefik:v3.3                  Pulled                                                                                                           2.7s
+ ✔ Image mariadb:10.11                 Pulled                                                                                                           2.9s
+ ✔ Image cloudflare/cloudflared:latest Pulled                                                                                                           6.2s
+ ✔ Image postgres:16-alpine            Pulled                                                                                                           3.0s
+Error response from daemon: pull access denied for dolibarr-edu-panel-api, repository does not exist or may require 'docker login'
+Error response from daemon: pull access denied for dolibarr-edu-panel-web, repository does not exist or may require 'docker login'
+Error response from daemon: pull access denied for dolibarr-edu-panel-migrator, repository does not exist or may require 'docker login'
+root@erpedu:/opt/dolibarr-edu# 

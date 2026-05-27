@@ -126,8 +126,13 @@ success "Migración del .env completada"
 # ── Actualizar imágenes y reiniciar ──────────────────────────────────────────
 cd "$WORK_DIR"
 
-info "Descargando nuevas imágenes Docker (puede tardar varios minutos)..."
-docker compose pull --ignore-buildable
+info "Descargando nuevas imágenes Docker externas (traefik, mariadb, postgres, cloudflared)..."
+# Pull explícito solo de las imágenes upstream. NO hacer `docker compose pull`
+# global: intentaría descargar también `dolibarr-edu-panel-*`, que son imágenes
+# construidas localmente (no existen en ningún registry) y haría fallar el script.
+# `|| true` para que no aborte si alguna no está disponible en este momento.
+docker compose pull traefik db panel_db dolibarr_tunnel 2>/dev/null || \
+  warn "Algunas imágenes externas no se pudieron descargar; se usarán las cacheadas localmente."
 
 info "Reconstruyendo imágenes del panel sin caché (garantiza código actualizado)..."
 # --no-cache es crítico: sin él, Docker reutiliza capas antiguas aunque el código fuente
