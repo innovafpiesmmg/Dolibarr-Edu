@@ -118,6 +118,6 @@ export async function getStudentDolibarrConfig(student: {
     throw new Error(`Alumno ${student.username}: sin contraseña Dolibarr. Despliega su contenedor primero.`);
   }
   const baseUrl = internalUrl(student.username);
-  const apiKey = await loginToStudentDolibarr(baseUrl, "admin", student.dolibarrPassword);
+  const apiKey = await loginToStudentDolibarr(baseUrl, student.username, student.dolibarrPassword);
   return { apiUrl: baseUrl, apiKey };
 }

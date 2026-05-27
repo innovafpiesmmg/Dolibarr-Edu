@@ -130,6 +130,7 @@ router.post("/students/bulk", async (req, res) => {
         email: student.email,
         username: student.username,
         passwordHash: hashPassword(student.password),
+        dolibarrPassword: student.password,
         groupId: body.groupId,
         companyName: student.companyName ?? null,
       });
@@ -180,6 +181,7 @@ router.post("/students", async (req, res) => {
       email: body.email,
       username: body.username,
       passwordHash: hashPassword(body.password),
+      dolibarrPassword: body.password,
       groupId: body.groupId,
       companyName: body.companyName ?? null,
     })

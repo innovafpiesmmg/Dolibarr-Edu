@@ -231,6 +231,7 @@ router.post("/teacher/me/students", async (req, res) => {
         email,
         username,
         passwordHash: hashPassword(password),
+        dolibarrPassword: password,
         groupId,
         companyName: body.companyName ? String(body.companyName) : null,
       })

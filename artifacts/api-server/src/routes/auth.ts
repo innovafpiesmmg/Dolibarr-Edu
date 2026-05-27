@@ -178,7 +178,7 @@ router.post("/auth/student-login", async (req, res) => {
     companyName: student.companyName ?? null,
     groupName: student.groupName ?? "",
     dolibarrUrl,
-    dolibarrUsername: deployed ? "admin" : "",
+    dolibarrUsername: deployed ? student.username : "",
     dolibarrPassword,
   });
 });
