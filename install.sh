@@ -84,21 +84,23 @@ if [[ ! -f "$WORK_DIR/.env" ]]; then
   cp "$WORK_DIR/.env.example" "$WORK_DIR/.env"
   info "Generando contraseñas aleatorias..."
 
-  sed -i "s|cambia_esta_contrasena_root|$(gen_pass 24)|g"             "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_contrasena_db|$(gen_pass 24)|g"               "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_contrasena_openproject|$(gen_pass 24)|g"      "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_clave_secreta_openproject|$(openssl rand -hex 64)|g" "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_contrasena_collabora|$(gen_pass 20)|g"        "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_contrasena_panel|$(gen_pass 24)|g"            "$WORK_DIR/.env"
-  sed -i "s|cambia_esta_clave_sesion|$(gen_pass 48)|g"                "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_contrasena_root|$(gen_pass 24)|g"  "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_contrasena_panel|$(gen_pass 24)|g" "$WORK_DIR/.env"
+  sed -i "s|cambia_esta_clave_sesion|$(gen_pass 48)|g"     "$WORK_DIR/.env"
 
-  DOLI_ADMIN_PASS=$(gen_pass 16)
-  sed -i "s|cambia_esta_contrasena_admin|$DOLI_ADMIN_PASS|g"          "$WORK_DIR/.env"
   success ".env creado con contraseñas generadas"
 else
   warn ".env ya existe — se mantiene la configuración actual."
-  DOLI_ADMIN_PASS="(ver $WORK_DIR/.env → DOLI_ADMIN_PASSWORD)"
 fi
+
+_env_set() { # _env_set KEY VALUE
+  local key="$1" val="$2"
+  if grep -q "^${key}=" "$WORK_DIR/.env"; then
+    sed -i "s|^${key}=.*|${key}=${val}|" "$WORK_DIR/.env"
+  else
+    echo "${key}=${val}" >> "$WORK_DIR/.env"
+  fi
+}
 
 # ── Contraseña del panel web ──────────────────────────────────────────────────
 CURRENT_HASH=$(grep "^ADMIN_PASSWORD_HASH=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
@@ -117,56 +119,28 @@ if [[ -z "$CURRENT_HASH" ]]; then
     echo -e "  ${RED}Las contraseñas no coinciden o están vacías. Inténtalo de nuevo.${NC}"
   done
   PANEL_HASH=$(echo -n "$PANEL_PASS" | openssl dgst -sha256 | awk '{print $2}')
-  if grep -q "^ADMIN_PASSWORD_HASH=" "$WORK_DIR/.env"; then
-    sed -i "s|^ADMIN_PASSWORD_HASH=.*|ADMIN_PASSWORD_HASH=$PANEL_HASH|" "$WORK_DIR/.env"
-  else
-    echo "ADMIN_PASSWORD_HASH=$PANEL_HASH" >> "$WORK_DIR/.env"
-  fi
+  _env_set "ADMIN_PASSWORD_HASH" "$PANEL_HASH"
   success "Contraseña del panel configurada"
 else
   success "Contraseña del panel ya configurada"
 fi
 
 # ── URLs públicas ─────────────────────────────────────────────────────────────
-echo ""
-echo -e "${BOLD}┌─────────────────────────────────────────────────────────┐${NC}"
-echo -e "${BOLD}│           URLs públicas (dominios del centro)            │${NC}"
-echo -e "${BOLD}└─────────────────────────────────────────────────────────┘${NC}"
-echo ""
-echo "  Pulsa Enter para aceptar los valores por defecto."
-echo ""
+# El dominio base de Dolibarr y la URL del panel se configuran desde el propio
+# panel (Configuración → Dominio base) una vez arrancado. Aquí solo dejamos las
+# claves presentes en el .env por si quieres sobreescribirlas a mano más tarde.
+_ensure_env_key() {
+  local key="$1" default="$2"
+  if ! grep -q "^${key}=" "$WORK_DIR/.env" 2>/dev/null; then
+    echo "${key}=${default}" >> "$WORK_DIR/.env"
+  fi
+}
+_ensure_env_key "BASE_DOMAIN" ""
+_ensure_env_key "PANEL_URL"   ""
 
-CURRENT_DOLI_URL=$(grep "^DOLI_URL_ROOT=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-read -rp "  URL de Dolibarr ERP       [${CURRENT_DOLI_URL:-https://erp.micentro.es}]: " DOLI_URL < /dev/tty
-DOLI_URL="${DOLI_URL:-${CURRENT_DOLI_URL:-https://erp.micentro.es}}"
-DOLI_DOMAIN=$(echo "$DOLI_URL" | sed 's|https\?://||' | cut -d'/' -f1)
-
-CURRENT_PANEL_URL=$(grep "^PANEL_URL=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-read -rp "  URL del Panel de gestión  [${CURRENT_PANEL_URL:-https://panel.micentro.es}]: " PANEL_URL < /dev/tty
-PANEL_URL="${PANEL_URL:-${CURRENT_PANEL_URL:-https://panel.micentro.es}}"
-
-CURRENT_OP_HOST=$(grep "^OP_HOST=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-read -rp "  Dominio de OpenProject    [${CURRENT_OP_HOST:-proyectos.micentro.es}]: " OP_HOST < /dev/tty
-OP_HOST="${OP_HOST:-${CURRENT_OP_HOST:-proyectos.micentro.es}}"
-
-CURRENT_OFFICE=$(grep "^OFFICE_HOST=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
-read -rp "  Dominio de Collabora      [${CURRENT_OFFICE:-office.micentro.es}]: " OFFICE_HOST < /dev/tty
-OFFICE_HOST="${OFFICE_HOST:-${CURRENT_OFFICE:-office.micentro.es}}"
-
-# Actualizar .env
-sed -i "s|^DOLI_URL_ROOT=.*|DOLI_URL_ROOT=$DOLI_URL|"             "$WORK_DIR/.env"
-sed -i "s|^DOLI_DOMAIN=.*|DOLI_DOMAIN=$DOLI_DOMAIN|"               "$WORK_DIR/.env"
-sed -i "s|^DOLIBARR_BASE_URL=.*|DOLIBARR_BASE_URL=$DOLI_URL|"     "$WORK_DIR/.env"
-sed -i "s|^OP_HOST=.*|OP_HOST=$OP_HOST|"                           "$WORK_DIR/.env"
-sed -i "s|^PANEL_URL=.*|PANEL_URL=$PANEL_URL|"                     "$WORK_DIR/.env"
-
-# Asegurarse de que OFFICE_HOST está en .env
-if grep -q "^OFFICE_HOST=" "$WORK_DIR/.env"; then
-  sed -i "s|^OFFICE_HOST=.*|OFFICE_HOST=$OFFICE_HOST|"             "$WORK_DIR/.env"
-else
-  echo "OFFICE_HOST=$OFFICE_HOST"                                >> "$WORK_DIR/.env"
-fi
-success "URLs configuradas"
+BASE_DOMAIN_IN=$(grep "^BASE_DOMAIN=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
+PANEL_URL=$(grep "^PANEL_URL=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2 || true)
+info "Dominio base y URL del panel se configuran desde el panel (Configuración → Dominio base)."
 
 # ── Cloudflare Tunnel token (opcional) ────────────────────────────────────────
 echo ""
@@ -186,34 +160,46 @@ else
   echo "  (Dashboard Cloudflare → Zero Trust → Networks → Tunnels → tu túnel"
   echo "   → Configure → Overview → copia el token del comando de instalación)"
   echo ""
+  echo "  Public Hostnames que debes crear en el dashboard del túnel:"
+  echo "    panel.<tu-dominio>     → http://panel_web:80   (panel + landing)"
+  echo "    *.<tu-dominio-base>    → http://traefik:80     (Dolibarr de cada alumno)"
+  echo "  (El dominio base lo configurarás luego desde el propio panel.)"
+  echo ""
   read -rp "  Token de Cloudflare (o Enter para omitir): " CF_TOKEN < /dev/tty
   if [[ -n "$CF_TOKEN" ]]; then
-    if grep -q "^CLOUDFLARE_TOKEN=" "$WORK_DIR/.env"; then
-      sed -i "s|^CLOUDFLARE_TOKEN=.*|CLOUDFLARE_TOKEN=$CF_TOKEN|" "$WORK_DIR/.env"
-    else
-      echo "CLOUDFLARE_TOKEN=$CF_TOKEN" >> "$WORK_DIR/.env"
-    fi
+    _env_set "CLOUDFLARE_TOKEN" "$CF_TOKEN"
     success "Token de Cloudflare guardado"
   else
     info "Cloudflare omitido. Añade CLOUDFLARE_TOKEN en $WORK_DIR/.env cuando lo tengas."
-    # Asegurarse de que la clave existe aunque vacía
-    grep -q "^CLOUDFLARE_TOKEN=" "$WORK_DIR/.env" || echo "CLOUDFLARE_TOKEN=" >> "$WORK_DIR/.env"
+    _env_set "CLOUDFLARE_TOKEN" ""
   fi
 fi
 
-# ── Resumen de credenciales ───────────────────────────────────────────────────
+# ── Componer COMPOSE_PROFILES ─────────────────────────────────────────────────
+# Solo "cloudflare" es opcional: activo si hay token.
+CF_TOKEN_VAL=$(grep "^CLOUDFLARE_TOKEN=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2-)
+if [[ -n "$CF_TOKEN_VAL" ]]; then
+  _env_set "COMPOSE_PROFILES" "cloudflare"
+  info "Perfiles Compose activos: cloudflare"
+else
+  _env_set "COMPOSE_PROFILES" ""
+  info "Sin perfiles opcionales activos"
+fi
+
+# ── Resumen ───────────────────────────────────────────────────────────────────
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║        GUARDA ESTAS CREDENCIALES EN LUGAR SEGURO            ║"
+echo "║                  Próximos pasos                              ║"
 echo "╠══════════════════════════════════════════════════════════════╣"
-printf  "║  %-28s %-31s║\n" "Dolibarr admin:" "admin / $DOLI_ADMIN_PASS"
-printf  "║  %-28s %-31s║\n" "OpenProject:" "admin / admin (cámbiala)"
-echo "╠══════════════════════════════════════════════════════════════╣"
-printf  "║  %-28s %-31s║\n" "Dolibarr ERP:" "$DOLI_URL"
-printf  "║  %-28s %-31s║\n" "Panel de gestión:" "$PANEL_URL"
-printf  "║  %-28s %-31s║\n" "OpenProject:" "https://$OP_HOST"
-printf  "║  %-28s %-31s║\n" "Collabora Online:" "https://$OFFICE_HOST"
+echo "║  1. Accede al panel y entra con la contraseña que pusiste.   ║"
+echo "║  2. Ve a Configuración → Dominio base y pon el tuyo.         ║"
+echo "║  3. En Cloudflare crea los Public Hostnames del túnel:       ║"
+echo "║       panel.<tu-dominio>   → http://panel_web:80             ║"
+echo "║       *.<tu-dominio-base>  → http://traefik:80               ║"
+echo "║  4. Crea profesores, grupos y alumnos desde el panel.        ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
+echo ""
+echo "  Cada alumno tendrá su propio Dolibarr aislado, creado desde el panel."
 
 # ── Arrancar servicios ────────────────────────────────────────────────────────
 echo ""
@@ -230,31 +216,33 @@ START_NOW="${START_NOW:-S}"
 if [[ "${START_NOW,,}" != "n" && "${START_NOW,,}" != "no" ]]; then
   cd "$WORK_DIR"
 
+  info "Descargando imágenes externas (traefik, mariadb, postgres, cloudflared)..."
+  # Pull explícito SOLO de las imágenes upstream. No usar `docker compose pull`
+  # global porque intentaría descargar `dolibarr-edu-panel-*`, que se construyen
+  # localmente y no existen en ningún registry (causa que el script aborte).
+  docker compose pull traefik db panel_db dolibarr_tunnel 2>/dev/null || \
+    warn "Algunas imágenes externas no se pudieron descargar; se reintentará al arrancar."
+
   info "Construyendo imágenes del panel (esto tarda unos minutos)..."
-  docker compose build panel_api panel_web
+  docker compose build panel_migrator panel_api panel_web
+
+  info "Pre-descargando la imagen de Dolibarr (se usa para cada alumno)..."
+  DOLIBARR_IMAGE_VAL=$(grep "^DOLIBARR_IMAGE=" "$WORK_DIR/.env" 2>/dev/null | cut -d'=' -f2-)
+  docker pull "${DOLIBARR_IMAGE_VAL:-dolibarr/dolibarr:latest}" >/dev/null 2>&1 || \
+    warn "No se pudo descargar la imagen de Dolibarr ahora; se descargará al desplegar el primer alumno."
 
   info "Arrancando todos los servicios..."
   docker compose up -d
-
-  info "Esperando a que la base de datos del panel esté lista..."
-  sleep 15
-
-  info "Aplicando schema de base de datos del panel..."
-  docker compose run --rm panel_api sh -c \
-    "DATABASE_URL=postgresql://panel:\${PANEL_DB_PASSWORD}@panel_db:5432/panel node -e 'console.log(\"ok\")'" \
-    2>/dev/null || true
 
   echo ""
   docker compose ps
   echo ""
   success "¡Todos los servicios en marcha!"
   echo ""
-  echo "  Panel de gestión: $PANEL_URL"
-  echo "  Dolibarr ERP:     $DOLI_URL"
+  echo "  Configura el dominio base desde el panel (Configuración → Dominio base)."
+  echo "  Cada alumno tendrá su Dolibarr aislado en https://<usuario>.<tu-dominio-base>/"
   echo ""
-  echo "  Si el panel da error al cargar, espera 1-2 min y recarga."
-  echo "  Para aplicar el schema inicial de la BD del panel:"
-  echo "    cd $WORK_DIR && docker compose exec panel_api sh"
+  echo "  Crea profesores, grupos y alumnos desde el panel."
 else
   echo ""
   success "Configuración completada."
@@ -262,7 +250,7 @@ else
   echo "Próximos pasos:"
   echo ""
   echo "  1. Construir las imágenes del panel (una sola vez, ~5 min):"
-  echo "     cd $WORK_DIR && docker compose build panel_api panel_web"
+  echo "     cd $WORK_DIR && docker compose build panel_migrator panel_api panel_web"
   echo ""
   echo "  2. Arrancar todos los servicios:"
   echo "     cd $WORK_DIR && docker compose up -d"
