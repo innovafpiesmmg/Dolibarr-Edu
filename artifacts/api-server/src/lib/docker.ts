@@ -165,6 +165,55 @@ export async function removeContainer(name: string): Promise<void> {
   logger.info({ container: name }, "Contenedor eliminado");
 }
 
+// Ejecuta un comando dentro del contenedor y devuelve stdout+stderr concatenados.
+// Lanza si el exit code != 0.
+export async function execInContainer(
+  name: string,
+  cmd: string[],
+): Promise<string> {
+  if (!isDockerAvailable()) throw new Error("Docker no disponible");
+  const container = client().getContainer(name);
+  const exec = await container.exec({
+    Cmd: cmd,
+    AttachStdout: true,
+    AttachStderr: true,
+    User: "root",
+  });
+  const stream = await exec.start({ hijack: true, stdin: false });
+  const chunks: Buffer[] = [];
+  await new Promise<void>((resolve, reject) => {
+    stream.on("data", (c: Buffer) => chunks.push(c));
+    stream.on("end", () => resolve());
+    stream.on("error", reject);
+  });
+  const inspect = await exec.inspect();
+  const out = Buffer.concat(chunks).toString("utf8");
+  if (inspect.ExitCode && inspect.ExitCode !== 0) {
+    throw new Error(`exec ${cmd.join(" ")} salió con código ${inspect.ExitCode}: ${out}`);
+  }
+  return out;
+}
+
+// Añade `$dolibarr_nocsrfcheck = 1;` al conf.php del contenedor del alumno si
+// aún no está presente. Esto desactiva globalmente la comprobación de token
+// CSRF (incluyendo páginas que la fuerzan con `define('CSRFCHECK_WITH_TOKEN')`),
+// necesario para nuestro flujo SSO autosubmit desde el panel.
+//
+// Es seguro porque cada contenedor Dolibarr es de un único alumno, no se
+// exponen formularios públicos y el acceso siempre pasa por la autenticación
+// del panel. Idempotente: comprueba si la línea ya existe antes de añadirla.
+export async function disableCsrfInConfPhp(containerName: string): Promise<void> {
+  const confPath = "/var/www/html/conf/conf.php";
+  // grep -q devuelve 0 si encuentra, 1 si no. Si ya está, no hacemos nada.
+  const sh =
+    `if [ -f ${confPath} ] && ! grep -q 'dolibarr_nocsrfcheck' ${confPath}; then ` +
+    `echo '$dolibarr_nocsrfcheck = 1;' >> ${confPath}; ` +
+    `echo applied; ` +
+    `else echo skipped; fi`;
+  const out = await execInContainer(containerName, ["sh", "-c", sh]);
+  logger.info({ containerName, result: out.trim() }, "CSRF desactivado en conf.php del alumno");
+}
+
 export async function waitForHttpHealthy(internalUrl: string, timeoutMs = 180_000): Promise<void> {
   const start = Date.now();
   const url = internalUrl.replace(/\/$/, "");

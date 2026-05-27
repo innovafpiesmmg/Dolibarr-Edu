@@ -8,6 +8,7 @@ import {
   startContainer,
   stopContainer,
   isDockerAvailable,
+  disableCsrfInConfPhp,
   type ContainerState,
   type ContainerInfo,
 } from "./docker";
@@ -166,7 +167,10 @@ export async function deployStudentDolibarr(
 
     // 3c) Desactivar CSRF token para permitir SSO autosubmit desde el panel
     await relaxStudentSecurityForSso(dbName(username)).catch((e) =>
-      logger.warn({ err: e, username }, "No se pudo desactivar CSRF (continuando)"),
+      logger.warn({ err: e, username }, "No se pudo desactivar CSRF en BD (continuando)"),
+    );
+    await disableCsrfInConfPhp(containerName(username)).catch((e) =>
+      logger.warn({ err: e, username }, "No se pudo desactivar CSRF en conf.php (continuando)"),
     );
   } catch (err) {
     // Compensación: si el contenedor se creó pero el health-check falló, lo
@@ -242,5 +246,8 @@ export async function enableStudentModules(username: string): Promise<{ enabled:
   }
   await enableModulesInStudentDb(dbName(username), DEFAULT_DOLIBARR_MODULE_CONSTANTS);
   await relaxStudentSecurityForSso(dbName(username));
+  await disableCsrfInConfPhp(containerName(username)).catch((e) =>
+    logger.warn({ err: e, username }, "No se pudo desactivar CSRF en conf.php"),
+  );
   return { enabled: [...DEFAULT_DOLIBARR_MODULE_CONSTANTS] };
 }
