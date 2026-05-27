@@ -17,19 +17,30 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-app.listen(port, (err) => {
-  if (err) {
-    logger.error({ err }, "Error listening on port");
-    process.exit(1);
-  }
-
-  logger.info({ port }, "Server listening");
-
-  // Reconstruye las rutas Traefik desde la BD al arrancar (idempotente).
-  // Así sobrevivimos a reinicios del panel y a montajes nuevos del volumen.
+async function start(): Promise<void> {
+  // Reconstruye las rutas Traefik desde la BD ANTES de aceptar peticiones.
+  // Hacerlo después abriría una race condition: un POST /students/:id/deploy
+  // entrante podría escribir su .yaml justo antes del borrado masivo inicial
+  // de rebuildAllRoutes y perderlo.
   if (isTraefikConfigEnabled()) {
-    getBaseDomain()
-      .then((baseDomain) => rebuildAllRoutes(baseDomain || null))
-      .catch((e) => logger.warn({ err: e }, "Fallo reconstruyendo rutas Traefik al arrancar"));
+    try {
+      const baseDomain = await getBaseDomain();
+      await rebuildAllRoutes(baseDomain || null);
+    } catch (e) {
+      logger.warn({ err: e }, "Fallo reconstruyendo rutas Traefik al arrancar");
+    }
   }
+
+  app.listen(port, (err) => {
+    if (err) {
+      logger.error({ err }, "Error listening on port");
+      process.exit(1);
+    }
+    logger.info({ port }, "Server listening");
+  });
+}
+
+start().catch((e) => {
+  logger.error({ err: e }, "Fatal startup error");
+  process.exit(1);
 });

@@ -1,0 +1,93 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# cd /opt/dolibarr-edu
+sudo git pull origin main
+
+cd dolibarr-edu
+sudo docker compose build --no-cache panel_api
+sudo docker compose up -d panel_api
+
+# Espera a que el panel arranque y reconstruya rutas (ahora con .yaml)
+sleep 8
+
+# Verifica que ahora hay un .yaml en lugar del .json
+sudo docker exec dolibarr_traefik ls /etc/traefik/dynamic/
+# Esperado: student-juanperez.yaml
+
+# Logs limpios del panel
+sudo docker logs --tail 10 dolibarr_panel_api 2>&1 | grep -i traefik
+
+# Asegúrate de que Traefik del compose está activo (no el _debug que creaste antes)
+sudo docker ps --filter name=dolibarr_traefik
+
+# Test final
+curl -i -s --resolve juanperez.erp1.iesmmg.es:8090:127.0.0.1 \
+  http://juanperez.erp1.iesmmg.es:8090/ | head -5
+# Esperado: HTTP/1.1 302 ... Location: /index.php?...
+remote: Enumerating objects: 24, done.
+remote: Counting objects: 100% (24/24), done.
+remote: Compressing objects: 100% (7/7), done.
+remote: Total 17 (delta 12), reused 15 (delta 10), pack-reused 0 (from 0)
+Unpacking objects: 100% (17/17), 7.12 KiB | 1.02 MiB/s, done.
+From https://github.com/innovafpiesmmg/Dolibarr-Edu
+ * branch            main       -> FETCH_HEAD
+   94b1249..a55c8a7  main       -> origin/main
+Updating 94b1249..a55c8a7
+Fast-forward
+ artifacts/api-server/src/lib/traefik-config.ts                                                   |  19 ++++++--
+ attached_assets/Pasted-root-erpedu-opt-dolibarr-edu-dolibarr-edu-1-El-volumen-_1779871712729.txt |  56 ++++++++++++++++++++++
+ attached_assets/Pasted-root-erpedu-opt-dolibarr-edu-dolibarr-edu-1-Traefik-vio_1779871475885.txt |  36 ++++++++++++++
+ attached_assets/Pasted-root-erpedu-opt-dolibarr-edu-dolibarr-edu-cd-opt-doliba_1779821928936.txt | 130 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 237 insertions(+), 4 deletions(-)
+ create mode 100644 attached_assets/Pasted-root-erpedu-opt-dolibarr-edu-dolibarr-edu-1-El-volumen-_1779871712729.txt
+ create mode 100644 attached_assets/Pasted-root-erpedu-opt-dolibarr-edu-dolibarr-edu-1-Traefik-vio_1779871475885.txt
+ create mode 100644 attached_assets/Pasted-root-erpedu-opt-dolibarr-edu-dolibarr-edu-cd-opt-doliba_1779821928936.txt
+[+] Building 32.7s (19/19) FINISHED                                                                                                                         
+ => [internal] load local bake definitions                                                                                                             0.0s
+ => => reading from stdin 1.06kB                                                                                                                       0.0s
+ => [internal] load build definition from Dockerfile.api                                                                                               0.0s
+ => => transferring dockerfile: 1.59kB                                                                                                                 0.0s
+ => [internal] load metadata for docker.io/library/node:24-alpine                                                                                      0.9s
+ => [internal] load .dockerignore                                                                                                                      0.0s
+ => => transferring context: 146B                                                                                                                      0.0s
+ => [internal] load build context                                                                                                                      0.1s
+ => => transferring context: 7.63kB                                                                                                                    0.0s
+ => [builder  1/10] FROM docker.io/library/node:24-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5bf14                      0.1s
+ => => resolve docker.io/library/node:24-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5bf14                                0.1s
+ => CACHED [builder  2/10] WORKDIR /workspace                                                                                                          0.0s
+ => CACHED [api 2/3] WORKDIR /app                                                                                                                      0.0s
+ => [builder  3/10] RUN corepack enable && corepack prepare pnpm@latest --activate                                                                     2.5s
+ => [builder  4/10] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./                                                                            0.2s 
+ => [builder  5/10] COPY tsconfig*.json ./                                                                                                             0.2s
+ => [builder  6/10] COPY lib/ ./lib/                                                                                                                   0.2s
+ => [builder  7/10] COPY artifacts/api-server/ ./artifacts/api-server/                                                                                 0.2s
+ => [builder  8/10] RUN pnpm install --frozen-lockfile --ignore-scripts                                                                               14.0s
+ => [builder  9/10] RUN pnpm run typecheck:libs                                                                                                        9.4s 
+ => [builder 10/10] RUN pnpm --filter @workspace/api-server run build                                                                                  2.2s 
+ => [api 3/3] COPY --from=builder /workspace/artifacts/api-server/dist ./dist                                                                          0.2s 
+ => exporting to image                                                                                                                                 1.8s 
+ => => exporting layers                                                                                                                                1.1s 
+ => => exporting manifest sha256:f67e80718558d4c0bd254f13783556080a6a7b2718428d512be8e3ae7507afd8                                                      0.1s 
+ => => exporting config sha256:fc55298e12f66a770b222f557cdf106bdd595b8c919eb8033d7d8900314143e0                                                        0.1s 
+ => => exporting attestation manifest sha256:b1184e1bf74a3b2dd5973a2ed347c6d15ff834e402acb260e13b10784dc5b41e                                          0.1s 
+ => => exporting manifest list sha256:ab20e36d1d228991490cdd210197acc9cc2eca860f61bb9cb8ed7fe8ef59a8cc                                                 0.1s
+ => => naming to docker.io/library/dolibarr-edu-panel-api:latest                                                                                       0.0s
+ => => unpacking to docker.io/library/dolibarr-edu-panel-api:latest                                                                                    0.3s
+ => resolving provenance for metadata file                                                                                                             0.0s
+[+] build 1/2
+ ⠙ Image dolibarr-edu-panel-migrator Building                                                                                                          32.8s
+ ✔ Image dolibarr-edu-panel-api      Built                                                                                                             32.8s
+[+] up 4/4
+ ✔ Container dolibarr_db             Healthy                                                                                                           11.9s
+ ✔ Container dolibarr_panel_db       Healthy                                                                                                           11.9s
+ ✔ Container dolibarr_panel_api      Recreated                                                                                                         10.6s
+ ✔ Container dolibarr_panel_migrator Exited                                                                                                            3.5s
+student-juanperez.yaml
+{"level":30,"time":1779871855546,"pid":1,"hostname":"98616f239687","username":"juanperez","path":"/etc/traefik/dynamic/student-juanperez.yaml","msg":"Ruta Traefik escrita"}
+{"level":30,"time":1779871855546,"pid":1,"hostname":"98616f239687","count":1,"msg":"Rutas Traefik reconstruidas desde BD"}
+CONTAINER ID   IMAGE          COMMAND                  CREATED        STATUS         PORTS                    NAMES
+eb42b3bec8e4   traefik:v3.3   "/entrypoint.sh --pr…"   14 hours ago   Up 2 minutes   127.0.0.1:8090->80/tcp   dolibarr_traefik
+HTTP/1.1 200 OK
+Cache-Control: Public, must-revalidate
+Content-Type: text/html; charset=UTF-8
+Date: Wed, 27 May 2026 08:51:03 GMT
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 

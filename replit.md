@@ -68,7 +68,7 @@ Plataforma de gestión para centros de FP de Administración de Empresas. **Cada
 
 - **Un contenedor Dolibarr por alumno** orquestado desde el panel a través del socket Docker (`/var/run/docker.sock`). Sustituye el enfoque anterior de "single-entity + tercero por alumno" — MultiCompany fue descontinuado por su autor en Dolistore y no hay alternativas viables.
 - **MariaDB compartida** (un solo servicio) con una base de datos por alumno (`dolibarr_alu_<username>`) y un usuario por alumno con privilegios sólo sobre su BD. Reduce uso de RAM frente a una MariaDB por contenedor — viable para <30 alumnos en un servidor de 16 GB.
-- **Traefik** como reverse proxy escuchando en `TRAEFIK_PORT` (por defecto 8090). Cada contenedor Dolibarr declara labels para enrutarse por subdominio `<usuario>.<BASE_DOMAIN>`. El túnel Cloudflare apunta un comodín `*.<BASE_DOMAIN>` a Traefik.
+- **Traefik** como reverse proxy escuchando en `TRAEFIK_PORT` (por defecto 8090). Usa **file provider** (no docker provider): el panel escribe `student-<user>.yaml` en un volumen compartido `traefik_dynamic` con la regla `Host(<usuario>.<BASE_DOMAIN>)` apuntando a `http://dolibarr_alu_<user>:80`. Traefik vigila el directorio y recarga en caliente. El túnel Cloudflare apunta un comodín `*.<BASE_DOMAIN>` a Traefik.
 - **Nombres deterministas**: `dolibarr_alu_<username>` (contenedor + BD + usuario MariaDB). El subdominio es el `username` saneado.
 - **Contraseñas deterministas**: Dolibarr/MariaDB de cada alumno se derivan de `SHA-256(<role>:<username> + SESSION_SECRET)`, por lo que no se almacenan en BD (sólo se muestran en el panel cuando se necesitan).
 - **Lifecycle endpoints**: `POST /students/:id/deploy|container/start|stop|restart` + `DELETE /students/:id/container` (destruye contenedor + BD).
@@ -119,6 +119,8 @@ Solo dos conectores a configurar en el túnel Cloudflare del centro (ambos oblig
 - La ruta de alumnos registra `/students/bulk` ANTES de `/students/:id` para evitar conflictos de ruta
 - En `App.tsx`, rutas estáticas (`/nominas/ss`, `/nominas/nueva`) deben declararse ANTES de `/nominas/:id`
 - **dockerode / docker-modem** requieren `ssh2`, `@grpc/grpc-js`, `@grpc/proto-loader` y `protobufjs` de forma eager aunque sólo usemos el socket UNIX. `artifacts/api-server/build.mjs` los stubea vía un plugin de esbuild — si actualizas dockerode revisa que el conjunto siga cubriendo todos los `require` top-level de `dockerode/lib/session.js` y `docker-modem/lib/*.js`.
+- **Traefik file provider en modo `directory` solo procesa `.toml`/`.yml`/`.yaml`** — ignora `.json` silenciosamente (lee el fichero pero descarta su contenido sin error). Los ficheros dinámicos se escriben con extensión `.yaml` (JSON es YAML válido, así que el contenido sigue siendo `JSON.stringify`).
+- **No usar el docker provider de Traefik** contra Docker Engine 25+ (MinAPIVersion 1.44): el cliente Go embebido negocia API 1.24 y falla. Por eso el ruteo va vía file provider; los labels `traefik.*` que `docker.ts` añade a los contenedores de alumno son inocuos pero ya no se usan.
 - El campo histórico `dolibarrEntityId` ya **NO existe** en BD/API/UI tras el pivot a contenedor-por-alumno. El identificador ahora es `containerName` + `publicUrl`, expuestos por `GET /students/:id/container`.
 
 ## Pointers
