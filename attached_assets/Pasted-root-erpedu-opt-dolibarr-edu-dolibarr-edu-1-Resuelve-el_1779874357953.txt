@@ -1,0 +1,39 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# # 1) ¿Resuelve el DNS desde fuera?
+dig +short juanperez.iesmmg.es
+# Esperado: 2 IPs de Cloudflare (104.x.x.x y/o 172.67.x.x)
+
+# 2) ¿Existe el CNAME wildcard?
+dig +short '*.iesmmg.es' CNAME
+# Esperado: <tunnel-id>.cfargotunnel.com.
+
+# 3) Túnel sano
+sudo docker logs --tail 20 dolibarr_tunnel 2>&1
+
+# 4) Traefik responde al nuevo Host (interno)
+curl -i -s --resolve juanperez.iesmmg.es:8090:127.0.0.1 \
+  http://juanperez.iesmmg.es:8090/ | head -5
+DNS Resolution    region2.v2.argotunnel.com  PASS    DNS Resolved successfully
+UDP Connectivity  region1.v2.argotunnel.com  PASS    QUIC connection successful
+UDP Connectivity  region2.v2.argotunnel.com  PASS    QUIC connection successful
+TCP Connectivity  region1.v2.argotunnel.com  PASS    HTTP/2 connection successful
+TCP Connectivity  region2.v2.argotunnel.com  PASS    HTTP/2 connection successful
+Cloudflare API    api.cloudflare.com:443     PASS    API is reachable
+
+SUMMARY: Environment is healthy. cloudflared will use 'quic' as primary protocol.
+--------------------------------------------------------------------------------
+
+2026-05-26T18:39:01Z INF precheck component="DNS Resolution" details="DNS Resolved successfully" run_id=290477d9-ecbc-4e8b-9ceb-d92aba7db20e status=pass target=region1.v2.argotunnel.com
+2026-05-26T18:39:01Z INF precheck component="DNS Resolution" details="DNS Resolved successfully" run_id=290477d9-ecbc-4e8b-9ceb-d92aba7db20e status=pass target=region2.v2.argotunnel.com
+2026-05-26T18:39:01Z INF precheck component="UDP Connectivity" details="QUIC connection successful" run_id=290477d9-ecbc-4e8b-9ceb-d92aba7db20e status=pass target=region1.v2.argotunnel.com
+2026-05-26T18:39:01Z INF precheck component="UDP Connectivity" details="QUIC connection successful" run_id=290477d9-ecbc-4e8b-9ceb-d92aba7db20e status=pass target=region2.v2.argotunnel.com
+2026-05-26T18:39:01Z INF precheck component="TCP Connectivity" details="HTTP/2 connection successful" run_id=290477d9-ecbc-4e8b-9ceb-d92aba7db20e status=pass target=region1.v2.argotunnel.com
+2026-05-26T18:39:01Z INF precheck component="TCP Connectivity" details="HTTP/2 connection successful" run_id=290477d9-ecbc-4e8b-9ceb-d92aba7db20e status=pass target=region2.v2.argotunnel.com
+2026-05-26T18:39:01Z INF precheck component="Cloudflare API" details="API is reachable" run_id=290477d9-ecbc-4e8b-9ceb-d92aba7db20e status=pass target=api.cloudflare.com:443
+2026-05-26T18:39:01Z INF precheck complete hard_fail=false run_id=290477d9-ecbc-4e8b-9ceb-d92aba7db20e suggested_protocol=quic
+2026-05-27T09:02:47Z INF Updated to new configuration config="{\"ingress\":[{\"hostname\":\"erp1.iesmmg.es\",\"originRequest\":{},\"service\":\"http://dolibarr:80\"},{\"hostname\":\"panel.iesmmg.es\",\"originRequest\":{},\"service\":\"http://panel_web:80\"},{\"hostname\":\"proyectos.iesmmg.es\",\"originRequest\":{},\"service\":\"http://openproject:80\"},{\"hostname\":\"office.iesmmg.es\",\"originRequest\":{},\"service\":\"http://collabora:9980\"},{\"hostname\":\"cloud.iesmmg.es\",\"originRequest\":{},\"service\":\"http://nextcloud:80\"},{\"hostname\":\"*.erp1.iesmmg.es\",\"originRequest\":{},\"service\":\"http://traefik:80\"},{\"service\":\"http_status:404\"}],\"warp-routing\":{\"enabled\":false}}" version=8
+2026-05-27T09:28:29Z INF Updated to new configuration config="{\"ingress\":[{\"hostname\":\"erp1.iesmmg.es\",\"originRequest\":{},\"service\":\"http://dolibarr:80\"},{\"hostname\":\"panel.iesmmg.es\",\"originRequest\":{},\"service\":\"http://panel_web:80\"},{\"hostname\":\"proyectos.iesmmg.es\",\"originRequest\":{},\"service\":\"http://openproject:80\"},{\"hostname\":\"office.iesmmg.es\",\"originRequest\":{},\"service\":\"http://collabora:9980\"},{\"hostname\":\"cloud.iesmmg.es\",\"originRequest\":{},\"service\":\"http://nextcloud:80\"},{\"hostname\":\"*.iesmmg.es\",\"originRequest\":{},\"service\":\"http://traefik:80\"},{\"service\":\"http_status:404\"}],\"warp-routing\":{\"enabled\":false}}" version=9
+HTTP/1.1 200 OK
+Cache-Control: Public, must-revalidate
+Content-Type: text/html; charset=UTF-8
+Date: Wed, 27 May 2026 09:32:21 GMT
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
