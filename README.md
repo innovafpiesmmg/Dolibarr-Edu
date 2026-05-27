@@ -12,6 +12,17 @@ Desarrollado por **Atreyu Servicios Digitales (ASD)** · [GitHub](https://github
 
 ---
 
+## Novedades v2.0
+
+- **Dolibarr por profesor** — además del Dolibarr individual de cada alumno, ahora cada profesor tiene su propio contenedor Dolibarr aislado con su propia base de datos MariaDB y su propio subdominio (`prof-<usuario>.<dominio-base>`). Se gestiona desde la ficha del profesor en el panel: desplegar, iniciar, detener, activar módulos, ver estado del contenedor y acceder a la URL pública.
+- **Arquitectura un-contenedor-por-usuario** — se ha abandonado el enfoque multi-empresa con `modMultiCompany` (descontinuado por su autor). Cada alumno y cada profesor tienen un Dolibarr completamente aislado, orquestado desde el panel a través del socket Docker.
+- **Traefik como reverse proxy** — un único Traefik enruta por subdominio (vía file provider) tanto los contenedores de alumnos como los de profesores. El túnel Cloudflare apunta un comodín `*.<dominio-base>` a Traefik.
+- **MariaDB compartida** — una sola instancia MariaDB con una base de datos por usuario. Reduce drásticamente el uso de RAM (viable para 30+ alumnos en un servidor de 16 GB).
+- **Contraseñas deterministas** — derivadas de `SHA-256(<rol>:<usuario> + SESSION_SECRET)`. No se almacenan; se muestran en el panel cuando hacen falta.
+- **Limpieza robusta de recursos** — al destruir un Dolibarr (alumno o profesor) se elimina el contenedor, la base de datos y la ruta Traefik, con garantía `finally` para no dejar subdominios huérfanos.
+
+---
+
 ## Capturas de pantalla
 
 ### Página de inicio — acceso del alumno a su empresa

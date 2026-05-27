@@ -94,7 +94,7 @@ export function AppSidebar() {
         )}
 
         <div className="text-xs text-sidebar-foreground/40 text-center">
-          ERP EDU v1.0
+          ERP EDU v2.0
         </div>
       </SidebarFooter>
     </Sidebar>
@@ -136,7 +136,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <img src="/images/ies-logo.png" alt="IES Manuel Martín González" className="h-3.5 w-auto" />
                 <span>IES Manuel Martín González</span>
               </div>
-              <span className="opacity-60">ERP EDU v1.0</span>
+              <span className="opacity-60">ERP EDU v2.0</span>
             </div>
           </footer>
         </main>
