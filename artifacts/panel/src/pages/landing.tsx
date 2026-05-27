@@ -254,6 +254,11 @@ export default function LandingPage() {
                 Portal del alumno
               </a>
             </Button>
+            <Button variant="outline" className="border-white/20 bg-white/5 text-white hover:bg-white/20 hover:text-white" asChild>
+              <Link href="/profesor/login">
+                Acceso profesor
+              </Link>
+            </Button>
             <Button asChild>
               <Link href="/login">
                 Panel de gestión <ArrowRight className="ml-2 h-4 w-4" />

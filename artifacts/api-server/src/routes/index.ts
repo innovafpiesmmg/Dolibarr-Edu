@@ -12,6 +12,8 @@ import ssRouter from "./ss";
 import settingsRouter from "./settings";
 import resetPasswordRouter from "./reset-password";
 import activityRouter from "./activity";
+import teamsRouter from "./teams";
+import teacherPanelRouter from "./teacher-panel";
 
 const router: IRouter = Router();
 
@@ -28,5 +30,7 @@ router.use(ssRouter);
 router.use(settingsRouter);
 router.use(resetPasswordRouter);
 router.use(activityRouter);
+router.use(teamsRouter);
+router.use(teacherPanelRouter);
 
 export default router;

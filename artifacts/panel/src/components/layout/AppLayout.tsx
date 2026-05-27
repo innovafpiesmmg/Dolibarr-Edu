@@ -10,6 +10,7 @@ import {
   ServerCog,
   Activity,
   ExternalLink,
+  Users2,
 } from "lucide-react";
 import {
   Sidebar,
@@ -30,6 +31,7 @@ const navigation = [
   { name: "Profesores", href: "/profesores", icon: Users },
   { name: "Grupos", href: "/grupos", icon: BookOpen },
   { name: "Alumnos", href: "/alumnos", icon: GraduationCap },
+  { name: "Equipos", href: "/equipos", icon: Users2 },
   { name: "Estado Dolibarr", href: "/estado", icon: ServerCog },
   { name: "Actividad", href: "/actividad", icon: Activity },
   { name: "Importar", href: "/importar", icon: Upload },

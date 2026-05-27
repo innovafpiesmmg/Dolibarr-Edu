@@ -573,6 +573,119 @@ export interface SettingsInput {
   baseDomain?: string;
 }
 
+export interface TeacherCredentials {
+  username: string;
+  password: string;
+}
+
+export interface TeacherProfile {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  username: string;
+  dolibarrSyncStatus: string;
+}
+
+export interface TeacherSession {
+  token: string;
+  teacher: TeacherProfile;
+}
+
+export interface TeacherDolibarrInfo {
+  deployed: boolean;
+  /** @nullable */
+  publicUrl?: string | null;
+  containerName: string;
+  /** @nullable */
+  dolibarrUsername?: string | null;
+  /** @nullable */
+  dolibarrPassword?: string | null;
+}
+
+export interface TeacherStats {
+  groupCount: number;
+  studentCount: number;
+  activeContainers: number;
+  teamCount: number;
+}
+
+export interface OkResponse {
+  ok: boolean;
+}
+
+export interface ResetPasswordSimple {
+  ok: boolean;
+  newPassword: string;
+}
+
+export interface SimpleDeployResult {
+  ok: boolean;
+  publicUrl?: string;
+  state?: string;
+}
+
+export interface SimpleStateResult {
+  ok: boolean;
+  state: string;
+}
+
+export interface StudentContainerState {
+  studentId: number;
+  exists: boolean;
+  state: string;
+  containerName: string;
+  /** @nullable */
+  publicUrl?: string | null;
+  /** @nullable */
+  startedAt?: string | null;
+}
+
+export interface Team {
+  id: number;
+  groupId: number;
+  groupName: string;
+  letter: string;
+  name: string;
+  dolibarrSyncStatus: string;
+  /** @nullable */
+  dolibarrSyncError?: string | null;
+  memberCount: number;
+  createdAt: string;
+}
+
+export interface TeamMember {
+  id: number;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+}
+
+export type TeamWithMembers = Team & ({
+  members: TeamMember[];
+  /** @nullable */
+  publicUrl?: string | null;
+  teacherUsername?: string;
+});
+
+export interface TeamInput {
+  groupId: number;
+  /** @minLength 1 */
+  name: string;
+}
+
+export interface AddTeamMemberInput {
+  studentId: number;
+}
+
+export interface AddTeamMemberResult {
+  ok: boolean;
+  provisioned: boolean;
+  /** @nullable */
+  provisionError?: string | null;
+}
+
 export type StatsStudentsPerGroupItem = {
   groupId: number;
   groupName: string;
@@ -637,5 +750,14 @@ employeeId?: number;
 export type ListActivityParams = {
 limit?: number;
 entityType?: string;
+};
+
+export type ListTeacherMyStudentsParams = {
+search?: string;
+groupId?: number;
+};
+
+export type ListTeamsParams = {
+groupId?: number;
 };
 

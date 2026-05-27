@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { setAuthTokenGetter } from "@workspace/api-client-react";
 
 const STORAGE_KEY = "dolibarr-edu-token";
 
@@ -13,22 +12,16 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) setAuthTokenGetter(() => stored);
-    return stored;
-  });
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
 
   const login = useCallback((newToken: string) => {
     localStorage.setItem(STORAGE_KEY, newToken);
     setToken(newToken);
-    setAuthTokenGetter(() => newToken);
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     setToken(null);
-    setAuthTokenGetter(null);
   }, []);
 
   return (

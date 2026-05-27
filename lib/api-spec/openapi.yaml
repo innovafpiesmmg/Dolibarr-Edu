@@ -1221,6 +1221,359 @@ paths:
               schema:
                 $ref: "#/components/schemas/Stats"
 
+  # ── Teacher auth ─────────────────────────────────────
+  /auth/teacher-login:
+    post:
+      operationId: teacherLogin
+      tags: [auth]
+      summary: Login del profesor para su panel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeacherCredentials"
+      responses:
+        "200":
+          description: Token de sesión del profesor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherSession"
+        "401":
+          description: Credenciales incorrectas
+
+  # ── Teacher panel scoped (requires Bearer profesor) ──
+  /teacher/me:
+    get:
+      operationId: getTeacherMe
+      tags: [teacher-panel]
+      summary: Perfil del profesor autenticado
+      responses:
+        "200":
+          description: Profesor
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeacherProfile" } } }
+
+  /teacher/me/dolibarr:
+    get:
+      operationId: getTeacherMyDolibarr
+      tags: [teacher-panel]
+      summary: Credenciales de acceso al Dolibarr del profesor
+      responses:
+        "200":
+          description: Estado del contenedor del profesor
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeacherDolibarrInfo" } } }
+
+  /teacher/me/groups:
+    get:
+      operationId: listTeacherMyGroups
+      tags: [teacher-panel]
+      summary: Grupos del profesor autenticado
+      responses:
+        "200":
+          description: Lista de grupos
+          content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Group" } } } }
+
+  /teacher/me/stats:
+    get:
+      operationId: getTeacherMyStats
+      tags: [teacher-panel]
+      summary: Estadísticas del profesor
+      responses:
+        "200":
+          description: Stats
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeacherStats" } } }
+
+  /teacher/me/students:
+    get:
+      operationId: listTeacherMyStudents
+      tags: [teacher-panel]
+      summary: Alumnos de los grupos del profesor
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: groupId
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Lista de alumnos
+          content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Student" } } } }
+    post:
+      operationId: createTeacherMyStudent
+      tags: [teacher-panel]
+      summary: Crear alumno en uno de mis grupos
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/StudentInput" } } }
+      responses:
+        "201":
+          description: Alumno creado
+          content: { application/json: { schema: { $ref: "#/components/schemas/Student" } } }
+
+  /teacher/me/students/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    patch:
+      operationId: updateTeacherMyStudent
+      tags: [teacher-panel]
+      summary: Actualizar alumno
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/StudentInput" } } }
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/OkResponse" } } }
+    delete:
+      operationId: deleteTeacherMyStudent
+      tags: [teacher-panel]
+      summary: Eliminar alumno
+      responses:
+        "204":
+          description: Eliminado
+
+  /teacher/me/students/{id}/reset-password:
+    post:
+      operationId: resetTeacherMyStudentPassword
+      tags: [teacher-panel]
+      summary: Resetear contraseña de un alumno
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Nueva contraseña
+          content: { application/json: { schema: { $ref: "#/components/schemas/ResetPasswordSimple" } } }
+
+  /teacher/me/students/{id}/dolibarr/deploy:
+    post:
+      operationId: deployTeacherMyStudentDolibarr
+      tags: [teacher-panel]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Despliegue iniciado
+          content: { application/json: { schema: { $ref: "#/components/schemas/SimpleDeployResult" } } }
+
+  /teacher/me/students/{id}/dolibarr/start:
+    post:
+      operationId: startTeacherMyStudentDolibarr
+      tags: [teacher-panel]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Contenedor iniciado
+          content: { application/json: { schema: { $ref: "#/components/schemas/SimpleStateResult" } } }
+
+  /teacher/me/students/{id}/dolibarr/stop:
+    post:
+      operationId: stopTeacherMyStudentDolibarr
+      tags: [teacher-panel]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Contenedor detenido
+          content: { application/json: { schema: { $ref: "#/components/schemas/SimpleStateResult" } } }
+
+  /teacher/me/students/{id}/dolibarr/state:
+    get:
+      operationId: getTeacherMyStudentDolibarrState
+      tags: [teacher-panel]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Estado del contenedor
+          content: { application/json: { schema: { $ref: "#/components/schemas/StudentContainerState" } } }
+
+  /teacher/me/students/{id}/dolibarr:
+    delete:
+      operationId: destroyTeacherMyStudentDolibarr
+      tags: [teacher-panel]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Eliminado
+
+  /teacher/me/teams:
+    get:
+      operationId: listTeacherMyTeams
+      tags: [teacher-panel]
+      responses:
+        "200":
+          description: Equipos del profesor
+          content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Team" } } } }
+    post:
+      operationId: createTeacherMyTeam
+      tags: [teacher-panel]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/TeamInput" } } }
+      responses:
+        "201":
+          description: Equipo creado
+          content: { application/json: { schema: { $ref: "#/components/schemas/Team" } } }
+
+  /teacher/me/teams/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    get:
+      operationId: getTeacherMyTeam
+      tags: [teacher-panel]
+      responses:
+        "200":
+          description: Equipo con miembros
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeamWithMembers" } } }
+    delete:
+      operationId: deleteTeacherMyTeam
+      tags: [teacher-panel]
+      responses:
+        "204":
+          description: Eliminado
+
+  /teacher/me/teams/{id}/members:
+    post:
+      operationId: addTeacherMyTeamMember
+      tags: [teacher-panel]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/AddTeamMemberInput" } } }
+      responses:
+        "200":
+          description: Miembro añadido
+          content: { application/json: { schema: { $ref: "#/components/schemas/AddTeamMemberResult" } } }
+
+  /teacher/me/teams/{id}/members/{studentId}:
+    delete:
+      operationId: removeTeacherMyTeamMember
+      tags: [teacher-panel]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+        - in: path
+          name: studentId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Miembro quitado
+          content: { application/json: { schema: { $ref: "#/components/schemas/OkResponse" } } }
+
+  # ── Teams (admin) ────────────────────────────────────
+  /teams:
+    get:
+      operationId: listTeams
+      tags: [teams]
+      parameters:
+        - in: query
+          name: groupId
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Lista de equipos
+          content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Team" } } } }
+    post:
+      operationId: createTeam
+      tags: [teams]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/TeamInput" } } }
+      responses:
+        "201":
+          description: Equipo creado
+          content: { application/json: { schema: { $ref: "#/components/schemas/Team" } } }
+
+  /teams/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    get:
+      operationId: getTeam
+      tags: [teams]
+      responses:
+        "200":
+          description: Equipo con miembros
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeamWithMembers" } } }
+    delete:
+      operationId: deleteTeam
+      tags: [teams]
+      responses:
+        "204":
+          description: Eliminado
+
+  /teams/{id}/members:
+    post:
+      operationId: addTeamMember
+      tags: [teams]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/AddTeamMemberInput" } } }
+      responses:
+        "200":
+          description: Miembro añadido
+          content: { application/json: { schema: { $ref: "#/components/schemas/AddTeamMemberResult" } } }
+
+  /teams/{id}/members/{studentId}:
+    delete:
+      operationId: removeTeamMember
+      tags: [teams]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+        - in: path
+          name: studentId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Miembro quitado
+          content: { application/json: { schema: { $ref: "#/components/schemas/OkResponse" } } }
+
 components:
   schemas:
     HealthStatus:
@@ -1690,6 +2043,148 @@ components:
           enum: [iva, igic]
         baseDomain:
           type: string
+
+    # ── Teacher session / panel ──────────────────────────
+    TeacherCredentials:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string }
+
+    TeacherProfile:
+      type: object
+      required: [id, firstName, lastName, email, username, dolibarrSyncStatus]
+      properties:
+        id:                 { type: integer }
+        firstName:          { type: string }
+        lastName:           { type: string }
+        email:              { type: string }
+        username:           { type: string }
+        dolibarrSyncStatus: { type: string }
+
+    TeacherSession:
+      type: object
+      required: [token, teacher]
+      properties:
+        token:   { type: string }
+        teacher: { $ref: "#/components/schemas/TeacherProfile" }
+
+    TeacherDolibarrInfo:
+      type: object
+      required: [deployed, containerName]
+      properties:
+        deployed:         { type: boolean }
+        publicUrl:        { type: ["string", "null"] }
+        containerName:    { type: string }
+        dolibarrUsername: { type: ["string", "null"] }
+        dolibarrPassword: { type: ["string", "null"] }
+
+    TeacherStats:
+      type: object
+      required: [groupCount, studentCount, activeContainers, teamCount]
+      properties:
+        groupCount:       { type: integer }
+        studentCount:     { type: integer }
+        activeContainers: { type: integer }
+        teamCount:        { type: integer }
+
+    OkResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean }
+
+    ResetPasswordSimple:
+      type: object
+      required: [ok, newPassword]
+      properties:
+        ok:          { type: boolean }
+        newPassword: { type: string }
+
+    SimpleDeployResult:
+      type: object
+      required: [ok]
+      properties:
+        ok:        { type: boolean }
+        publicUrl: { type: string }
+        state:     { type: string }
+
+    SimpleStateResult:
+      type: object
+      required: [ok, state]
+      properties:
+        ok:    { type: boolean }
+        state: { type: string }
+
+    StudentContainerState:
+      type: object
+      required: [studentId, exists, state, containerName]
+      properties:
+        studentId:     { type: integer }
+        exists:        { type: boolean }
+        state:         { type: string }
+        containerName: { type: string }
+        publicUrl:     { type: ["string", "null"] }
+        startedAt:     { type: ["string", "null"] }
+
+    # ── Teams ────────────────────────────────────────────
+    Team:
+      type: object
+      required: [id, groupId, groupName, letter, name, dolibarrSyncStatus, memberCount, createdAt]
+      properties:
+        id:                 { type: integer }
+        groupId:            { type: integer }
+        groupName:          { type: string }
+        letter:             { type: string }
+        name:               { type: string }
+        dolibarrSyncStatus: { type: string }
+        dolibarrSyncError:  { type: ["string", "null"] }
+        memberCount:        { type: integer }
+        createdAt:          { type: string, format: date-time }
+
+    TeamMember:
+      type: object
+      required: [id, firstName, lastName, username, email]
+      properties:
+        id:        { type: integer }
+        firstName: { type: string }
+        lastName:  { type: string }
+        username:  { type: string }
+        email:     { type: string }
+
+    TeamWithMembers:
+      allOf:
+        - $ref: "#/components/schemas/Team"
+        - type: object
+          required: [members]
+          properties:
+            members:
+              type: array
+              items: { $ref: "#/components/schemas/TeamMember" }
+            publicUrl:        { type: ["string", "null"] }
+            teacherUsername:  { type: string }
+
+    TeamInput:
+      type: object
+      required: [groupId, name]
+      properties:
+        groupId: { type: integer }
+        name:    { type: string, minLength: 1 }
+
+    AddTeamMemberInput:
+      type: object
+      required: [studentId]
+      properties:
+        studentId: { type: integer }
+
+    AddTeamMemberResult:
+      type: object
+      required: [ok, provisioned]
+      properties:
+        ok:             { type: boolean }
+        provisioned:    { type: boolean }
+        provisionError: { type: ["string", "null"] }
 
     # ── Stats ────────────────────────────────────────────
     Stats:

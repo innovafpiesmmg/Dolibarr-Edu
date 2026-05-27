@@ -17,8 +17,15 @@ import Configuracion from "@/pages/configuracion/index";
 import EstadoSincronizacion from "@/pages/estado/index";
 import Actividad from "@/pages/actividad/index";
 import SeguimientoAlumno from "@/pages/alumnos/seguimiento";
+import EquiposAdmin from "@/pages/equipos/index";
+import ProfesorLogin from "@/pages/profesor/login";
+import ProfesorDashboard from "@/pages/profesor/dashboard";
+import ProfesorAlumnos from "@/pages/profesor/alumnos";
+import ProfesorEquipos from "@/pages/profesor/equipos";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { TeacherLayout } from "@/components/layout/TeacherLayout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { TeacherAuthProvider, useTeacherAuth } from "@/contexts/TeacherAuthContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +49,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   return <AppLayout>{children}</AppLayout>;
+}
+
+function TeacherProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useTeacherAuth();
+  if (!isAuthenticated) return <Redirect to="/profesor/login" />;
+  return <TeacherLayout>{children}</TeacherLayout>;
 }
 
 function Router() {
@@ -94,6 +107,24 @@ function Router() {
         <ProtectedRoute><Actividad /></ProtectedRoute>
       </Route>
 
+      <Route path="/equipos">
+        <ProtectedRoute><EquiposAdmin /></ProtectedRoute>
+      </Route>
+
+      <Route path="/profesor/login" component={ProfesorLogin} />
+      <Route path="/profesor/dashboard">
+        <TeacherProtectedRoute><ProfesorDashboard /></TeacherProtectedRoute>
+      </Route>
+      <Route path="/profesor/alumnos">
+        <TeacherProtectedRoute><ProfesorAlumnos /></TeacherProtectedRoute>
+      </Route>
+      <Route path="/profesor/equipos">
+        <TeacherProtectedRoute><ProfesorEquipos /></TeacherProtectedRoute>
+      </Route>
+      <Route path="/profesor">
+        <Redirect to="/profesor/login" />
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -103,12 +134,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
+        <TeacherAuthProvider>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <Router />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </TeacherAuthProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

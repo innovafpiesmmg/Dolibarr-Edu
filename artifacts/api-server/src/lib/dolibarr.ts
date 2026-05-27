@@ -45,6 +45,62 @@ async function parseId(res: Response, context: string): Promise<number> {
 
 export type TaxSystem = "iva" | "igic";
 
+// ── Usuarios Dolibarr (para miembros de equipo) ─────────────────────────────
+
+export async function createDolibarrUser(
+  config: DolibarrConfig,
+  opts: {
+    login: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    admin?: boolean;
+  },
+): Promise<{ userId: number }> {
+  const res = await dolibarrFetch(config, "/users", {
+    method: "POST",
+    body: JSON.stringify({
+      login: opts.login,
+      pass: opts.password,
+      firstname: opts.firstName,
+      lastname: opts.lastName,
+      email: opts.email,
+      admin: opts.admin ? 1 : 0,
+      statut: 1,
+    }),
+  });
+  return { userId: await parseId(res, "createDolibarrUser") };
+}
+
+export async function findDolibarrUserIdByLogin(
+  config: DolibarrConfig,
+  login: string,
+): Promise<number | null> {
+  const res = await dolibarrFetch(
+    config,
+    `/users?sqlfilters=${encodeURIComponent(`(t.login:=:'${login}')`)}`,
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`findDolibarrUserIdByLogin(${login}): ${res.status} — ${text.slice(0, 200)}`);
+  }
+  const data = (await res.json()) as unknown;
+  if (!Array.isArray(data) || data.length === 0) return null;
+  const first = data[0] as { id?: number | string };
+  const id = typeof first.id === "string" ? Number(first.id) : first.id;
+  return typeof id === "number" && Number.isFinite(id) ? id : null;
+}
+
+export async function deleteDolibarrUser(config: DolibarrConfig, userId: number): Promise<void> {
+  const res = await dolibarrFetch(config, `/users/${userId}`, { method: "DELETE" });
+  if (!res.ok && res.status !== 404) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`deleteDolibarrUser(${userId}): ${res.status} — ${text.slice(0, 200)}`);
+  }
+}
+
 // ── HRM — Empleados ──────────────────────────────────────────────────────────
 //
 // En el modelo per-container ya NO necesitamos `fk_soc` para filtrar — cada

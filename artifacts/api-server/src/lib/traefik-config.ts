@@ -1,13 +1,14 @@
 import { mkdir, writeFile, unlink, readdir } from "fs/promises";
 import { join } from "path";
 import { logger } from "./logger";
-import { db, studentsTable, teachersTable } from "@workspace/db";
+import { db, studentsTable, teachersTable, teamsTable, groupsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { containerName, publicHostname } from "./student-dolibarr";
 import {
   containerName as teacherContainerName,
   publicHostname as teacherPublicHostname,
 } from "./teacher-dolibarr";
+import { groupNameToSlug } from "./team-dolibarr";
 
 const DYNAMIC_DIR = process.env.TRAEFIK_DYNAMIC_DIR ?? "/etc/traefik/dynamic";
 
@@ -115,6 +116,58 @@ export async function removeTeacherRoute(username: string): Promise<void> {
   logger.info({ username }, "Ruta Traefik profesor eliminada");
 }
 
+// ── Rutas para equipos (apuntan al contenedor del profesor del grupo) ───────
+function teamFileFor(groupSlug: string, letter: string): string {
+  return join(DYNAMIC_DIR, `team-${letter.toLowerCase()}-${groupSlug}.yaml`);
+}
+
+function teamRouteConfig(teacherUsername: string, hostname: string, groupSlug: string, letter: string): unknown {
+  const id = `team-${letter.toLowerCase()}-${groupSlug}`;
+  return {
+    http: {
+      routers: {
+        [id]: {
+          rule: `Host(\`${hostname}\`)`,
+          service: id,
+          entryPoints: ["web"],
+        },
+      },
+      services: {
+        [id]: {
+          loadBalancer: {
+            servers: [{ url: `http://${teacherContainerName(teacherUsername)}:80` }],
+          },
+        },
+      },
+    },
+  };
+}
+
+export async function writeTeamRoute(
+  teacherUsername: string,
+  groupSlug: string,
+  letter: string,
+  baseDomain: string,
+): Promise<void> {
+  if (!isTraefikConfigEnabled()) return;
+  if (!baseDomain) return;
+  await mkdir(DYNAMIC_DIR, { recursive: true });
+  const hostname = `equipo-${letter.toLowerCase()}-${groupSlug}.${baseDomain}`;
+  const cfg = teamRouteConfig(teacherUsername, hostname, groupSlug, letter);
+  const path = teamFileFor(groupSlug, letter);
+  await writeFile(path, JSON.stringify(cfg, null, 2));
+  logger.info({ teacherUsername, groupSlug, letter, path }, "Ruta Traefik equipo escrita");
+}
+
+export async function removeTeamRoute(groupSlug: string, letter: string): Promise<void> {
+  if (!isTraefikConfigEnabled()) return;
+  const ignoreMissing = (err: NodeJS.ErrnoException) => {
+    if (err.code !== "ENOENT") throw err;
+  };
+  await unlink(teamFileFor(groupSlug, letter)).catch(ignoreMissing);
+  logger.info({ groupSlug, letter }, "Ruta Traefik equipo eliminada");
+}
+
 export async function rebuildAllRoutes(baseDomain: string | null): Promise<void> {
   if (!isTraefikConfigEnabled()) return;
   if (!baseDomain) {
@@ -129,7 +182,7 @@ export async function rebuildAllRoutes(baseDomain: string | null): Promise<void>
   await Promise.all(
     existing
       .filter((f) =>
-        (f.startsWith("student-") || f.startsWith("teacher-")) &&
+        (f.startsWith("student-") || f.startsWith("teacher-") || f.startsWith("team-")) &&
         (f.endsWith(".yaml") || f.endsWith(".json")),
       )
       .map((f) => unlink(join(DYNAMIC_DIR, f)).catch(() => undefined)),
@@ -146,12 +199,26 @@ export async function rebuildAllRoutes(baseDomain: string | null): Promise<void>
     .from(teachersTable)
     .where(eq(teachersTable.dolibarrSyncStatus, "synced"));
 
+  // Equipos: una ruta por equipo apuntando al contenedor del profesor de su grupo.
+  const teams = await db
+    .select({
+      letter: teamsTable.letter,
+      groupName: groupsTable.name,
+      teacherUsername: teachersTable.username,
+    })
+    .from(teamsTable)
+    .innerJoin(groupsTable, eq(groupsTable.id, teamsTable.groupId))
+    .innerJoin(teachersTable, eq(teachersTable.id, groupsTable.teacherId));
+
   await Promise.all([
     ...students.map((s) => writeStudentRoute(s.username, baseDomain)),
     ...teachers.map((t) => writeTeacherRoute(t.username, baseDomain)),
+    ...teams.map((tm) =>
+      writeTeamRoute(tm.teacherUsername, groupNameToSlug(tm.groupName), tm.letter, baseDomain),
+    ),
   ]);
   logger.info(
-    { students: students.length, teachers: teachers.length },
+    { students: students.length, teachers: teachers.length, teams: teams.length },
     "Rutas Traefik reconstruidas desde BD",
   );
 }

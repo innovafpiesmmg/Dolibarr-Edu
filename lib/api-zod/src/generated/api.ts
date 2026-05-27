@@ -1182,3 +1182,388 @@ export const GetStatsResponse = zod.object({
 })
 
 
+/**
+ * @summary Login del profesor para su panel
+ */
+export const TeacherLoginBody = zod.object({
+  "username": zod.string(),
+  "password": zod.string()
+})
+
+export const TeacherLoginResponse = zod.object({
+  "token": zod.string(),
+  "teacher": zod.object({
+  "id": zod.number(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "email": zod.string(),
+  "username": zod.string(),
+  "dolibarrSyncStatus": zod.string()
+})
+})
+
+
+/**
+ * @summary Perfil del profesor autenticado
+ */
+export const GetTeacherMeResponse = zod.object({
+  "id": zod.number(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "email": zod.string(),
+  "username": zod.string(),
+  "dolibarrSyncStatus": zod.string()
+})
+
+
+/**
+ * @summary Credenciales de acceso al Dolibarr del profesor
+ */
+export const GetTeacherMyDolibarrResponse = zod.object({
+  "deployed": zod.boolean(),
+  "publicUrl": zod.string().nullish(),
+  "containerName": zod.string(),
+  "dolibarrUsername": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish()
+})
+
+
+/**
+ * @summary Grupos del profesor autenticado
+ */
+export const ListTeacherMyGroupsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "courseYear": zod.string(),
+  "description": zod.string().nullish(),
+  "teacherId": zod.number(),
+  "teacherName": zod.string(),
+  "studentCount": zod.number(),
+  "createdAt": zod.coerce.date()
+})
+export const ListTeacherMyGroupsResponse = zod.array(ListTeacherMyGroupsResponseItem)
+
+
+/**
+ * @summary Estadísticas del profesor
+ */
+export const GetTeacherMyStatsResponse = zod.object({
+  "groupCount": zod.number(),
+  "studentCount": zod.number(),
+  "activeContainers": zod.number(),
+  "teamCount": zod.number()
+})
+
+
+/**
+ * @summary Alumnos de los grupos del profesor
+ */
+export const ListTeacherMyStudentsQueryParams = zod.object({
+  "search": zod.coerce.string().optional(),
+  "groupId": zod.coerce.number().optional()
+})
+
+export const ListTeacherMyStudentsResponseItem = zod.object({
+  "id": zod.number(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "email": zod.string(),
+  "username": zod.string(),
+  "groupId": zod.number(),
+  "groupName": zod.string(),
+  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncError": zod.string().nullish(),
+  "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del alumno.'),
+  "companyName": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+export const ListTeacherMyStudentsResponse = zod.array(ListTeacherMyStudentsResponseItem)
+
+
+/**
+ * @summary Crear alumno en uno de mis grupos
+ */
+
+
+export const createTeacherMyStudentBodyUsernameMin = 3;
+
+export const createTeacherMyStudentBodyPasswordMin = 6;
+
+
+
+export const CreateTeacherMyStudentBody = zod.object({
+  "firstName": zod.string().min(1),
+  "lastName": zod.string().min(1),
+  "email": zod.string().email(),
+  "username": zod.string().min(createTeacherMyStudentBodyUsernameMin),
+  "password": zod.string().min(createTeacherMyStudentBodyPasswordMin),
+  "groupId": zod.number(),
+  "companyName": zod.string().optional()
+})
+
+
+/**
+ * @summary Actualizar alumno
+ */
+export const UpdateTeacherMyStudentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+export const updateTeacherMyStudentBodyUsernameMin = 3;
+
+export const updateTeacherMyStudentBodyPasswordMin = 6;
+
+
+
+export const UpdateTeacherMyStudentBody = zod.object({
+  "firstName": zod.string().min(1),
+  "lastName": zod.string().min(1),
+  "email": zod.string().email(),
+  "username": zod.string().min(updateTeacherMyStudentBodyUsernameMin),
+  "password": zod.string().min(updateTeacherMyStudentBodyPasswordMin),
+  "groupId": zod.number(),
+  "companyName": zod.string().optional()
+})
+
+export const UpdateTeacherMyStudentResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Eliminar alumno
+ */
+export const DeleteTeacherMyStudentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary Resetear contraseña de un alumno
+ */
+export const ResetTeacherMyStudentPasswordParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ResetTeacherMyStudentPasswordResponse = zod.object({
+  "ok": zod.boolean(),
+  "newPassword": zod.string()
+})
+
+
+export const DeployTeacherMyStudentDolibarrParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeployTeacherMyStudentDolibarrResponse = zod.object({
+  "ok": zod.boolean(),
+  "publicUrl": zod.string().optional(),
+  "state": zod.string().optional()
+})
+
+
+export const StartTeacherMyStudentDolibarrParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const StartTeacherMyStudentDolibarrResponse = zod.object({
+  "ok": zod.boolean(),
+  "state": zod.string()
+})
+
+
+export const StopTeacherMyStudentDolibarrParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const StopTeacherMyStudentDolibarrResponse = zod.object({
+  "ok": zod.boolean(),
+  "state": zod.string()
+})
+
+
+export const GetTeacherMyStudentDolibarrStateParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTeacherMyStudentDolibarrStateResponse = zod.object({
+  "studentId": zod.number(),
+  "exists": zod.boolean(),
+  "state": zod.string(),
+  "containerName": zod.string(),
+  "publicUrl": zod.string().nullish(),
+  "startedAt": zod.string().nullish()
+})
+
+
+export const DestroyTeacherMyStudentDolibarrParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+export const ListTeacherMyTeamsResponseItem = zod.object({
+  "id": zod.number(),
+  "groupId": zod.number(),
+  "groupName": zod.string(),
+  "letter": zod.string(),
+  "name": zod.string(),
+  "dolibarrSyncStatus": zod.string(),
+  "dolibarrSyncError": zod.string().nullish(),
+  "memberCount": zod.number(),
+  "createdAt": zod.coerce.date()
+})
+export const ListTeacherMyTeamsResponse = zod.array(ListTeacherMyTeamsResponseItem)
+
+
+
+
+
+export const CreateTeacherMyTeamBody = zod.object({
+  "groupId": zod.number(),
+  "name": zod.string().min(1)
+})
+
+
+export const GetTeacherMyTeamParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTeacherMyTeamResponse = zod.object({
+  "id": zod.number(),
+  "groupId": zod.number(),
+  "groupName": zod.string(),
+  "letter": zod.string(),
+  "name": zod.string(),
+  "dolibarrSyncStatus": zod.string(),
+  "dolibarrSyncError": zod.string().nullish(),
+  "memberCount": zod.number(),
+  "createdAt": zod.coerce.date()
+}).and(zod.object({
+  "members": zod.array(zod.object({
+  "id": zod.number(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "username": zod.string(),
+  "email": zod.string()
+})),
+  "publicUrl": zod.string().nullish(),
+  "teacherUsername": zod.string().optional()
+}))
+
+
+export const DeleteTeacherMyTeamParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+export const AddTeacherMyTeamMemberParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AddTeacherMyTeamMemberBody = zod.object({
+  "studentId": zod.number()
+})
+
+export const AddTeacherMyTeamMemberResponse = zod.object({
+  "ok": zod.boolean(),
+  "provisioned": zod.boolean(),
+  "provisionError": zod.string().nullish()
+})
+
+
+export const RemoveTeacherMyTeamMemberParams = zod.object({
+  "id": zod.coerce.number(),
+  "studentId": zod.coerce.number()
+})
+
+export const RemoveTeacherMyTeamMemberResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+export const ListTeamsQueryParams = zod.object({
+  "groupId": zod.coerce.number().optional()
+})
+
+export const ListTeamsResponseItem = zod.object({
+  "id": zod.number(),
+  "groupId": zod.number(),
+  "groupName": zod.string(),
+  "letter": zod.string(),
+  "name": zod.string(),
+  "dolibarrSyncStatus": zod.string(),
+  "dolibarrSyncError": zod.string().nullish(),
+  "memberCount": zod.number(),
+  "createdAt": zod.coerce.date()
+})
+export const ListTeamsResponse = zod.array(ListTeamsResponseItem)
+
+
+
+
+
+export const CreateTeamBody = zod.object({
+  "groupId": zod.number(),
+  "name": zod.string().min(1)
+})
+
+
+export const GetTeamParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTeamResponse = zod.object({
+  "id": zod.number(),
+  "groupId": zod.number(),
+  "groupName": zod.string(),
+  "letter": zod.string(),
+  "name": zod.string(),
+  "dolibarrSyncStatus": zod.string(),
+  "dolibarrSyncError": zod.string().nullish(),
+  "memberCount": zod.number(),
+  "createdAt": zod.coerce.date()
+}).and(zod.object({
+  "members": zod.array(zod.object({
+  "id": zod.number(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "username": zod.string(),
+  "email": zod.string()
+})),
+  "publicUrl": zod.string().nullish(),
+  "teacherUsername": zod.string().optional()
+}))
+
+
+export const DeleteTeamParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+export const AddTeamMemberParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AddTeamMemberBody = zod.object({
+  "studentId": zod.number()
+})
+
+export const AddTeamMemberResponse = zod.object({
+  "ok": zod.boolean(),
+  "provisioned": zod.boolean(),
+  "provisionError": zod.string().nullish()
+})
+
+
+export const RemoveTeamMemberParams = zod.object({
+  "id": zod.coerce.number(),
+  "studentId": zod.coerce.number()
+})
+
+export const RemoveTeamMemberResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+

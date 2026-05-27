@@ -11,6 +11,7 @@ export const studentsTable = pgTable("students", {
   username: varchar("username", { length: 100 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   groupId: integer("group_id").notNull().references(() => groupsTable.id, { onDelete: "restrict" }),
+  teamId: integer("team_id"),
   dolibarrEntityId: integer("dolibarr_entity_id"),
   dolibarrUserId: integer("dolibarr_user_id"),
   dolibarrSyncStatus: varchar("dolibarr_sync_status", { length: 20 }).notNull().default("pending"),

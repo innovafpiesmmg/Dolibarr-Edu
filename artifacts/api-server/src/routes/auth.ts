@@ -3,9 +3,11 @@ import { createHash, timingSafeEqual } from "crypto";
 import { db } from "@workspace/db";
 import { studentsTable, groupsTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
-import { AdminLoginBody, StudentLoginBody } from "@workspace/api-zod";
-import { adminPasswordHash, generateAdminToken } from "../lib/auth";
+import { AdminLoginBody, StudentLoginBody, TeacherLoginBody } from "@workspace/api-zod";
+import { teachersTable, teamsTable } from "@workspace/db/schema";
+import { adminPasswordHash, generateAdminToken, generateTeacherToken } from "../lib/auth";
 import { publicUrl, deterministicPassword } from "../lib/student-dolibarr";
+import { publicUrl as teamPublicUrl, groupNameToSlug } from "../lib/team-dolibarr";
 import { getBaseDomain } from "./settings";
 
 const router = Router();
@@ -77,6 +79,47 @@ router.post("/auth/student-login", async (req, res) => {
   }
 
   const baseDomain = await getBaseDomain();
+
+  // Si el alumno está en un equipo, redirigir al Dolibarr del equipo (contenedor del profe)
+  // y usar las credenciales personales del alumno creadas dentro de ese contenedor.
+  const [fullStudent] = await db
+    .select({
+      teamId: studentsTable.teamId,
+      groupName: groupsTable.name,
+    })
+    .from(studentsTable)
+    .leftJoin(groupsTable, eq(studentsTable.groupId, groupsTable.id))
+    .where(eq(studentsTable.id, student.id))
+    .limit(1);
+
+  if (fullStudent?.teamId && baseDomain) {
+    const [team] = await db
+      .select({ letter: teamsTable.letter, groupName: groupsTable.name })
+      .from(teamsTable)
+      .leftJoin(groupsTable, eq(teamsTable.groupId, groupsTable.id))
+      .where(eq(teamsTable.id, fullStudent.teamId))
+      .limit(1);
+
+    if (team) {
+      const groupSlug = groupNameToSlug(team.groupName ?? "");
+      const teamUrl = teamPublicUrl(groupSlug, team.letter, baseDomain);
+      // La contraseña del Dolibarr de equipo se guardó en students.dolibarrPassword
+      // cuando se aprovisionó el usuario dentro del contenedor del profesor.
+      // Si por algún motivo no hay (provisión fallida), devolvemos cadena vacía:
+      // el alumno verá la URL pero no podrá hacer autologin hasta que se reintente.
+      res.json({
+        firstName: student.firstName,
+        lastName: student.lastName,
+        companyName: student.companyName ?? null,
+        groupName: student.groupName ?? "",
+        dolibarrUrl: teamUrl,
+        dolibarrUsername: student.username,
+        dolibarrPassword: student.dolibarrPassword ?? "",
+      });
+      return;
+    }
+  }
+
   const deployed = baseDomain && student.dolibarrSyncStatus === "synced";
   const dolibarrUrl = deployed ? publicUrl(student.username, baseDomain) : "";
   const dolibarrPassword = deployed
@@ -91,6 +134,39 @@ router.post("/auth/student-login", async (req, res) => {
     dolibarrUrl,
     dolibarrUsername: deployed ? "admin" : "",
     dolibarrPassword,
+  });
+});
+
+// POST /auth/teacher-login — profesor accede a su panel de supervisión
+router.post("/auth/teacher-login", async (req, res) => {
+  const parsed = TeacherLoginBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ message: "Usuario y contraseña requeridos" });
+    return;
+  }
+
+  const inputHash = createHash("sha256").update(parsed.data.password).digest("hex");
+
+  const [teacher] = await db
+    .select()
+    .from(teachersTable)
+    .where(eq(teachersTable.username, parsed.data.username))
+    .limit(1);
+
+  if (!teacher || teacher.passwordHash !== inputHash) {
+    res.status(401).json({ message: "Usuario o contraseña incorrectos" });
+    return;
+  }
+
+  res.json({
+    token: generateTeacherToken(teacher.id, teacher.passwordHash),
+    teacher: {
+      id: teacher.id,
+      firstName: teacher.firstName,
+      lastName: teacher.lastName,
+      email: teacher.email,
+      username: teacher.username,
+    },
   });
 });
 

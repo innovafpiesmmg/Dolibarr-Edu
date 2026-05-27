@@ -1,5 +1,6 @@
 export * from "./teachers";
 export * from "./groups";
+export * from "./teams";
 export * from "./students";
 export * from "./employees";
 export * from "./payrolls";
