@@ -38,7 +38,6 @@ const navigation = [
 
 export function AppSidebar() {
   const [location] = useLocation();
-  const { logout } = useAuth();
 
   const dolibarrUrl = import.meta.env.VITE_DOLIBARR_BASE_URL as string | undefined;
 
@@ -94,16 +93,7 @@ export function AppSidebar() {
           </a>
         )}
 
-        <div className="border-t border-sidebar-border pt-3 space-y-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-            onClick={() => { logout(); window.location.href = "/"; }}
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Cerrar sesión
-          </Button>
+        <div className="border-t border-sidebar-border pt-3">
           <div className="text-xs text-sidebar-foreground/40 text-center">
             ERP EDU v1.0
           </div>
@@ -114,14 +104,24 @@ export function AppSidebar() {
 }
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
+  const { logout } = useAuth();
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <main className="flex-1 flex flex-col min-w-0">
-          <header className="h-16 border-b border-border bg-card flex items-center px-6 gap-4 shrink-0">
-            <SidebarTrigger />
+          <header className="h-16 border-b border-blue-900/40 bg-blue-700 text-white flex items-center px-6 gap-4 shrink-0">
+            <SidebarTrigger className="text-white hover:bg-white/10 hover:text-white" />
             <div className="flex-1" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white/90 hover:bg-white/10 hover:text-white"
+              onClick={() => { logout(); window.location.href = "/"; }}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Cerrar sesión
+            </Button>
           </header>
           <div className="flex-1 p-6 overflow-auto">
             <div className="mx-auto max-w-6xl w-full">
