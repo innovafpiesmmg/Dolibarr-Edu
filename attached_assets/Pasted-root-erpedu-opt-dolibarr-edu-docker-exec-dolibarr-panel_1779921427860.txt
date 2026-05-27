@@ -1,0 +1,36 @@
+root@erpedu:/opt/dolibarr-edu# docker exec dolibarr_panel_db psql -U panel -d panel -c "\d teachers"
+docker exec dolibarr_panel_db psql -U panel -d panel -c "\dt"
+                                            Table "public.teachers"
+        Column         |           Type           | Collation | Nullable |               Default                
+-----------------------+--------------------------+-----------+----------+--------------------------------------
+ id                    | integer                  |           | not null | nextval('teachers_id_seq'::regclass)
+ first_name            | character varying(100)   |           | not null | 
+ last_name             | character varying(100)   |           | not null | 
+ email                 | character varying(255)   |           | not null | 
+ username              | character varying(100)   |           | not null | 
+ password_hash         | text                     |           | not null | 
+ phone                 | character varying(50)    |           |          | 
+ nextcloud_sync_status | character varying(20)    |           | not null | 'pending'::character varying
+ created_at            | timestamp with time zone |           | not null | now()
+ updated_at            | timestamp with time zone |           | not null | now()
+Indexes:
+    "teachers_pkey" PRIMARY KEY, btree (id)
+    "teachers_email_unique" UNIQUE CONSTRAINT, btree (email)
+    "teachers_username_unique" UNIQUE CONSTRAINT, btree (username)
+Referenced by:
+    TABLE "groups" CONSTRAINT "groups_teacher_id_teachers_id_fk" FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE RESTRICT
+
+           List of relations
+ Schema |     Name      | Type  | Owner 
+--------+---------------+-------+-------
+ public | activity_logs | table | panel
+ public | employees     | table | panel
+ public | groups        | table | panel
+ public | payrolls      | table | panel
+ public | settings      | table | panel
+ public | ss_payments   | table | panel
+ public | students      | table | panel
+ public | teachers      | table | panel
+(8 rows)
+
+root@erpedu:/opt/dolibarr-edu# 
