@@ -13,6 +13,7 @@ import {
 } from "./docker";
 import {
   ensureStudentDatabase,
+  relaxStudentSecurityForSso,
   dropStudentDatabase,
   enableModulesInStudentDb,
   isMariaDBConfigured,
@@ -162,6 +163,11 @@ export async function deployStudentDolibarr(
     await enableModulesInStudentDb(dbName(username), DEFAULT_DOLIBARR_MODULE_CONSTANTS).catch((e) =>
       logger.warn({ err: e, username }, "No se pudo activar módulos por SQL (continuando)"),
     );
+
+    // 3c) Desactivar CSRF token para permitir SSO autosubmit desde el panel
+    await relaxStudentSecurityForSso(dbName(username)).catch((e) =>
+      logger.warn({ err: e, username }, "No se pudo desactivar CSRF (continuando)"),
+    );
   } catch (err) {
     // Compensación: si el contenedor se creó pero el health-check falló, lo
     // dejamos *parado* (no destruimos) para diagnóstico, pero invalidamos token.
@@ -235,5 +241,6 @@ export async function enableStudentModules(username: string): Promise<{ enabled:
     throw new Error("MariaDB no configurada — no se puede activar módulos.");
   }
   await enableModulesInStudentDb(dbName(username), DEFAULT_DOLIBARR_MODULE_CONSTANTS);
+  await relaxStudentSecurityForSso(dbName(username));
   return { enabled: [...DEFAULT_DOLIBARR_MODULE_CONSTANTS] };
 }

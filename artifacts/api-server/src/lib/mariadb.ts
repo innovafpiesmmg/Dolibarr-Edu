@@ -159,6 +159,46 @@ export async function enableModulesInStudentDb(
   }
 }
 
+// Desactiva la comprobación de token CSRF de Dolibarr para el alumno.
+//
+// Por defecto Dolibarr exige un token CSRF en todos los POST autenticados (y,
+// con `MAIN_SECURITY_CSRF_WITH_TOKEN >= 2`, también en el POST de login). Como
+// nuestro flujo SSO desde el panel envía un POST autosubmit a `index.php` con
+// usuario/contraseña pero sin token (no podemos compartir cookie de sesión
+// cross-domain), Dolibarr lo rechaza con "Token not provided".
+//
+// La solución es fijar `MAIN_SECURITY_CSRF_WITH_TOKEN=0` en `llx_const` para
+// la entidad del alumno. Es seguro porque cada contenedor Dolibarr es
+// single-tenant (un único usuario), no se exponen formularios públicos y el
+// acceso pasa siempre por nuestra autenticación previa en el panel.
+//
+// También fijamos `MAIN_SECURITY_DISABLEANTIFLOOD=1` para evitar bloqueos
+// puntuales en autosubmits repetidos durante desarrollo.
+export async function relaxStudentSecurityForSso(dbName: string): Promise<void> {
+  const cfg = rootConfig();
+  if (!cfg) throw new Error("MariaDB no configurada");
+  assertIdent("dbName", dbName);
+
+  const conn = await mysql.createConnection({ ...cfg, database: dbName });
+  try {
+    const [tables] = await conn.query<mysql.RowDataPacket[]>(
+      "SHOW TABLES LIKE 'llx_const'",
+    );
+    if (!Array.isArray(tables) || tables.length === 0) {
+      throw new Error(`Tabla llx_const no encontrada en ${dbName}`);
+    }
+    const sql =
+      `INSERT INTO llx_const (name, entity, value, type, visible, note) VALUES ` +
+      `('MAIN_SECURITY_CSRF_WITH_TOKEN', 1, '0', 'chaine', 0, NULL), ` +
+      `('MAIN_SECURITY_DISABLEANTIFLOOD', 1, '1', 'chaine', 0, NULL) ` +
+      `ON DUPLICATE KEY UPDATE value=VALUES(value)`;
+    await conn.query(sql);
+    logger.info({ dbName }, "CSRF token check desactivado en Dolibarr alumno");
+  } finally {
+    await conn.end().catch(() => {});
+  }
+}
+
 export async function dropStudentDatabase(dbName: string, dbUser: string): Promise<void> {
   const cfg = rootConfig();
   if (!cfg) throw new Error("MariaDB no configurada");
