@@ -1,6 +1,8 @@
 # ERP EDU
 
-![ERP EDU Logo](artifacts/panel/public/images/logo.png)
+<p align="center">
+  <img src="artifacts/panel/public/images/logo.png" alt="ERP EDU Logo" width="200" />
+</p>
 
 Plataforma de gestión educativa para centros de **Formación Profesional de Administración de Empresas**. Proporciona a cada alumno una empresa ERP real e independiente, con profesores gestionando grupos y alumnos desde un panel centralizado.
 
