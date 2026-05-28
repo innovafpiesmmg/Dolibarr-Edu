@@ -242,8 +242,11 @@ export async function disableCsrfInConfPhp(containerName: string): Promise<void>
   // expone formulario público y todo acceso pasa por la auth previa del panel.
   // Idempotente: comprueba si ya fue parcheado antes de tocar nada.
   const mainIncPath = "/var/www/html/main.inc.php";
+  const backupPath = `${mainIncPath}.dolibarr-edu-bak`;
   const marker = "DOLIBARR_EDU_NOCSRF_PATCH";
-  // Construimos el script como heredoc para no pelear con quoting de comillas.
+  // REGLA DE ORO: NUNCA tocar main.inc.php sin backup + lint + rollback.
+  // Cualquier fallo deja un 500 generalizado en Dolibarr (también afecta a
+  // /login.php, no sólo al SSO). Si php -l falla tras patchear, restauramos.
   const sh =
     `set -e; ` +
     // 1) conf.php: $dolibarr_nocsrfcheck=1 (cubre rama MAIN_SECURITY_CSRF_WITH_TOKEN).
@@ -251,34 +254,48 @@ export async function disableCsrfInConfPhp(containerName: string): Promise<void>
     `  sed -i '/dolibarr_nocsrfcheck/d; /NOCSRFCHECK/d' ${confPath}; ` +
     `  echo '$dolibarr_nocsrfcheck = 1;' >> ${confPath}; ` +
     `fi; ` +
-    // 2) main.inc.php: inyectar define('NOCSRFCHECK',1) JUSTO después del <?php.
     `if [ ! -f ${mainIncPath} ]; then echo no-main; exit 0; fi; ` +
-    `if grep -q ${marker} ${mainIncPath}; then echo already-patched-main; ` +
-    `else ` +
-    `  TMP=$(mktemp); ` +
-    // primera línea (el <?php) tal cual
-    `  head -n 1 ${mainIncPath} > "$TMP"; ` +
-    // nuestra línea de bypass — usamos heredoc con delimitador entre comillas
-    // simples para que el shell no toque NADA del cuerpo (ni $, ni \, ni ").
-    `  cat >> "$TMP" <<'EOF_NOCSRF_PATCH'\n` +
+    // 2) Si ya está parcheado, salir.
+    `if grep -q ${marker} ${mainIncPath}; then echo already-patched-main; exit 0; fi; ` +
+    // 3) Backup ANTES de tocar nada. Si ya existe un backup previo, no lo
+    //    sobreescribimos para no perder el original tras patches sucesivos
+    //    fallidos.
+    `if [ ! -f ${backupPath} ]; then cp ${mainIncPath} ${backupPath}; fi; ` +
+    // 4) Construir versión parcheada en /tmp.
+    `TMP=$(mktemp); ` +
+    `head -n 1 ${mainIncPath} > "$TMP"; ` +
+    `cat >> "$TMP" <<'EOF_NOCSRF_PATCH'\n` +
     `if (!defined("NOCSRFCHECK")) { define("NOCSRFCHECK", 1); } /* ${marker} */\n` +
     `EOF_NOCSRF_PATCH\n` +
-    // resto del fichero desde la línea 2
-    `  tail -n +2 ${mainIncPath} >> "$TMP"; ` +
-    `  mv "$TMP" ${mainIncPath}; ` +
+    `tail -n +2 ${mainIncPath} >> "$TMP"; ` +
+    // 5) Lint en el fichero temporal — si falla, NO sobreescribimos el original.
+    `if ! php -l "$TMP" > /tmp/lint.out 2>&1; then ` +
+    `  echo "LINT_FAIL:"; cat /tmp/lint.out; rm -f "$TMP"; exit 1; ` +
     `fi; ` +
-    // 3) Sanity check de sintaxis PHP.
-    `php -l ${mainIncPath} > /dev/null && echo lint-ok; ` +
-    // 4) Verifica rápido que el marker está donde toca (líneas 1-3).
-    `head -n 3 ${mainIncPath} | grep -q ${marker} && echo marker-on-top; ` +
-    // 5) Recarga Apache para descartar opcache de páginas previas.
+    // 6) Lint pasó: aplicamos.
+    `cp "$TMP" ${mainIncPath}; rm -f "$TMP"; ` +
+    // 7) Verificación final: marker en las primeras 3 líneas + sintaxis del fichero ya in-place.
+    `head -n 3 ${mainIncPath} | grep -q ${marker} || { echo "MARKER_MISSING"; cp ${backupPath} ${mainIncPath}; exit 1; }; ` +
+    `php -l ${mainIncPath} > /dev/null || { echo "POST_LINT_FAIL"; cp ${backupPath} ${mainIncPath}; exit 1; }; ` +
+    // 8) Recarga Apache.
     `(apache2ctl graceful 2>/dev/null || /usr/sbin/apache2ctl graceful 2>/dev/null || kill -USR1 1 2>/dev/null) || true; ` +
     `echo applied`;
   try {
     const out = await execInContainer(containerName, ["sh", "-c", sh]);
     logger.info({ containerName, result: out.trim() }, "CSRF parche aplicado a main.inc.php");
   } catch (err) {
-    logger.warn({ containerName, err: String(err) }, "No se pudo parchear CSRF — el alumno tendrá que escribir credenciales");
+    // Si por lo que sea petó, intenta restaurar el backup automáticamente.
+    logger.warn({ containerName, err: String(err) }, "Patch de CSRF falló — intentando restaurar backup");
+    try {
+      const restore = await execInContainer(containerName, ["sh", "-c",
+        `if [ -f ${backupPath} ]; then cp ${backupPath} ${mainIncPath}; ` +
+        `(apache2ctl graceful 2>/dev/null || kill -USR1 1) || true; echo restored; ` +
+        `else echo no-backup; fi`,
+      ]);
+      logger.info({ containerName, result: restore.trim() }, "Backup restaurado");
+    } catch (restoreErr) {
+      logger.error({ containerName, restoreErr: String(restoreErr) }, "No se pudo restaurar el backup");
+    }
   }
 }
 
