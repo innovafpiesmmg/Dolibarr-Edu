@@ -261,6 +261,12 @@ export async function disableCsrfInConfPhp(containerName: string): Promise<void>
     //    sobreescribimos para no perder el original tras patches sucesivos
     //    fallidos.
     `if [ ! -f ${backupPath} ]; then cp ${mainIncPath} ${backupPath}; fi; ` +
+    // 3b) Capturar owner y modo del original ANTES de tocar. Si por lo que sea
+    //     el patch nuke los permisos (ej. usar 'mv' desde /tmp que arrastra
+    //     root:root 0600), restauramos al final. Sin esto, Apache (www-data)
+    //     no podrá leer main.inc.php y Dolibarr devolverá 500 en TODO.
+    `ORIG_OWNER=$(stat -c '%u:%g' ${mainIncPath}); ` +
+    `ORIG_MODE=$(stat -c '%a' ${mainIncPath}); ` +
     // 4) Construir versión parcheada en /tmp.
     `TMP=$(mktemp); ` +
     `head -n 1 ${mainIncPath} > "$TMP"; ` +
@@ -272,11 +278,15 @@ export async function disableCsrfInConfPhp(containerName: string): Promise<void>
     `if ! php -l "$TMP" > /tmp/lint.out 2>&1; then ` +
     `  echo "LINT_FAIL:"; cat /tmp/lint.out; rm -f "$TMP"; exit 1; ` +
     `fi; ` +
-    // 6) Lint pasó: aplicamos.
+    // 6) Lint pasó: aplicamos con 'cp' (preserva inode → preserva perms),
+    //    y por si acaso forzamos owner+mode originales.
     `cp "$TMP" ${mainIncPath}; rm -f "$TMP"; ` +
-    // 7) Verificación final: marker en las primeras 3 líneas + sintaxis del fichero ya in-place.
-    `head -n 3 ${mainIncPath} | grep -q ${marker} || { echo "MARKER_MISSING"; cp ${backupPath} ${mainIncPath}; exit 1; }; ` +
-    `php -l ${mainIncPath} > /dev/null || { echo "POST_LINT_FAIL"; cp ${backupPath} ${mainIncPath}; exit 1; }; ` +
+    `chown "$ORIG_OWNER" ${mainIncPath} 2>/dev/null || chown www-data:www-data ${mainIncPath} || true; ` +
+    `chmod "$ORIG_MODE" ${mainIncPath} 2>/dev/null || chmod 644 ${mainIncPath} || true; ` +
+    // 7) Verificación final: marker en las primeras 3 líneas + sintaxis del fichero ya in-place + lecturable por www-data.
+    `head -n 3 ${mainIncPath} | grep -q ${marker} || { echo "MARKER_MISSING"; cp ${backupPath} ${mainIncPath}; chown "$ORIG_OWNER" ${mainIncPath} 2>/dev/null; chmod "$ORIG_MODE" ${mainIncPath} 2>/dev/null; exit 1; }; ` +
+    `php -l ${mainIncPath} > /dev/null || { echo "POST_LINT_FAIL"; cp ${backupPath} ${mainIncPath}; chown "$ORIG_OWNER" ${mainIncPath} 2>/dev/null; chmod "$ORIG_MODE" ${mainIncPath} 2>/dev/null; exit 1; }; ` +
+    `su -s /bin/sh www-data -c "cat ${mainIncPath} > /dev/null" 2>/dev/null || { echo "WWW_DATA_CANT_READ"; chmod 644 ${mainIncPath}; chown www-data:www-data ${mainIncPath}; }; ` +
     // 8) Recarga Apache.
     `(apache2ctl graceful 2>/dev/null || /usr/sbin/apache2ctl graceful 2>/dev/null || kill -USR1 1 2>/dev/null) || true; ` +
     `echo applied`;

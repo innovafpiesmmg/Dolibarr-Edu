@@ -1,0 +1,75 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# docker exec dolibarr_alu_juanperez tail -40 /var/log/apache2/error.log
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# docker exec dolibarr_alu_juanperez tail -40 /var/log/apache2/error.log
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# docker exec dolibarr_alu_juanperez tail -40 /var/log/apache2/error.log
+docker logs --tail 60 dolibarr_alu_juanperez
+docker exec dolibarr_alu_juanperez grep dolibarr_main_db /var/www/html/conf/conf.php
+Importing data from llx_const.sql ...
+Importing data from llx_expensereport_ik-expensereport.sql ...
+Importing data from llx_holiday_config.sql ...
+Set some default const ...
+DOLI_INIT_DEMO is off. No demo data load to do.
+Create SuperAdmin account ...
+Enable user module ...
+Activating module User... OK
+Set cron key to ...
+Run scripts into docker-init.d if there is ...
+Database Version is : 23.0.2
+Files Version are   : 23.0.2
+Schema update is not required ... Enjoy !
+usermod: no changes
+Update ownership for files in /var/www/documents ...
+
+*** You can connect to the docker Mariadb with:
+sudo docker exec -it nameofwebcontainer-mariadb-1 bash
+mariadb -uroot -p'MYSQL_ROOT_PASSWORD' -h localhost
+or
+mariadb -uxxx -p'yyy' -h mariadb  with xxx in /run/secrets/mysql-user and yyy in /run/secrets/mysql-password if these files were used in docker-compose.yml
+ls /var/lib/mysql
+
+*** You can connect to the docker Dolibarr with:
+sudo docker exec -it nameofwebcontainer-web-1 bash
+ls /var/www/documents
+ls /var/www/html
+
+*** You can access persistent directory from the host with:
+ls /home/dolibarr_mariadb_latest
+ls /home/dolibarr_documents_latest
+ls /home/dolibarr_custom_latest
+
+*** You can connect to the running Dolibarr web application with:
+http://127.0.0.1:port
+
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.7. Set the 'ServerName' directive globally to suppress this message
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.7. Set the 'ServerName' directive globally to suppress this message
+[Thu May 28 00:15:13.023518 2026] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.67 (Debian) configured -- resuming normal operations
+[Thu May 28 00:15:13.023755 2026] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+172.18.0.3 - - [28/May/2026:00:15:14 +0000] "GET / HTTP/1.1" 200 2951 "-" "node"
+[Thu May 28 00:15:14.648458 2026] [mpm_prefork:notice] [pid 1:tid 1] AH00171: Graceful restart requested, doing restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.7. Set the 'ServerName' directive globally to suppress this message
+[Thu May 28 00:15:14.684090 2026] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.67 (Debian) configured -- resuming normal operations
+[Thu May 28 00:15:14.684106 2026] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+172.18.0.3 - - [28/May/2026:00:15:15 +0000] "GET / HTTP/1.1" 200 2918 "-" "node"
+[Thu May 28 00:15:15.251097 2026] [mpm_prefork:notice] [pid 1:tid 1] AH00171: Graceful restart requested, doing restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.7. Set the 'ServerName' directive globally to suppress this message
+[Thu May 28 00:15:15.294128 2026] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.67 (Debian) configured -- resuming normal operations
+[Thu May 28 00:15:15.294174 2026] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Thu May 28 00:15:19.190837 2026] [mpm_prefork:notice] [pid 1:tid 1] AH00171: Graceful restart requested, doing restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.7. Set the 'ServerName' directive globally to suppress this message
+[Thu May 28 00:15:19.241102 2026] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.67 (Debian) configured -- resuming normal operations
+[Thu May 28 00:15:19.241336 2026] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Thu May 28 00:15:26.699922 2026] [php:warn] [pid 3404:tid 3404] [client 172.18.0.4:58806] PHP Warning:  require(/var/www/html/main.inc.php): Failed to open stream: Permission denied in /var/www/html/index.php on line 33
+[Thu May 28 00:15:26.699970 2026] [php:error] [pid 3404:tid 3404] [client 172.18.0.4:58806] PHP Fatal error:  Uncaught Error: Failed opening required 'main.inc.php' (include_path='.:/usr/local/lib/php') in /var/www/html/index.php:33\nStack trace:\n#0 {main}\n  thrown in /var/www/html/index.php on line 33
+172.18.0.4 - - [28/May/2026:00:15:26 +0000] "GET / HTTP/1.1" 500 169 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+[Thu May 28 00:15:30.988218 2026] [php:warn] [pid 3405:tid 3405] [client 172.18.0.4:57766] PHP Warning:  require(/var/www/html/main.inc.php): Failed to open stream: Permission denied in /var/www/html/index.php on line 33
+[Thu May 28 00:15:30.988282 2026] [php:error] [pid 3405:tid 3405] [client 172.18.0.4:57766] PHP Fatal error:  Uncaught Error: Failed opening required 'main.inc.php' (include_path='.:/usr/local/lib/php') in /var/www/html/index.php:33\nStack trace:\n#0 {main}\n  thrown in /var/www/html/index.php on line 33
+172.18.0.4 - - [28/May/2026:00:15:30 +0000] "GET / HTTP/1.1" 500 169 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+$dolibarr_main_db_port='3306';
+$dolibarr_main_db_name='doli_juanperez';
+$dolibarr_main_db_prefix='llx_';
+$dolibarr_main_db_user='doli_juanperez';
+$dolibarr_main_db_pass='3a66daed2d7035524baccc74';
+$dolibarr_main_db_type='mysqli';
+$dolibarr_main_db_host='db';
+$dolibarr_main_db_character_set='utf8mb4';
+$dolibarr_main_db_collation='utf8mb4_unicode_ci';
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 

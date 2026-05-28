@@ -46,6 +46,35 @@ if (!defined("NOCSRFCHECK")) { define("NOCSRFCHECK", 1); } /* DOLIBARR_EDU_NOCSR
 `artifacts/api-server/src/lib/docker.ts`, llamado tras cada deploy y por
 `autoHealCsrf` al loguearse el alumno.
 
+## NUNCA usar `mv` desde `/tmp` — destroza permisos
+
+Síntoma: tras patchear, Dolibarr devuelve 500 GENERALIZADO con este error en
+`/var/log/apache2/error.log` dentro del contenedor:
+
+```
+PHP Warning: require(/var/www/html/main.inc.php): Failed to open stream:
+Permission denied in /var/www/html/index.php on line 33
+```
+
+Causa: `mktemp` crea `/tmp/tmp.XXX` con `0600 root:root` (porque `docker exec`
+corre como root). `mv "$TMP" /var/www/html/main.inc.php` **arrastra esos
+perms al destino** → Apache, que corre como `www-data`, no puede leerlo.
+
+**Usar `cp` en su lugar** (preserva inode del destino → preserva owner+mode),
+y aun así capturar owner+mode con `stat` antes de tocar y restaurarlos al
+final con `chown`/`chmod` como cinturón y tirantes. La verificación final
+debe incluir un `su -s /bin/sh www-data -c "cat main.inc.php > /dev/null"`
+para detectar el problema ANTES de devolver "applied".
+
+Recuperación manual del contenedor afectado:
+```bash
+docker exec dolibarr_alu_USUARIO sh -c '
+  chown www-data:www-data /var/www/html/main.inc.php
+  chmod 644 /var/www/html/main.inc.php
+  apache2ctl graceful 2>/dev/null || kill -USR1 1
+'
+```
+
 ## REGLA DE ORO — backup + lint + rollback
 
 Tocar `main.inc.php` mal deja a **toda** la app Dolibarr con HTTP 500 (no solo
