@@ -32,6 +32,14 @@ function SyncStatusBadge({ status, error }: { status: string; error?: string | n
       </Badge>
     );
   }
+  if (status === "deploying") {
+    return (
+      <Badge variant="outline" className="text-blue-700 dark:text-blue-400 border-blue-500/30 bg-blue-500/10">
+        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 mr-1.5 inline-block animate-pulse" />
+        Desplegando… (puede tardar 2-3 min)
+      </Badge>
+    );
+  }
   if (status === "error") {
     return (
       <div className="space-y-1">

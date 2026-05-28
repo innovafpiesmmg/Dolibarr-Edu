@@ -18,6 +18,7 @@ export type TeacherDolibarrSyncStatus = typeof TeacherDolibarrSyncStatus[keyof t
 
 export const TeacherDolibarrSyncStatus = {
   pending: 'pending',
+  deploying: 'deploying',
   synced: 'synced',
   error: 'error',
 } as const;
@@ -82,6 +83,7 @@ export type StudentDolibarrSyncStatus = typeof StudentDolibarrSyncStatus[keyof t
 
 export const StudentDolibarrSyncStatus = {
   pending: 'pending',
+  deploying: 'deploying',
   synced: 'synced',
   error: 'error',
 } as const;
@@ -332,6 +334,7 @@ export type EmployeeDolibarrSyncStatus = typeof EmployeeDolibarrSyncStatus[keyof
 
 export const EmployeeDolibarrSyncStatus = {
   pending: 'pending',
+  deploying: 'deploying',
   synced: 'synced',
   error: 'error',
 } as const;
@@ -456,6 +459,7 @@ export type PayrollDolibarrSyncStatus = typeof PayrollDolibarrSyncStatus[keyof t
 
 export const PayrollDolibarrSyncStatus = {
   pending: 'pending',
+  deploying: 'deploying',
   synced: 'synced',
   error: 'error',
 } as const;

@@ -336,6 +336,10 @@ export default function AlumnosList() {
                             <Badge variant="outline" className="text-[10px] h-5 px-1.5 text-green-600 border-green-200 bg-green-50 dark:bg-green-500/10">
                               ✓ Contenedor activo
                             </Badge>
+                          ) : student.dolibarrSyncStatus === "deploying" ? (
+                            <Badge variant="outline" className="text-[10px] h-5 px-1.5 text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-500/10">
+                              Desplegando…
+                            </Badge>
                           ) : student.dolibarrSyncStatus === "error" ? (
                             <Badge variant="outline" className="text-[10px] h-5 px-1.5 text-red-600 border-red-200 bg-red-50 dark:bg-red-500/10">
                               ✗ Error sync

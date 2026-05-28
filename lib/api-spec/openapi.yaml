@@ -1604,7 +1604,7 @@ components:
         phone:              { type: ["string", "null"] }
         groupCount:         { type: integer }
         studentCount:       { type: integer }
-        dolibarrSyncStatus: { type: string, enum: [pending, synced, error] }
+        dolibarrSyncStatus: { type: string, enum: [pending, deploying, synced, error] }
         dolibarrSyncError:  { type: ["string", "null"] }
         dolibarrPassword:   { type: ["string", "null"], description: "Contraseña admin del Dolibarr propio del profesor." }
         createdAt:          { type: string, format: date-time }
@@ -1688,7 +1688,7 @@ components:
         username:            { type: string }
         groupId:             { type: integer }
         groupName:           { type: string }
-        dolibarrSyncStatus:  { type: string, enum: [pending, synced, error] }
+        dolibarrSyncStatus:  { type: string, enum: [pending, deploying, synced, error] }
         dolibarrSyncError:   { type: ["string", "null"] }
         dolibarrPassword:    { type: ["string", "null"], description: "Contraseña admin del Dolibarr propio del alumno." }
         companyName:         { type: ["string", "null"] }
@@ -1854,7 +1854,7 @@ components:
         irpfRate:             { type: number }
         active:               { type: boolean }
         dolibarrEmployeeId:   { type: ["integer", "null"] }
-        dolibarrSyncStatus:   { type: string, enum: [pending, synced, error] }
+        dolibarrSyncStatus:   { type: string, enum: [pending, deploying, synced, error] }
         dolibarrSyncError:    { type: ["string", "null"] }
         createdAt:            { type: string, format: date-time }
 
@@ -1930,7 +1930,7 @@ components:
             id:                   { type: integer }
             dolibarrSalaryId:     { type: ["integer", "null"] }
             dolibarrAccountingId: { type: ["integer", "null"] }
-            dolibarrSyncStatus:   { type: string, enum: [pending, synced, error] }
+            dolibarrSyncStatus:   { type: string, enum: [pending, deploying, synced, error] }
             dolibarrSyncError:    { type: ["string", "null"] }
             createdAt:            { type: string, format: date-time }
 

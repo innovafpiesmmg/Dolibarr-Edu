@@ -72,7 +72,7 @@ export const ListTeachersResponseItem = zod.object({
   "phone": zod.string().nullish(),
   "groupCount": zod.number().optional(),
   "studentCount": zod.number().optional(),
-  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncStatus": zod.enum(['pending', 'deploying', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del profesor.'),
   "createdAt": zod.coerce.date()
@@ -117,7 +117,7 @@ export const GetTeacherResponse = zod.object({
   "phone": zod.string().nullish(),
   "groupCount": zod.number().optional(),
   "studentCount": zod.number().optional(),
-  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncStatus": zod.enum(['pending', 'deploying', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del profesor.'),
   "createdAt": zod.coerce.date()
@@ -151,7 +151,7 @@ export const UpdateTeacherResponse = zod.object({
   "phone": zod.string().nullish(),
   "groupCount": zod.number().optional(),
   "studentCount": zod.number().optional(),
-  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncStatus": zod.enum(['pending', 'deploying', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del profesor.'),
   "createdAt": zod.coerce.date()
@@ -341,7 +341,7 @@ export const GetGroupResponse = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncStatus": zod.enum(['pending', 'deploying', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del alumno.'),
   "companyName": zod.string().nullish(),
@@ -402,7 +402,7 @@ export const ListGroupStudentsResponseItem = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncStatus": zod.enum(['pending', 'deploying', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del alumno.'),
   "companyName": zod.string().nullish(),
@@ -432,7 +432,7 @@ export const ListStudentsResponseItem = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncStatus": zod.enum(['pending', 'deploying', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del alumno.'),
   "companyName": zod.string().nullish(),
@@ -511,7 +511,7 @@ export const GetStudentResponse = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncStatus": zod.enum(['pending', 'deploying', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del alumno.'),
   "companyName": zod.string().nullish(),
@@ -546,7 +546,7 @@ export const UpdateStudentResponse = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncStatus": zod.enum(['pending', 'deploying', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del alumno.'),
   "companyName": zod.string().nullish(),
@@ -806,7 +806,7 @@ export const ListEmployeesResponseItem = zod.object({
   "irpfRate": zod.number(),
   "active": zod.boolean(),
   "dolibarrEmployeeId": zod.number().nullish(),
-  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncStatus": zod.enum(['pending', 'deploying', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
@@ -867,7 +867,7 @@ export const GetEmployeeResponse = zod.object({
   "irpfRate": zod.number(),
   "active": zod.boolean(),
   "dolibarrEmployeeId": zod.number().nullish(),
-  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncStatus": zod.enum(['pending', 'deploying', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
@@ -923,7 +923,7 @@ export const UpdateEmployeeResponse = zod.object({
   "irpfRate": zod.number(),
   "active": zod.boolean(),
   "dolibarrEmployeeId": zod.number().nullish(),
-  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncStatus": zod.enum(['pending', 'deploying', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
@@ -1035,7 +1035,7 @@ export const ListPayrollsResponseItem = zod.object({
   "id": zod.number(),
   "dolibarrSalaryId": zod.number().nullish(),
   "dolibarrAccountingId": zod.number().nullish(),
-  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncStatus": zod.enum(['pending', 'deploying', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 }))
@@ -1109,7 +1109,7 @@ export const GetPayrollResponse = zod.object({
   "id": zod.number(),
   "dolibarrSalaryId": zod.number().nullish(),
   "dolibarrAccountingId": zod.number().nullish(),
-  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncStatus": zod.enum(['pending', 'deploying', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 }))
@@ -1274,7 +1274,7 @@ export const ListTeacherMyStudentsResponseItem = zod.object({
   "username": zod.string(),
   "groupId": zod.number(),
   "groupName": zod.string(),
-  "dolibarrSyncStatus": zod.enum(['pending', 'synced', 'error']),
+  "dolibarrSyncStatus": zod.enum(['pending', 'deploying', 'synced', 'error']),
   "dolibarrSyncError": zod.string().nullish(),
   "dolibarrPassword": zod.string().nullish().describe('Contraseña admin del Dolibarr propio del alumno.'),
   "companyName": zod.string().nullish(),

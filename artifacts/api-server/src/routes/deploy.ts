@@ -73,52 +73,52 @@ router.post("/students/:id/deploy", async (req, res) => {
   const student = await loadStudent(studentId);
   if (!student) { res.status(404).json({ error: "Alumno no encontrado" }); return; }
 
-  try {
-    const result = await deployStudentDolibarr(student, readDeployEnv(baseDomain));
+  // El deploy real puede tardar hasta ~3 min (instalación inicial de Dolibarr +
+  // migración de schema). Cualquier proxy (Cloudflare ~100s, navegador) cierra
+  // la conexión antes. Por eso marcamos "deploying" y devolvemos al instante;
+  // el frontend pollea /students/:id/dolibarr/state y la propia ficha del alumno.
+  await db
+    .update(studentsTable)
+    .set({ dolibarrSyncStatus: "deploying", dolibarrSyncError: null })
+    .where(eq(studentsTable.id, studentId));
 
-    await db
-      .update(studentsTable)
-      .set({
-        dolibarrPassword: result.adminPassword,
-        dolibarrSyncStatus: result.state === "running" ? "synced" : "error",
-        dolibarrSyncError: null,
-      })
-      .where(eq(studentsTable.id, studentId));
+  res.status(202).json({
+    studentId,
+    status: "deploying" as const,
+    containerName: null,
+    publicUrl: null,
+    containerState: null,
+    dolibarrPassword: null,
+    error: null,
+  });
 
-    await logActivity({
-      action: "deploy_student",
-      entityType: "student",
-      entityId: studentId,
-      entityName: `${student.firstName} ${student.lastName}`,
-      details: `Contenedor ${result.containerName} desplegado en ${result.hostname}`,
-    });
-
-    res.json({
-      studentId,
-      status: "synced" as const,
-      containerName: result.containerName,
-      publicUrl: result.publicUrl,
-      containerState: result.state,
-      dolibarrPassword: result.adminPassword,
-      error: null,
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    await db
-      .update(studentsTable)
-      .set({ dolibarrSyncStatus: "error", dolibarrSyncError: message })
-      .where(eq(studentsTable.id, studentId));
-
-    res.json({
-      studentId,
-      status: "error" as const,
-      containerName: null,
-      publicUrl: null,
-      containerState: null,
-      dolibarrPassword: null,
-      error: message,
-    });
-  }
+  // Trabajo de fondo — no await; los errores se persisten en BD.
+  void (async () => {
+    try {
+      const result = await deployStudentDolibarr(student, readDeployEnv(baseDomain));
+      await db
+        .update(studentsTable)
+        .set({
+          dolibarrPassword: result.adminPassword,
+          dolibarrSyncStatus: result.state === "running" ? "synced" : "error",
+          dolibarrSyncError: null,
+        })
+        .where(eq(studentsTable.id, studentId));
+      await logActivity({
+        action: "deploy_student",
+        entityType: "student",
+        entityId: studentId,
+        entityName: `${student.firstName} ${student.lastName}`,
+        details: `Contenedor ${result.containerName} desplegado en ${result.hostname}`,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error desconocido";
+      await db
+        .update(studentsTable)
+        .set({ dolibarrSyncStatus: "error", dolibarrSyncError: message })
+        .where(eq(studentsTable.id, studentId));
+    }
+  })();
 });
 
 // ── POST /groups/:id/deploy-all ──────────────────────────────────────────────
@@ -316,52 +316,48 @@ router.post("/teachers/:id/deploy", async (req, res) => {
   const teacher = await loadTeacher(teacherId);
   if (!teacher) { res.status(404).json({ error: "Profesor no encontrado" }); return; }
 
-  try {
-    const result = await deployTeacherDolibarr(teacher, readDeployEnv(baseDomain));
+  // Async: ver explicación en el deploy de alumno.
+  await db
+    .update(teachersTable)
+    .set({ dolibarrSyncStatus: "deploying", dolibarrSyncError: null })
+    .where(eq(teachersTable.id, teacherId));
 
-    await db
-      .update(teachersTable)
-      .set({
-        dolibarrPassword: result.adminPassword,
-        dolibarrSyncStatus: result.state === "running" ? "synced" : "error",
-        dolibarrSyncError: null,
-      })
-      .where(eq(teachersTable.id, teacherId));
+  res.status(202).json({
+    teacherId,
+    status: "deploying" as const,
+    containerName: null,
+    publicUrl: null,
+    containerState: null,
+    dolibarrPassword: null,
+    error: null,
+  });
 
-    await logActivity({
-      action: "deploy_teacher",
-      entityType: "teacher",
-      entityId: teacherId,
-      entityName: `${teacher.firstName} ${teacher.lastName}`,
-      details: `Contenedor ${result.containerName} desplegado en ${result.hostname}`,
-    });
-
-    res.json({
-      teacherId,
-      status: "synced" as const,
-      containerName: result.containerName,
-      publicUrl: result.publicUrl,
-      containerState: result.state,
-      dolibarrPassword: result.adminPassword,
-      error: null,
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    await db
-      .update(teachersTable)
-      .set({ dolibarrSyncStatus: "error", dolibarrSyncError: message })
-      .where(eq(teachersTable.id, teacherId));
-
-    res.json({
-      teacherId,
-      status: "error" as const,
-      containerName: null,
-      publicUrl: null,
-      containerState: null,
-      dolibarrPassword: null,
-      error: message,
-    });
-  }
+  void (async () => {
+    try {
+      const result = await deployTeacherDolibarr(teacher, readDeployEnv(baseDomain));
+      await db
+        .update(teachersTable)
+        .set({
+          dolibarrPassword: result.adminPassword,
+          dolibarrSyncStatus: result.state === "running" ? "synced" : "error",
+          dolibarrSyncError: null,
+        })
+        .where(eq(teachersTable.id, teacherId));
+      await logActivity({
+        action: "deploy_teacher",
+        entityType: "teacher",
+        entityId: teacherId,
+        entityName: `${teacher.firstName} ${teacher.lastName}`,
+        details: `Contenedor ${result.containerName} desplegado en ${result.hostname}`,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error desconocido";
+      await db
+        .update(teachersTable)
+        .set({ dolibarrSyncStatus: "error", dolibarrSyncError: message })
+        .where(eq(teachersTable.id, teacherId));
+    }
+  })();
 });
 
 router.post("/teachers/:id/dolibarr/start", async (req, res) => {
