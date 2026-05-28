@@ -4,3 +4,4 @@
 - [Dolibarr — activación de módulos por SQL](dolibarr-module-activation.md) — escribir en `llx_const` con `entity=1` (NO 0), `ON DUPLICATE KEY UPDATE`, y los nombres no siempre coinciden (modProjet→PROJET).
 - [Dolibarr CSRF bypass para SSO](dolibarr-csrf-bypass.md) — único método que funciona es parchear `/var/www/html/main.inc.php` (no conf.php, no auto_prepend_file); SIEMPRE con backup+lint+rollback o se cae todo el ERP con 500.
 - [Despliegues largos async + enum exhaustivo](long-running-deploy-async.md) — ops >100s necesitan 202 + estado intermedio; toda rama de UI debe enumerarlo o muestra "Error desconocido" falso positivo.
+- [Equipos = contenedor Dolibarr propio](team-container-per-team.md) — un Dolibarr aislado por equipo (admin=profe); alumno unido = stop individual + provisión en el del equipo; al salir, start del individual.

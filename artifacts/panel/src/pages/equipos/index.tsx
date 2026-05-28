@@ -8,11 +8,16 @@ import {
   useRemoveTeamMember,
   useListGroups,
   useListStudents,
+  useDeployTeam,
+  useStartTeamContainer,
+  useStopTeamContainer,
+  useRestartTeamContainer,
+  useDestroyTeamContainer,
   getListTeamsQueryKey,
   getGetTeamQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, ExternalLink, UserPlus, UserMinus } from "lucide-react";
+import { Plus, Trash2, ExternalLink, UserPlus, UserMinus, Play, Square, RotateCw, Rocket, ServerCrash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,8 +38,13 @@ function TeamDetail({ teamId, onClose }: { teamId: number; onClose: () => void }
     queryClient.invalidateQueries({ queryKey: getGetTeamQueryKey(teamId) });
     queryClient.invalidateQueries({ queryKey: getListTeamsQueryKey() });
   };
-  const addMember = useAddTeamMember({ mutation: { onSuccess: () => { invalidate(); setStudentToAdd(undefined); toast({ title: "Miembro añadido" }); }, onError: (err: any) => toast({ variant: "destructive", title: "Error", description: err?.data?.error ?? "" }) } });
+  const addMember = useAddTeamMember({ mutation: { onSuccess: (r: any) => { invalidate(); setStudentToAdd(undefined); toast({ title: r?.provisioned ? "Miembro añadido y provisionado" : "Miembro añadido", description: r?.provisionError ?? undefined }); }, onError: (err: any) => toast({ variant: "destructive", title: "Error", description: err?.data?.error ?? "" }) } });
   const removeMember = useRemoveTeamMember({ mutation: { onSuccess: () => { invalidate(); toast({ title: "Miembro quitado" }); } } });
+  const deploy = useDeployTeam({ mutation: { onSuccess: () => { invalidate(); toast({ title: "Despliegue iniciado", description: "Puede tardar unos minutos." }); }, onError: (err: any) => toast({ variant: "destructive", title: "Error", description: err?.data?.error ?? "" }) } });
+  const startC = useStartTeamContainer({ mutation: { onSuccess: () => { invalidate(); toast({ title: "Contenedor iniciado" }); } } });
+  const stopC = useStopTeamContainer({ mutation: { onSuccess: () => { invalidate(); toast({ title: "Contenedor detenido" }); } } });
+  const restartC = useRestartTeamContainer({ mutation: { onSuccess: () => { invalidate(); toast({ title: "Contenedor reiniciado" }); } } });
+  const destroyC = useDestroyTeamContainer({ mutation: { onSuccess: () => { invalidate(); toast({ title: "Contenedor eliminado", description: "El equipo sigue existiendo; puedes volver a desplegarlo." }); } } });
 
   const availableStudents = (students ?? []).filter((s) => !(team?.members ?? []).some((m) => m.id === s.id));
 
@@ -47,12 +57,42 @@ function TeamDetail({ teamId, onClose }: { teamId: number; onClose: () => void }
         </DialogHeader>
         {isLoading || !team ? <Skeleton className="h-40" /> : (
           <div className="space-y-4">
-            {team.publicUrl && (
-              <a href={team.publicUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary inline-flex items-center gap-1 hover:underline">
-                <ExternalLink className="h-3 w-3" /> {team.publicUrl}
-              </a>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <Badge variant={team.dolibarrSyncStatus === "synced" ? "default" : team.dolibarrSyncStatus === "error" ? "destructive" : "secondary"}>
+                {team.dolibarrSyncStatus}
+              </Badge>
+              {team.publicUrl && team.dolibarrSyncStatus === "synced" && (
+                <a href={team.publicUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary inline-flex items-center gap-1 hover:underline truncate">
+                  <ExternalLink className="h-3 w-3" /> {team.publicUrl}
+                </a>
+              )}
+            </div>
+            {team.dolibarrSyncError && (
+              <div className="text-xs text-destructive bg-destructive/10 rounded-md px-2 py-1 inline-flex items-center gap-1">
+                <ServerCrash className="h-3 w-3" /> {team.dolibarrSyncError}
+              </div>
             )}
-            <Badge variant={team.dolibarrSyncStatus === "synced" ? "default" : "secondary"}>{team.dolibarrSyncStatus}</Badge>
+
+            <div className="flex flex-wrap gap-2 border border-border rounded-lg p-2 bg-muted/30">
+              {team.dolibarrSyncStatus !== "synced" && team.dolibarrSyncStatus !== "deploying" && (
+                <Button size="sm" onClick={() => deploy.mutate({ id: teamId })} disabled={deploy.isPending}>
+                  <Rocket className="h-4 w-4 mr-1" />{team.dolibarrSyncStatus === "error" ? "Reintentar despliegue" : "Desplegar Dolibarr del equipo"}
+                </Button>
+              )}
+              {team.dolibarrSyncStatus === "deploying" && (
+                <span className="text-xs text-muted-foreground inline-flex items-center px-2">Desplegando — esto puede tardar varios minutos…</span>
+              )}
+              {team.dolibarrSyncStatus === "synced" && (
+                <>
+                  <Button size="sm" variant="outline" onClick={() => startC.mutate({ id: teamId })}><Play className="h-4 w-4 mr-1" />Iniciar</Button>
+                  <Button size="sm" variant="outline" onClick={() => stopC.mutate({ id: teamId })}><Square className="h-4 w-4 mr-1" />Parar</Button>
+                  <Button size="sm" variant="outline" onClick={() => restartC.mutate({ id: teamId })}><RotateCw className="h-4 w-4 mr-1" />Reiniciar</Button>
+                  <Button size="sm" variant="ghost" className="text-destructive ml-auto" onClick={() => { if (confirm("¿Destruir contenedor y BD del equipo? El equipo seguirá existiendo.")) destroyC.mutate({ id: teamId }); }}>
+                    <Trash2 className="h-4 w-4 mr-1" />Destruir
+                  </Button>
+                </>
+              )}
+            </div>
 
             <div>
               <h3 className="font-semibold mb-2">Miembros ({team.members.length})</h3>

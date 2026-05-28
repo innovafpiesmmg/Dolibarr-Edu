@@ -8,7 +8,7 @@ import {
   containerName as teacherContainerName,
   publicHostname as teacherPublicHostname,
 } from "./teacher-dolibarr";
-import { groupNameToSlug } from "./team-dolibarr";
+import { groupNameToSlug, publicHostname as teamPublicHostname, teamContainerName } from "./team-dolibarr";
 
 const DYNAMIC_DIR = process.env.TRAEFIK_DYNAMIC_DIR ?? "/etc/traefik/dynamic";
 
@@ -116,12 +116,12 @@ export async function removeTeacherRoute(username: string): Promise<void> {
   logger.info({ username }, "Ruta Traefik profesor eliminada");
 }
 
-// ── Rutas para equipos (apuntan al contenedor del profesor del grupo) ───────
+// ── Rutas para equipos (apuntan al PROPIO contenedor del equipo) ────────────
 function teamFileFor(groupSlug: string, letter: string): string {
   return join(DYNAMIC_DIR, `team-${letter.toLowerCase()}-${groupSlug}.yaml`);
 }
 
-function teamRouteConfig(teacherUsername: string, hostname: string, groupSlug: string, letter: string): unknown {
+function teamRouteConfig(hostname: string, groupSlug: string, letter: string): unknown {
   const id = `team-${letter.toLowerCase()}-${groupSlug}`;
   return {
     http: {
@@ -135,7 +135,7 @@ function teamRouteConfig(teacherUsername: string, hostname: string, groupSlug: s
       services: {
         [id]: {
           loadBalancer: {
-            servers: [{ url: `http://${teacherContainerName(teacherUsername)}:80` }],
+            servers: [{ url: `http://${teamContainerName(groupSlug, letter)}:80` }],
           },
         },
       },
@@ -144,7 +144,6 @@ function teamRouteConfig(teacherUsername: string, hostname: string, groupSlug: s
 }
 
 export async function writeTeamRoute(
-  teacherUsername: string,
   groupSlug: string,
   letter: string,
   baseDomain: string,
@@ -152,11 +151,11 @@ export async function writeTeamRoute(
   if (!isTraefikConfigEnabled()) return;
   if (!baseDomain) return;
   await mkdir(DYNAMIC_DIR, { recursive: true });
-  const hostname = `equipo-${letter.toLowerCase()}-${groupSlug}.${baseDomain}`;
-  const cfg = teamRouteConfig(teacherUsername, hostname, groupSlug, letter);
+  const hostname = teamPublicHostname(groupSlug, letter, baseDomain);
+  const cfg = teamRouteConfig(hostname, groupSlug, letter);
   const path = teamFileFor(groupSlug, letter);
   await writeFile(path, JSON.stringify(cfg, null, 2));
-  logger.info({ teacherUsername, groupSlug, letter, path }, "Ruta Traefik equipo escrita");
+  logger.info({ groupSlug, letter, path }, "Ruta Traefik equipo escrita");
 }
 
 export async function removeTeamRoute(groupSlug: string, letter: string): Promise<void> {
@@ -199,22 +198,22 @@ export async function rebuildAllRoutes(baseDomain: string | null): Promise<void>
     .from(teachersTable)
     .where(eq(teachersTable.dolibarrSyncStatus, "synced"));
 
-  // Equipos: una ruta por equipo apuntando al contenedor del profesor de su grupo.
+  // Equipos: una ruta por equipo apuntando a SU PROPIO contenedor (dolibarr_eqp_*).
+  // Solo los que están desplegados (synced); el resto no tiene contenedor que rutear.
   const teams = await db
     .select({
       letter: teamsTable.letter,
       groupName: groupsTable.name,
-      teacherUsername: teachersTable.username,
     })
     .from(teamsTable)
     .innerJoin(groupsTable, eq(groupsTable.id, teamsTable.groupId))
-    .innerJoin(teachersTable, eq(teachersTable.id, groupsTable.teacherId));
+    .where(eq(teamsTable.dolibarrSyncStatus, "synced"));
 
   await Promise.all([
     ...students.map((s) => writeStudentRoute(s.username, baseDomain)),
     ...teachers.map((t) => writeTeacherRoute(t.username, baseDomain)),
     ...teams.map((tm) =>
-      writeTeamRoute(tm.teacherUsername, groupNameToSlug(tm.groupName), tm.letter, baseDomain),
+      writeTeamRoute(groupNameToSlug(tm.groupName), tm.letter, baseDomain),
     ),
   ]);
   logger.info(

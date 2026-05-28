@@ -30,9 +30,22 @@ import {
 import { getTeacherContainerInfo } from "../lib/teacher-deploy";
 import { ensureStudentDatabase, isMariaDBConfigured } from "../lib/mariadb";
 import { dbName, dbUser, invalidateTokenCache } from "../lib/student-dolibarr";
-import { nextLetter, groupNameToSlug, publicUrl as teamPublicUrl } from "../lib/team-dolibarr";
-import { writeTeamRoute, removeTeamRoute } from "../lib/traefik-config";
-import { getTeacherDolibarrConfig } from "../lib/teacher-dolibarr";
+import {
+  nextLetter,
+  groupNameToSlug,
+  publicUrl as teamPublicUrl,
+  teamContainerName,
+  getTeamDolibarrConfig,
+} from "../lib/team-dolibarr";
+import { removeTeamRoute } from "../lib/traefik-config";
+import {
+  deployTeamDolibarr,
+  destroyTeamDolibarr,
+  startTeamContainer,
+  stopTeamContainer,
+  restartTeamContainer,
+  getTeamContainerInfo,
+} from "../lib/team-deploy";
 import { createDolibarrUser, deleteDolibarrUser, findDolibarrUserIdByLogin } from "../lib/dolibarr";
 import { logger } from "../lib/logger";
 
@@ -464,11 +477,178 @@ router.post("/teacher/me/teams", async (req, res) => {
     .from(teamsTable)
     .where(eq(teamsTable.groupId, groupId));
   const letter = nextLetter(used.map((r) => r.letter));
+
+  // Estado inicial "deploying" si podemos orquestar; el deploy async se lanza
+  // bajo demanda desde el frontend (POST /teams/:id/deploy del panel admin) o
+  // dejamos pending y el profe lo lanza desde su UI cuando esté listo.
   const [team] = await db
     .insert(teamsTable)
-    .values({ groupId, letter, name })
+    .values({ groupId, letter, name, dolibarrSyncStatus: "pending", dolibarrSyncError: null })
     .returning();
   res.status(201).json(team);
+});
+
+// ── POST /teacher/me/teams/:id/deploy — lanza despliegue del contenedor ────
+router.post("/teacher/me/teams/:id/deploy", async (req, res) => {
+  const t = (req as unknown as TeacherRequest).teacher;
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id) || id <= 0) {
+    res.status(400).json({ error: "ID inválido" });
+    return;
+  }
+  const [team] = await db
+    .select({
+      teamId: teamsTable.id,
+      letter: teamsTable.letter,
+      name: teamsTable.name,
+      groupId: teamsTable.groupId,
+      groupName: groupsTable.name,
+      teacherId: groupsTable.teacherId,
+      teacherUsername: teachersTable.username,
+      teacherEmail: teachersTable.email,
+      teacherDolibarrPassword: teachersTable.dolibarrPassword,
+    })
+    .from(teamsTable)
+    .innerJoin(groupsTable, eq(groupsTable.id, teamsTable.groupId))
+    .innerJoin(teachersTable, eq(teachersTable.id, groupsTable.teacherId))
+    .where(eq(teamsTable.id, id))
+    .limit(1);
+  if (!team || team.teacherId !== t.id) {
+    res.status(404).json({ error: "Equipo no encontrado" });
+    return;
+  }
+  if (!team.teacherDolibarrPassword) {
+    res.status(400).json({
+      error: "Despliega primero tu Dolibarr individual: sus credenciales se reutilizan como admin del Dolibarr del equipo.",
+    });
+    return;
+  }
+  const gate = canOrchestrate();
+  if (!gate.ok) { res.status(503).json({ error: gate.reason }); return; }
+  const baseDomain = await getBaseDomain();
+  if (!baseDomain) {
+    res.status(400).json({ error: "Falta configurar el dominio base." });
+    return;
+  }
+
+  await db
+    .update(teamsTable)
+    .set({ dolibarrSyncStatus: "deploying", dolibarrSyncError: null })
+    .where(eq(teamsTable.id, id));
+
+  res.status(202).json({ teamId: id, status: "deploying" as const });
+
+  const groupSlug = groupNameToSlug(team.groupName);
+  void (async () => {
+    try {
+      const result = await deployTeamDolibarr(
+        {
+          groupSlug,
+          letter: team.letter,
+          teamName: team.name,
+          groupName: team.groupName,
+          teacherUsername: team.teacherUsername,
+          teacherPassword: team.teacherDolibarrPassword,
+          teacherEmail: team.teacherEmail,
+        },
+        readDeployEnv(baseDomain),
+      );
+      await db
+        .update(teamsTable)
+        .set({
+          dolibarrSyncStatus: result.state === "running" ? "synced" : "error",
+          dolibarrSyncError: null,
+        })
+        .where(eq(teamsTable.id, id));
+      await logActivity({
+        action: "deploy_team",
+        entityType: "team",
+        entityId: id,
+        entityName: `${team.name} (${team.letter})`,
+        details: `Contenedor ${result.containerName} desplegado en ${result.hostname}`,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      req.log.error({ err, teamId: id }, "Deploy equipo (panel profe) falló");
+      await db
+        .update(teamsTable)
+        .set({ dolibarrSyncStatus: "error", dolibarrSyncError: message })
+        .where(eq(teamsTable.id, id));
+    }
+  })();
+});
+
+// ── Lifecycle del contenedor del equipo (panel profe) ─────────────────────
+async function loadOwnedTeam(teacherId: number, teamId: number) {
+  const [team] = await db
+    .select({
+      teamId: teamsTable.id,
+      letter: teamsTable.letter,
+      groupName: groupsTable.name,
+      teacherId: groupsTable.teacherId,
+    })
+    .from(teamsTable)
+    .innerJoin(groupsTable, eq(groupsTable.id, teamsTable.groupId))
+    .where(eq(teamsTable.id, teamId))
+    .limit(1);
+  if (!team || team.teacherId !== teacherId) return null;
+  return team;
+}
+
+router.post("/teacher/me/teams/:id/container/start", async (req, res) => {
+  const t = (req as unknown as TeacherRequest).teacher;
+  const id = Number(req.params.id);
+  const team = await loadOwnedTeam(t.id, id);
+  if (!team) { res.status(404).json({ error: "Equipo no encontrado" }); return; }
+  const groupSlug = groupNameToSlug(team.groupName);
+  try {
+    const info = await startTeamContainer(groupSlug, team.letter);
+    res.json({ teamId: id, state: info.state, exists: info.exists, containerName: teamContainerName(groupSlug, team.letter) });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
+  }
+});
+
+router.post("/teacher/me/teams/:id/container/stop", async (req, res) => {
+  const t = (req as unknown as TeacherRequest).teacher;
+  const id = Number(req.params.id);
+  const team = await loadOwnedTeam(t.id, id);
+  if (!team) { res.status(404).json({ error: "Equipo no encontrado" }); return; }
+  const groupSlug = groupNameToSlug(team.groupName);
+  try {
+    const info = await stopTeamContainer(groupSlug, team.letter);
+    res.json({ teamId: id, state: info.state, exists: info.exists, containerName: teamContainerName(groupSlug, team.letter) });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
+  }
+});
+
+router.post("/teacher/me/teams/:id/container/restart", async (req, res) => {
+  const t = (req as unknown as TeacherRequest).teacher;
+  const id = Number(req.params.id);
+  const team = await loadOwnedTeam(t.id, id);
+  if (!team) { res.status(404).json({ error: "Equipo no encontrado" }); return; }
+  const groupSlug = groupNameToSlug(team.groupName);
+  try {
+    const info = await restartTeamContainer(groupSlug, team.letter);
+    res.json({ teamId: id, state: info.state, exists: info.exists, containerName: teamContainerName(groupSlug, team.letter) });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
+  }
+});
+
+router.get("/teacher/me/teams/:id/container/state", async (req, res) => {
+  const t = (req as unknown as TeacherRequest).teacher;
+  const id = Number(req.params.id);
+  const team = await loadOwnedTeam(t.id, id);
+  if (!team) { res.status(404).json({ error: "Equipo no encontrado" }); return; }
+  const groupSlug = groupNameToSlug(team.groupName);
+  try {
+    const info = await getTeamContainerInfo(groupSlug, team.letter);
+    res.json({ teamId: id, state: info.state, exists: info.exists, containerName: teamContainerName(groupSlug, team.letter), startedAt: info.startedAt });
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
+  }
 });
 
 router.delete("/teacher/me/teams/:id", async (req, res) => {
@@ -489,8 +669,22 @@ router.delete("/teacher/me/teams/:id", async (req, res) => {
     res.status(404).json({ error: "Equipo no encontrado" });
     return;
   }
-  await db.update(studentsTable).set({ teamId: null }).where(eq(studentsTable.teamId, id));
   const groupSlug = groupNameToSlug(team.groupName);
+
+  // Liberar miembros y reanudar sus Dolibarrs individuales
+  const members = await db
+    .select({ username: studentsTable.username })
+    .from(studentsTable)
+    .where(eq(studentsTable.teamId, id));
+  await db.update(studentsTable).set({ teamId: null }).where(eq(studentsTable.teamId, id));
+  for (const m of members) {
+    await startStudentContainer(m.username).catch(() => undefined);
+  }
+
+  // Destruir contenedor + BD del equipo
+  await destroyTeamDolibarr(groupSlug, team.letter).catch((err) =>
+    logger.warn({ err, teamId: id }, "No se pudo destruir contenedor del equipo"),
+  );
   await removeTeamRoute(groupSlug, team.letter).catch(() => undefined);
   await db.delete(teamsTable).where(eq(teamsTable.id, id));
   res.status(204).send();
@@ -505,6 +699,8 @@ router.get("/teacher/me/teams/:id", async (req, res) => {
       groupId: teamsTable.groupId,
       letter: teamsTable.letter,
       name: teamsTable.name,
+      dolibarrSyncStatus: teamsTable.dolibarrSyncStatus,
+      dolibarrSyncError: teamsTable.dolibarrSyncError,
       groupName: groupsTable.name,
       teacherId: groupsTable.teacherId,
       teacherUsername: teachersTable.username,
@@ -534,6 +730,7 @@ router.get("/teacher/me/teams/:id", async (req, res) => {
     ...team,
     members,
     publicUrl: baseDomain ? teamPublicUrl(groupSlug, team.letter, baseDomain) : null,
+    containerName: teamContainerName(groupSlug, team.letter),
   });
 });
 
@@ -551,7 +748,7 @@ router.post("/teacher/me/teams/:id/members", async (req, res) => {
       teacherId: groupsTable.teacherId,
       teacherUsername: teachersTable.username,
       teacherDolibarrPassword: teachersTable.dolibarrPassword,
-      teacherSyncStatus: teachersTable.dolibarrSyncStatus,
+      dolibarrSyncStatus: teamsTable.dolibarrSyncStatus,
     })
     .from(teamsTable)
     .innerJoin(groupsTable, eq(groupsTable.id, teamsTable.groupId))
@@ -568,51 +765,45 @@ router.post("/teacher/me/teams/:id/members", async (req, res) => {
     return;
   }
 
+  const groupSlug = groupNameToSlug(team.groupName);
+
+  // 1) Marcar como miembro
   await db.update(studentsTable).set({ teamId }).where(eq(studentsTable.id, studentId));
+
+  // 2) Pausar Dolibarr individual del alumno (best effort)
   await stopStudentContainer(student.username).catch(() => undefined);
 
+  // 3) Provisionar usuario en el Dolibarr DEL EQUIPO (no del profe)
   let provisioned = false;
   let provisionError: string | null = null;
-  if (team.teacherSyncStatus === "synced" && team.teacherDolibarrPassword) {
+  if (team.dolibarrSyncStatus === "synced" && team.teacherDolibarrPassword) {
     try {
-      const config = await getTeacherDolibarrConfig({
-        username: team.teacherUsername,
-        dolibarrPassword: team.teacherDolibarrPassword,
+      const config = await getTeamDolibarrConfig({
+        groupSlug,
+        letter: team.letter,
+        teacherUsername: team.teacherUsername,
+        teacherPassword: team.teacherDolibarrPassword,
       });
-      const password = createHash("sha256")
-        .update(`team-member:${student.username}:${team.teacherUsername}:${teamId}`)
-        .digest("hex")
-        .slice(0, 24);
-      await createDolibarrUser(config, {
-        login: student.username,
-        password,
-        firstName: student.firstName,
-        lastName: student.lastName,
-        email: student.email,
-        admin: false,
-      });
-      await db
-        .update(studentsTable)
-        .set({ dolibarrPassword: password })
-        .where(eq(studentsTable.id, studentId));
-      provisioned = true;
+      const password = student.dolibarrPassword ?? null;
+      if (!password) {
+        provisionError = "El alumno no tiene dolibarrPassword (despliega su Dolibarr individual antes para inicializarla).";
+      } else {
+        await createDolibarrUser(config, {
+          login: student.username,
+          password,
+          firstName: student.firstName,
+          lastName: student.lastName,
+          email: student.email,
+          admin: false,
+        });
+        provisioned = true;
+      }
     } catch (err) {
       provisionError = err instanceof Error ? err.message : "Error provisión";
-      logger.error({ err, studentId, teamId }, "Falló provisión usuario en equipo");
+      logger.error({ err, studentId, teamId }, "Falló provisión usuario en Dolibarr del equipo");
     }
-  }
-
-  const baseDomain = await getBaseDomain();
-  if (baseDomain) {
-    const groupSlug = groupNameToSlug(team.groupName);
-    await writeTeamRoute(team.teacherUsername, groupSlug, team.letter, baseDomain).catch(() => undefined);
-    await db
-      .update(teamsTable)
-      .set({
-        dolibarrSyncStatus: provisioned ? "synced" : provisionError ? "error" : "pending",
-        dolibarrSyncError: provisionError,
-      })
-      .where(eq(teamsTable.id, teamId));
+  } else if (team.dolibarrSyncStatus !== "synced") {
+    provisionError = `Dolibarr del equipo no desplegado (status: ${team.dolibarrSyncStatus}). Despliégalo primero.`;
   }
 
   res.json({ ok: true, provisioned, provisionError });
@@ -625,10 +816,13 @@ router.delete("/teacher/me/teams/:id/members/:studentId", async (req, res) => {
   // Verifica ownership
   const [team] = await db
     .select({
+      teamId: teamsTable.id,
+      letter: teamsTable.letter,
+      groupName: groupsTable.name,
       teacherId: groupsTable.teacherId,
       teacherUsername: teachersTable.username,
       teacherDolibarrPassword: teachersTable.dolibarrPassword,
-      teacherSyncStatus: teachersTable.dolibarrSyncStatus,
+      dolibarrSyncStatus: teamsTable.dolibarrSyncStatus,
     })
     .from(teamsTable)
     .innerJoin(groupsTable, eq(groupsTable.id, teamsTable.groupId))
@@ -649,28 +843,33 @@ router.delete("/teacher/me/teams/:id/members/:studentId", async (req, res) => {
     return;
   }
 
-  if (team.teacherSyncStatus === "synced" && team.teacherDolibarrPassword) {
+  const groupSlug = groupNameToSlug(team.groupName);
+
+  // 1) Deprovisionar usuario en el Dolibarr DEL EQUIPO
+  if (team.dolibarrSyncStatus === "synced" && team.teacherDolibarrPassword) {
     try {
-      const config = await getTeacherDolibarrConfig({
-        username: team.teacherUsername,
-        dolibarrPassword: team.teacherDolibarrPassword,
+      const config = await getTeamDolibarrConfig({
+        groupSlug,
+        letter: team.letter,
+        teacherUsername: team.teacherUsername,
+        teacherPassword: team.teacherDolibarrPassword,
       });
       const userId = await findDolibarrUserIdByLogin(config, member.username);
-      if (userId) {
-        await deleteDolibarrUser(config, userId);
-      }
+      if (userId) await deleteDolibarrUser(config, userId);
     } catch (err) {
-      logger.warn(
-        { err, studentId, teamId },
-        "No se pudo eliminar usuario Dolibarr del equipo (continúa)",
-      );
+      logger.warn({ err, studentId, teamId }, "No se pudo eliminar usuario Dolibarr del equipo (continúa)");
     }
   }
 
+  // 2) Sacar del equipo (NO borramos su dolibarrPassword: la necesita para su Dolibarr individual)
   await db
     .update(studentsTable)
-    .set({ teamId: null, dolibarrPassword: null })
+    .set({ teamId: null })
     .where(and(eq(studentsTable.id, studentId), eq(studentsTable.teamId, teamId)));
+
+  // 3) Reanudar Dolibarr individual del alumno
+  await startStudentContainer(member.username).catch(() => undefined);
+
   res.json({ ok: true });
 });
 

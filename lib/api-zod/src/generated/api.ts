@@ -1452,12 +1452,74 @@ export const GetTeacherMyTeamResponse = zod.object({
   "email": zod.string()
 })),
   "publicUrl": zod.string().nullish(),
+  "containerName": zod.string().optional(),
   "teacherUsername": zod.string().optional()
 }))
 
 
 export const DeleteTeacherMyTeamParams = zod.object({
   "id": zod.coerce.number()
+})
+
+
+export const DeployTeacherMyTeamParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+export const StartTeacherMyTeamContainerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const StartTeacherMyTeamContainerResponse = zod.object({
+  "teamId": zod.number(),
+  "state": zod.string(),
+  "exists": zod.boolean(),
+  "containerName": zod.string(),
+  "publicUrl": zod.string().nullish(),
+  "startedAt": zod.string().nullish()
+})
+
+
+export const StopTeacherMyTeamContainerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const StopTeacherMyTeamContainerResponse = zod.object({
+  "teamId": zod.number(),
+  "state": zod.string(),
+  "exists": zod.boolean(),
+  "containerName": zod.string(),
+  "publicUrl": zod.string().nullish(),
+  "startedAt": zod.string().nullish()
+})
+
+
+export const RestartTeacherMyTeamContainerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RestartTeacherMyTeamContainerResponse = zod.object({
+  "teamId": zod.number(),
+  "state": zod.string(),
+  "exists": zod.boolean(),
+  "containerName": zod.string(),
+  "publicUrl": zod.string().nullish(),
+  "startedAt": zod.string().nullish()
+})
+
+
+export const GetTeacherMyTeamContainerStateParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTeacherMyTeamContainerStateResponse = zod.object({
+  "teamId": zod.number(),
+  "state": zod.string(),
+  "exists": zod.boolean(),
+  "containerName": zod.string(),
+  "publicUrl": zod.string().nullish(),
+  "startedAt": zod.string().nullish()
 })
 
 
@@ -1536,12 +1598,79 @@ export const GetTeamResponse = zod.object({
   "email": zod.string()
 })),
   "publicUrl": zod.string().nullish(),
+  "containerName": zod.string().optional(),
   "teacherUsername": zod.string().optional()
 }))
 
 
 export const DeleteTeamParams = zod.object({
   "id": zod.coerce.number()
+})
+
+
+export const DeployTeamParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+export const StartTeamContainerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const StartTeamContainerResponse = zod.object({
+  "teamId": zod.number(),
+  "state": zod.string(),
+  "exists": zod.boolean(),
+  "containerName": zod.string(),
+  "publicUrl": zod.string().nullish(),
+  "startedAt": zod.string().nullish()
+})
+
+
+export const StopTeamContainerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const StopTeamContainerResponse = zod.object({
+  "teamId": zod.number(),
+  "state": zod.string(),
+  "exists": zod.boolean(),
+  "containerName": zod.string(),
+  "publicUrl": zod.string().nullish(),
+  "startedAt": zod.string().nullish()
+})
+
+
+export const RestartTeamContainerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RestartTeamContainerResponse = zod.object({
+  "teamId": zod.number(),
+  "state": zod.string(),
+  "exists": zod.boolean(),
+  "containerName": zod.string(),
+  "publicUrl": zod.string().nullish(),
+  "startedAt": zod.string().nullish()
+})
+
+
+export const DestroyTeamContainerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+export const GetTeamContainerStateParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTeamContainerStateResponse = zod.object({
+  "teamId": zod.number(),
+  "state": zod.string(),
+  "exists": zod.boolean(),
+  "containerName": zod.string(),
+  "publicUrl": zod.string().nullish(),
+  "startedAt": zod.string().nullish()
 })
 
 

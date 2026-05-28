@@ -1460,6 +1460,76 @@ paths:
         "204":
           description: Eliminado
 
+  /teacher/me/teams/{id}/deploy:
+    post:
+      operationId: deployTeacherMyTeam
+      tags: [teacher-panel]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "202":
+          description: Despliegue iniciado
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeamDeployAccepted" } } }
+
+  /teacher/me/teams/{id}/container/start:
+    post:
+      operationId: startTeacherMyTeamContainer
+      tags: [teacher-panel]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Estado del contenedor
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeamContainerState" } } }
+
+  /teacher/me/teams/{id}/container/stop:
+    post:
+      operationId: stopTeacherMyTeamContainer
+      tags: [teacher-panel]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Estado del contenedor
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeamContainerState" } } }
+
+  /teacher/me/teams/{id}/container/restart:
+    post:
+      operationId: restartTeacherMyTeamContainer
+      tags: [teacher-panel]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Estado del contenedor
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeamContainerState" } } }
+
+  /teacher/me/teams/{id}/container/state:
+    get:
+      operationId: getTeacherMyTeamContainerState
+      tags: [teacher-panel]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Estado del contenedor
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeamContainerState" } } }
+
   /teacher/me/teams/{id}/members:
     post:
       operationId: addTeacherMyTeamMember
@@ -1515,8 +1585,8 @@ paths:
         required: true
         content: { application/json: { schema: { $ref: "#/components/schemas/TeamInput" } } }
       responses:
-        "201":
-          description: Equipo creado
+        "202":
+          description: Equipo creado y despliegue iniciado
           content: { application/json: { schema: { $ref: "#/components/schemas/Team" } } }
 
   /teams/{id}:
@@ -1538,6 +1608,89 @@ paths:
       responses:
         "204":
           description: Eliminado
+
+  /teams/{id}/deploy:
+    post:
+      operationId: deployTeam
+      tags: [teams]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "202":
+          description: Despliegue iniciado
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeamDeployAccepted" } } }
+
+  /teams/{id}/container/start:
+    post:
+      operationId: startTeamContainer
+      tags: [teams]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Estado del contenedor
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeamContainerState" } } }
+
+  /teams/{id}/container/stop:
+    post:
+      operationId: stopTeamContainer
+      tags: [teams]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Estado del contenedor
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeamContainerState" } } }
+
+  /teams/{id}/container/restart:
+    post:
+      operationId: restartTeamContainer
+      tags: [teams]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Estado del contenedor
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeamContainerState" } } }
+
+  /teams/{id}/container:
+    delete:
+      operationId: destroyTeamContainer
+      tags: [teams]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Contenedor y BD eliminados
+
+  /teams/{id}/container/state:
+    get:
+      operationId: getTeamContainerState
+      tags: [teams]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Estado del contenedor
+          content: { application/json: { schema: { $ref: "#/components/schemas/TeamContainerState" } } }
 
   /teams/{id}/members:
     post:
@@ -2166,7 +2319,27 @@ components:
               type: array
               items: { $ref: "#/components/schemas/TeamMember" }
             publicUrl:        { type: ["string", "null"] }
+            containerName:    { type: string }
             teacherUsername:  { type: string }
+
+    TeamDeployAccepted:
+      type: object
+      required: [teamId, status]
+      properties:
+        teamId: { type: integer }
+        status: { type: string, enum: [deploying] }
+        error:  { type: ["string", "null"] }
+
+    TeamContainerState:
+      type: object
+      required: [teamId, state, exists, containerName]
+      properties:
+        teamId:        { type: integer }
+        state:         { type: string }
+        exists:        { type: boolean }
+        containerName: { type: string }
+        publicUrl:     { type: ["string", "null"] }
+        startedAt:     { type: ["string", "null"] }
 
     TeamInput:
       type: object

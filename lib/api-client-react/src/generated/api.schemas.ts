@@ -689,8 +689,34 @@ export type TeamWithMembers = Team & ({
   members: TeamMember[];
   /** @nullable */
   publicUrl?: string | null;
+  containerName?: string;
   teacherUsername?: string;
 });
+
+export type TeamDeployAcceptedStatus = typeof TeamDeployAcceptedStatus[keyof typeof TeamDeployAcceptedStatus];
+
+
+export const TeamDeployAcceptedStatus = {
+  deploying: 'deploying',
+} as const;
+
+export interface TeamDeployAccepted {
+  teamId: number;
+  status: TeamDeployAcceptedStatus;
+  /** @nullable */
+  error?: string | null;
+}
+
+export interface TeamContainerState {
+  teamId: number;
+  state: string;
+  exists: boolean;
+  containerName: string;
+  /** @nullable */
+  publicUrl?: string | null;
+  /** @nullable */
+  startedAt?: string | null;
+}
 
 export interface TeamInput {
   groupId: number;

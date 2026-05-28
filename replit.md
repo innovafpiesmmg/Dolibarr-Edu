@@ -37,10 +37,14 @@ Plataforma de gestión para centros de FP de Administración de Empresas. **Cada
   - `employees.ts`, `payrolls.ts`, `ss.ts` — módulo de nóminas y Seguridad Social
   - `settings.ts` — configuración del panel (taxSystem, baseDomain, currency, language)
   - `auth.ts` — autenticación del panel y sesión de alumno (redirige a `https://{user}.{baseDomain}/`)
+  - `teams.ts` — equipos (admin): CRUD + lifecycle del contenedor del equipo + miembros
+  - `teacher-panel.ts` — todas las rutas `/teacher/me/*` del panel del profesor (incluye equipos espejo)
 - `artifacts/api-server/src/lib/docker.ts` — wrapper de `dockerode` sobre el socket UNIX
   - `isDockerAvailable`, `ensureStudentContainer`, `start/stop/restart/remove`, `getContainerState`
 - `artifacts/api-server/src/lib/mariadb.ts` — wrapper de `mysql2/promise` sobre la MariaDB compartida
   - `isMariaDbAvailable`, `createStudentDatabase`, `dropStudentDatabase`
+- `artifacts/api-server/src/lib/team-dolibarr.ts` — utilidades por-equipo (naming + `getTeamDolibarrConfig`)
+- `artifacts/api-server/src/lib/team-deploy.ts` — lifecycle del contenedor Dolibarr del equipo (deploy/destroy/start/stop/restart)
 - `artifacts/api-server/src/lib/student-dolibarr.ts` — utilidades por-alumno
   - `studentContainerName`, `studentDbName`, `studentDbUser`, `studentSubdomain`, `studentPublicUrl`
   - `studentDolibarrConfig(student, settings)` — construye `DolibarrConfig` apuntando al contenedor del alumno
@@ -67,6 +71,7 @@ Plataforma de gestión para centros de FP de Administración de Empresas. **Cada
 ## Architecture decisions
 
 - **Un contenedor Dolibarr por alumno** orquestado desde el panel a través del socket Docker (`/var/run/docker.sock`). Sustituye el enfoque anterior de "single-entity + tercero por alumno" — MultiCompany fue descontinuado por su autor en Dolistore y no hay alternativas viables.
+- **Equipos = contenedor Dolibarr INDEPENDIENTE por equipo** (no compartido con el del profe). Nombres `dolibarr_eqp_<groupSlug>_<letter>` + BD `doli_eqp_<...>`. Admin del Dolibarr del equipo = profesor del grupo (reutiliza sus credenciales de Dolibarr individual: por eso es requisito desplegar primero el del profe). Cuando un alumno se une a un equipo, su Dolibarr individual se **pausa** (`stop`, no destruye) y se provisiona como usuario en el Dolibarr del equipo con su misma `dolibarrPassword`; al salir se reanuda. Al borrar el equipo se reanudan los Dolibarrs individuales de todos sus miembros. Endpoints: `POST /teams/:id/deploy|container/start|stop|restart` + `DELETE /teams/:id/container` (espejados en `/teacher/me/teams/...`). Subdominio `equipo-<letter>-<groupSlug>.<baseDomain>` vía Traefik file provider (mismo patrón que alumnos/profes).
 - **MariaDB compartida** (un solo servicio) con una base de datos por alumno (`dolibarr_alu_<username>`) y un usuario por alumno con privilegios sólo sobre su BD. Reduce uso de RAM frente a una MariaDB por contenedor — viable para <30 alumnos en un servidor de 16 GB.
 - **Traefik** como reverse proxy escuchando en `TRAEFIK_PORT` (por defecto 8090). Usa **file provider** (no docker provider): el panel escribe `student-<user>.yaml` en un volumen compartido `traefik_dynamic` con la regla `Host(<usuario>.<BASE_DOMAIN>)` apuntando a `http://dolibarr_alu_<user>:80`. Traefik vigila el directorio y recarga en caliente. El túnel Cloudflare apunta un comodín `*.<BASE_DOMAIN>` a Traefik.
 - **Nombres deterministas**: `dolibarr_alu_<username>` (contenedor + BD + usuario MariaDB). El subdominio es el `username` saneado.
