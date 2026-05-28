@@ -31,20 +31,36 @@ oficial soportada para desactivarlo.
   Dolibarr no usa el layout `php:apache` estándar; esa ruta es ignorada.
   (Probado en mayo 2026 — silently no-op, sin error visible).
 
-## Qué SÍ funciona
+## Qué SÍ funciona — DOS pasos en main.inc.php (uno solo no basta)
 
-Parchear directamente `/var/www/html/main.inc.php` inyectando una línea
-después del `<?php` de apertura:
+Parchear `/var/www/html/main.inc.php` con DOS modificaciones:
 
-```php
-<?php
-if (!defined("NOCSRFCHECK")) { define("NOCSRFCHECK", 1); } /* DOLIBARR_EDU_NOCSRF_PATCH */
-... resto original ...
-```
+1. Inyectar tras el `<?php`:
+   ```php
+   if (!defined("NOCSRFCHECK")) { define("NOCSRFCHECK", 1); } /* DOLIBARR_EDU_NOCSRF_PATCH_V2 */
+   ```
+2. **Renombrar la constante** `CSRFCHECK_WITH_TOKEN` a una que jamás se defina:
+   ```bash
+   sed -i "s/defined('CSRFCHECK_WITH_TOKEN')/defined('DOLIBARR_EDU_DISABLED_CSRF')/g" main.inc.php
+   sed -i 's/defined("CSRFCHECK_WITH_TOKEN")/defined("DOLIBARR_EDU_DISABLED_CSRF")/g' main.inc.php
+   ```
+
+**Why:** son DOS checks independientes en main.inc.php. El primer paso
+(NOCSRFCHECK) desactiva la rama estándar `if (!defined('NOCSRFCHECK') && ...)`.
+Pero existe una SEGUNDA rama `if (defined('CSRFCHECK_WITH_TOKEN'))` que activan
+ciertas páginas con `define('CSRFCHECK_WITH_TOKEN', 1)` antes del require, y
+NOCSRFCHECK **no la afecta**. Si solo aplicas el paso 1, ves
+"constant CSRFCHECK_WITH_TOKEN is defined ... Token not provided" en index.php
+(y otras). Al renombrar la constante a una ficticia, `defined()` devuelve false
+en toda main.inc.php y el bloque entero se salta. Las páginas que la "definen"
+con `define('CSRFCHECK_WITH_TOKEN',1)` siguen ejecutándose, pero ningún sitio
+la consulta ya.
 
 **How to apply:** se ejecuta como parte de `disableCsrfInConfPhp()` en
 `artifacts/api-server/src/lib/docker.ts`, llamado tras cada deploy y por
-`autoHealCsrf` al loguearse el alumno.
+`autoHealCsrf` al loguearse el alumno. **Bumpear el marker** (`_V2`, `_V3`...)
+cada vez que cambies el contenido del patch o los contenedores ya parcheados
+se saltarán el re-patch por el grep de idempotencia.
 
 ## NUNCA usar `mv` desde `/tmp` — destroza permisos
 

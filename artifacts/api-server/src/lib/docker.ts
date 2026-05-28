@@ -243,7 +243,9 @@ export async function disableCsrfInConfPhp(containerName: string): Promise<void>
   // Idempotente: comprueba si ya fue parcheado antes de tocar nada.
   const mainIncPath = "/var/www/html/main.inc.php";
   const backupPath = `${mainIncPath}.dolibarr-edu-bak`;
-  const marker = "DOLIBARR_EDU_NOCSRF_PATCH";
+  // v2: añade renombrado de CSRFCHECK_WITH_TOKEN. Bumpear cada vez que cambie
+  // el contenido del patch para que contenedores ya parcheados se re-parcheen.
+  const marker = "DOLIBARR_EDU_NOCSRF_PATCH_V2";
   // REGLA DE ORO: NUNCA tocar main.inc.php sin backup + lint + rollback.
   // Cualquier fallo deja un 500 generalizado en Dolibarr (también afecta a
   // /login.php, no sólo al SSO). Si php -l falla tras patchear, restauramos.
@@ -268,12 +270,20 @@ export async function disableCsrfInConfPhp(containerName: string): Promise<void>
     `ORIG_OWNER=$(stat -c '%u:%g' ${mainIncPath}); ` +
     `ORIG_MODE=$(stat -c '%a' ${mainIncPath}); ` +
     // 4) Construir versión parcheada en /tmp.
+    //    a) Inyectar NOCSRFCHECK al principio (desactiva el check estándar).
+    //    b) Renombrar la constante 'CSRFCHECK_WITH_TOKEN' por una que NUNCA
+    //       está definida ('DOLIBARR_EDU_DISABLED_CSRF'), así todas las ramas
+    //       `defined('CSRFCHECK_WITH_TOKEN')` de main.inc.php se evalúan a
+    //       false y se salta el bloque entero "Token not provided". NOCSRFCHECK
+    //       NO desactiva esta segunda rama — son dos checks independientes.
     `TMP=$(mktemp); ` +
     `head -n 1 ${mainIncPath} > "$TMP"; ` +
     `cat >> "$TMP" <<'EOF_NOCSRF_PATCH'\n` +
     `if (!defined("NOCSRFCHECK")) { define("NOCSRFCHECK", 1); } /* ${marker} */\n` +
     `EOF_NOCSRF_PATCH\n` +
     `tail -n +2 ${mainIncPath} >> "$TMP"; ` +
+    `sed -i "s/defined('CSRFCHECK_WITH_TOKEN')/defined('DOLIBARR_EDU_DISABLED_CSRF')/g" "$TMP"; ` +
+    `sed -i 's/defined("CSRFCHECK_WITH_TOKEN")/defined("DOLIBARR_EDU_DISABLED_CSRF")/g' "$TMP"; ` +
     // 5) Lint en el fichero temporal — si falla, NO sobreescribimos el original.
     `if ! php -l "$TMP" > /tmp/lint.out 2>&1; then ` +
     `  echo "LINT_FAIL:"; cat /tmp/lint.out; rm -f "$TMP"; exit 1; ` +
