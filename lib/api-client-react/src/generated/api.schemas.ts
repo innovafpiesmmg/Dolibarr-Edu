@@ -185,6 +185,7 @@ export const DeployResultStatus = {
   synced: 'synced',
   error: 'error',
   skipped: 'skipped',
+  deploying: 'deploying',
 } as const;
 
 export interface DeployResult {
@@ -230,6 +231,7 @@ export const TeacherDeployResultStatus = {
   synced: 'synced',
   error: 'error',
   skipped: 'skipped',
+  deploying: 'deploying',
 } as const;
 
 export interface TeacherDeployResult {

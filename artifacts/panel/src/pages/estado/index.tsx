@@ -60,6 +60,8 @@ export default function EstadoSincronizacion() {
           toast({ title: "Desplegado", description: `${name} sincronizado correctamente.` });
         } else if (result.status === "skipped") {
           toast({ title: "Ya estaba desplegado", description: `${name} ya tenía entidad activa.` });
+        } else if (result.status === "deploying") {
+          toast({ title: "Despliegue iniciado", description: `${name} se está preparando en segundo plano.` });
         } else {
           toast({ variant: "destructive", title: "Error", description: result.error ?? "Error desconocido" });
         }

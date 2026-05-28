@@ -175,7 +175,7 @@ export const DeployTeacherParams = zod.object({
 
 export const DeployTeacherResponse = zod.object({
   "teacherId": zod.number(),
-  "status": zod.enum(['synced', 'error', 'skipped']),
+  "status": zod.enum(['synced', 'error', 'skipped', 'deploying']),
   "containerName": zod.string().nullish(),
   "publicUrl": zod.string().nullish(),
   "containerState": zod.string().nullish(),
@@ -571,7 +571,7 @@ export const DeployStudentParams = zod.object({
 
 export const DeployStudentResponse = zod.object({
   "studentId": zod.number(),
-  "status": zod.enum(['synced', 'error', 'skipped']),
+  "status": zod.enum(['synced', 'error', 'skipped', 'deploying']),
   "containerName": zod.string().nullish().describe('Nombre del contenedor Docker creado para el alumno.'),
   "publicUrl": zod.string().nullish().describe('URL pública del Dolibarr del alumno (https:\/\/{user}.{baseDomain}\/).'),
   "containerState": zod.string().nullish().describe('Estado del contenedor: running, exited, created, etc.'),

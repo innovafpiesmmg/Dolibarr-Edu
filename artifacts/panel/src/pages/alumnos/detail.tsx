@@ -166,6 +166,11 @@ export default function StudentDetail() {
           });
         } else if (result.status === "skipped") {
           toast({ title: "Ya estaba desplegado", description: "Este alumno ya tiene su empresa creada en Dolibarr." });
+        } else if (result.status === "deploying") {
+          toast({
+            title: "Despliegue iniciado",
+            description: "El contenedor se está preparando en segundo plano (puede tardar 1–3 minutos).",
+          });
         } else {
           toast({
             variant: "destructive",

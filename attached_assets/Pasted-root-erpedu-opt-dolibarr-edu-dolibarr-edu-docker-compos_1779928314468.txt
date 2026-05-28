@@ -1,0 +1,74 @@
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# docker compose -f /opt/dolibarr-edu/dolibarr-edu/docker-compose.yml logs --tail=120 --no-color panel_api 2>&1 | tail -120
+dolibarr_panel_api  | {"level":30,"time":1779928065164,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","path":"/etc/traefik/dynamic/student-juanperez.yaml","msg":"Ruta Traefik escrita"}
+dolibarr_panel_api  | {"level":30,"time":1779928065165,"pid":1,"hostname":"120c70fcd2e4","students":1,"teachers":0,"teams":0,"msg":"Rutas Traefik reconstruidas desde BD"}
+dolibarr_panel_api  | {"level":30,"time":1779928065172,"pid":1,"hostname":"120c70fcd2e4","port":8080,"msg":"Server listening"}
+dolibarr_panel_api  | {"level":30,"time":1779928115709,"pid":1,"hostname":"120c70fcd2e4","req":{"id":1,"method":"POST","url":"/api/auth/login"},"res":{"statusCode":200},"responseTime":19,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928115843,"pid":1,"hostname":"120c70fcd2e4","req":{"id":2,"method":"GET","url":"/api/stats"},"res":{"statusCode":304},"responseTime":24,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928119955,"pid":1,"hostname":"120c70fcd2e4","req":{"id":3,"method":"GET","url":"/api/groups"},"res":{"statusCode":304},"responseTime":9,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928119972,"pid":1,"hostname":"120c70fcd2e4","req":{"id":4,"method":"GET","url":"/api/students"},"res":{"statusCode":304},"responseTime":22,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928125113,"pid":1,"hostname":"120c70fcd2e4","req":{"id":5,"method":"GET","url":"/api/students/1"},"res":{"statusCode":304},"responseTime":4,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928125136,"pid":1,"hostname":"120c70fcd2e4","req":{"id":6,"method":"GET","url":"/api/students/1/dolibarr/state"},"res":{"statusCode":304},"responseTime":20,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928129957,"pid":1,"hostname":"120c70fcd2e4","container":"dolibarr_alu_juanperez","msg":"Contenedor eliminado"}
+dolibarr_panel_api  | {"level":30,"time":1779928133271,"pid":1,"hostname":"120c70fcd2e4","req":{"id":8,"method":"GET","url":"/api/students/1/dolibarr/state"},"res":{"statusCode":200},"responseTime":5,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928137769,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","dbUser":"doli_juanperez","msg":"Base de datos de alumno eliminada"}
+dolibarr_panel_api  | {"level":30,"time":1779928137772,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","msg":"Ruta Traefik eliminada"}
+dolibarr_panel_api  | {"level":30,"time":1779928137786,"pid":1,"hostname":"120c70fcd2e4","req":{"id":7,"method":"DELETE","url":"/api/students/1/dolibarr"},"res":{"statusCode":204},"responseTime":9591,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928137863,"pid":1,"hostname":"120c70fcd2e4","req":{"id":9,"method":"GET","url":"/api/students/1"},"res":{"statusCode":200},"responseTime":6,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928137883,"pid":1,"hostname":"120c70fcd2e4","req":{"id":10,"method":"GET","url":"/api/students/1/dolibarr/state"},"res":{"statusCode":304},"responseTime":24,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928143410,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","container":"dolibarr_alu_juanperez","hostname":"juanperez.iesmmg.es","msg":"Iniciando despliegue Dolibarr de alumno"}
+dolibarr_panel_api  | {"level":30,"time":1779928143412,"pid":1,"hostname":"120c70fcd2e4","req":{"id":11,"method":"POST","url":"/api/students/1/deploy"},"res":{"statusCode":202},"responseTime":11,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928143424,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","dbUser":"doli_juanperez","msg":"Base de datos de alumno asegurada"}
+dolibarr_panel_api  | {"level":30,"time":1779928143511,"pid":1,"hostname":"120c70fcd2e4","req":{"id":12,"method":"GET","url":"/api/students/1"},"res":{"statusCode":200},"responseTime":5,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928146148,"pid":1,"hostname":"120c70fcd2e4","container":"dolibarr_alu_juanperez","msg":"Contenedor Dolibarr creado y arrancado"}
+dolibarr_panel_api  | {"level":30,"time":1779928146206,"pid":1,"hostname":"120c70fcd2e4","req":{"id":13,"method":"GET","url":"/api/students/1/dolibarr/state"},"res":{"statusCode":200},"responseTime":177,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928147030,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","container":"dolibarr_alu_juanperez","hostname":"juanperez.iesmmg.es","msg":"Iniciando despliegue Dolibarr de alumno"}
+dolibarr_panel_api  | {"level":30,"time":1779928147031,"pid":1,"hostname":"120c70fcd2e4","req":{"id":14,"method":"POST","url":"/api/students/1/deploy"},"res":{"statusCode":202},"responseTime":11,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928147071,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","dbUser":"doli_juanperez","msg":"Base de datos de alumno asegurada"}
+dolibarr_panel_api  | {"level":30,"time":1779928147169,"pid":1,"hostname":"120c70fcd2e4","req":{"id":15,"method":"GET","url":"/api/students/1"},"res":{"statusCode":304},"responseTime":3,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928154363,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","container":"dolibarr_alu_juanperez","hostname":"juanperez.iesmmg.es","msg":"Iniciando despliegue Dolibarr de alumno"}
+dolibarr_panel_api  | {"level":30,"time":1779928154364,"pid":1,"hostname":"120c70fcd2e4","req":{"id":16,"method":"POST","url":"/api/students/1/deploy"},"res":{"statusCode":202},"responseTime":17,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928154381,"pid":1,"hostname":"120c70fcd2e4","req":{"id":17,"method":"GET","url":"/api/students/1/dolibarr/state"},"res":{"statusCode":304},"responseTime":25,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928154400,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","dbUser":"doli_juanperez","msg":"Base de datos de alumno asegurada"}
+dolibarr_panel_api  | {"level":30,"time":1779928154462,"pid":1,"hostname":"120c70fcd2e4","req":{"id":18,"method":"GET","url":"/api/students/1"},"res":{"statusCode":304},"responseTime":4,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928158830,"pid":1,"hostname":"120c70fcd2e4","req":{"id":20,"method":"GET","url":"/api/students/1"},"res":{"statusCode":304},"responseTime":3,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928158835,"pid":1,"hostname":"120c70fcd2e4","req":{"id":19,"method":"GET","url":"/api/students/1/dolibarr/state"},"res":{"statusCode":304},"responseTime":10,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928161820,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","container":"dolibarr_alu_juanperez","hostname":"juanperez.iesmmg.es","msg":"Iniciando despliegue Dolibarr de alumno"}
+dolibarr_panel_api  | {"level":30,"time":1779928161821,"pid":1,"hostname":"120c70fcd2e4","req":{"id":21,"method":"POST","url":"/api/students/1/deploy"},"res":{"statusCode":202},"responseTime":10,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928161842,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","dbUser":"doli_juanperez","msg":"Base de datos de alumno asegurada"}
+dolibarr_panel_api  | {"level":30,"time":1779928161921,"pid":1,"hostname":"120c70fcd2e4","req":{"id":22,"method":"GET","url":"/api/students/1"},"res":{"statusCode":304},"responseTime":2,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928215320,"pid":1,"hostname":"120c70fcd2e4","req":{"id":23,"method":"POST","url":"/api/auth/login"},"res":{"statusCode":200},"responseTime":2,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928215491,"pid":1,"hostname":"120c70fcd2e4","req":{"id":24,"method":"GET","url":"/api/stats"},"res":{"statusCode":304},"responseTime":25,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928218067,"pid":1,"hostname":"120c70fcd2e4","req":{"id":25,"method":"GET","url":"/api/students"},"res":{"statusCode":200},"responseTime":4,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928218084,"pid":1,"hostname":"120c70fcd2e4","req":{"id":26,"method":"GET","url":"/api/groups"},"res":{"statusCode":304},"responseTime":19,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928221020,"pid":1,"hostname":"120c70fcd2e4","req":{"id":27,"method":"GET","url":"/api/students/1"},"res":{"statusCode":200},"responseTime":4,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928221026,"pid":1,"hostname":"120c70fcd2e4","req":{"id":28,"method":"GET","url":"/api/students/1/dolibarr/state"},"res":{"statusCode":200},"responseTime":8,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928222071,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","container":"dolibarr_alu_juanperez","hostname":"juanperez.iesmmg.es","msg":"Iniciando despliegue Dolibarr de alumno"}
+dolibarr_panel_api  | {"level":30,"time":1779928222072,"pid":1,"hostname":"120c70fcd2e4","req":{"id":29,"method":"POST","url":"/api/students/1/deploy"},"res":{"statusCode":202},"responseTime":10,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928222216,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","dbUser":"doli_juanperez","msg":"Base de datos de alumno asegurada"}
+dolibarr_panel_api  | {"level":30,"time":1779928222226,"pid":1,"hostname":"120c70fcd2e4","req":{"id":30,"method":"GET","url":"/api/students/1"},"res":{"statusCode":304},"responseTime":3,"msg":"request completed"}
+dolibarr_panel_api  | {"level":30,"time":1779928244730,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","count":20,"msg":"Módulos Dolibarr activados vía SQL"}
+dolibarr_panel_api  | {"level":30,"time":1779928244739,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","msg":"CSRF token check desactivado en Dolibarr alumno"}
+dolibarr_panel_api  | {"level":30,"time":1779928245044,"pid":1,"hostname":"120c70fcd2e4","containerName":"dolibarr_alu_juanperez","result":"\u0001\u0000\u0000\u0000\u0000\u0000\u0000\bapplied","msg":"CSRF parche aplicado a main.inc.php"}
+dolibarr_panel_api  | {"level":30,"time":1779928245047,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","path":"/etc/traefik/dynamic/student-juanperez.yaml","msg":"Ruta Traefik escrita"}
+dolibarr_panel_api  | {"level":30,"time":1779928245048,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","state":"running","msg":"Dolibarr de alumno desplegado"}
+dolibarr_panel_api  | {"level":30,"time":1779928245463,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","count":20,"msg":"Módulos Dolibarr activados vía SQL"}
+dolibarr_panel_api  | {"level":30,"time":1779928245468,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","msg":"CSRF token check desactivado en Dolibarr alumno"}
+dolibarr_panel_api  | {"level":30,"time":1779928245532,"pid":1,"hostname":"120c70fcd2e4","containerName":"dolibarr_alu_juanperez","result":"\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0015already-patched-main","msg":"CSRF parche aplicado a main.inc.php"}
+dolibarr_panel_api  | {"level":30,"time":1779928245534,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","path":"/etc/traefik/dynamic/student-juanperez.yaml","msg":"Ruta Traefik escrita"}
+dolibarr_panel_api  | {"level":30,"time":1779928245534,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","state":"running","msg":"Dolibarr de alumno desplegado"}
+dolibarr_panel_api  | {"level":30,"time":1779928246139,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","count":20,"msg":"Módulos Dolibarr activados vía SQL"}
+dolibarr_panel_api  | {"level":30,"time":1779928246143,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","msg":"CSRF token check desactivado en Dolibarr alumno"}
+dolibarr_panel_api  | {"level":30,"time":1779928246185,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","count":20,"msg":"Módulos Dolibarr activados vía SQL"}
+dolibarr_panel_api  | {"level":30,"time":1779928246192,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","msg":"CSRF token check desactivado en Dolibarr alumno"}
+dolibarr_panel_api  | {"level":30,"time":1779928246230,"pid":1,"hostname":"120c70fcd2e4","containerName":"dolibarr_alu_juanperez","result":"\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0015already-patched-main","msg":"CSRF parche aplicado a main.inc.php"}
+dolibarr_panel_api  | {"level":30,"time":1779928246234,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","path":"/etc/traefik/dynamic/student-juanperez.yaml","msg":"Ruta Traefik escrita"}
+dolibarr_panel_api  | {"level":30,"time":1779928246234,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","state":"running","msg":"Dolibarr de alumno desplegado"}
+dolibarr_panel_api  | {"level":30,"time":1779928246276,"pid":1,"hostname":"120c70fcd2e4","containerName":"dolibarr_alu_juanperez","result":"\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0015already-patched-main","msg":"CSRF parche aplicado a main.inc.php"}
+dolibarr_panel_api  | {"level":30,"time":1779928246281,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","count":20,"msg":"Módulos Dolibarr activados vía SQL"}
+dolibarr_panel_api  | {"level":30,"time":1779928246284,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","path":"/etc/traefik/dynamic/student-juanperez.yaml","msg":"Ruta Traefik escrita"}
+dolibarr_panel_api  | {"level":30,"time":1779928246284,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","state":"running","msg":"Dolibarr de alumno desplegado"}
+dolibarr_panel_api  | {"level":30,"time":1779928246292,"pid":1,"hostname":"120c70fcd2e4","dbName":"doli_juanperez","msg":"CSRF token check desactivado en Dolibarr alumno"}
+dolibarr_panel_api  | {"level":30,"time":1779928246355,"pid":1,"hostname":"120c70fcd2e4","containerName":"dolibarr_alu_juanperez","result":"\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0015already-patched-main","msg":"CSRF parche aplicado a main.inc.php"}
+dolibarr_panel_api  | {"level":30,"time":1779928246358,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","path":"/etc/traefik/dynamic/student-juanperez.yaml","msg":"Ruta Traefik escrita"}
+dolibarr_panel_api  | {"level":30,"time":1779928246358,"pid":1,"hostname":"120c70fcd2e4","username":"juanperez","state":"running","msg":"Dolibarr de alumno desplegado"}
+root@erpedu:/opt/dolibarr-edu/dolibarr-edu# 

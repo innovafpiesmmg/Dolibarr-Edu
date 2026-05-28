@@ -140,6 +140,8 @@ export default function TeacherDetail() {
         invalidateAll();
         if (r.status === "error") {
           toast({ variant: "destructive", title: "Error de despliegue", description: r.error ?? "Falló el despliegue del contenedor." });
+        } else if (r.status === "deploying") {
+          toast({ title: "Despliegue iniciado", description: "El contenedor se está preparando en segundo plano (puede tardar 1–3 minutos)." });
         } else {
           toast({ title: "Dolibarr desplegado", description: "El contenedor del profesor está en marcha." });
         }
