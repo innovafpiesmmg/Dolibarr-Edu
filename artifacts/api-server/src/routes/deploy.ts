@@ -30,6 +30,29 @@ import type { ContainerInfo } from "../lib/docker";
 
 const router: IRouter = Router();
 
+// Convierte CUALQUIER throw (Error, string, objeto de mysql2/dockerode, etc.)
+// en un mensaje útil. Sin esto, "Error desconocido" oculta la verdadera causa.
+function describeError(err: unknown): string {
+  if (err instanceof Error) {
+    const code = (err as { code?: string }).code;
+    return code ? `[${code}] ${err.message}` : err.message;
+  }
+  if (typeof err === "string") return err;
+  if (err && typeof err === "object") {
+    const e = err as { code?: string; errno?: number; sqlMessage?: string; message?: string; reason?: string };
+    const parts = [
+      e.code,
+      e.sqlMessage,
+      e.message,
+      e.reason,
+      e.errno != null ? `errno=${e.errno}` : null,
+    ].filter(Boolean);
+    if (parts.length) return parts.join(" — ");
+    try { return JSON.stringify(err); } catch { /* noop */ }
+  }
+  return `Error desconocido (${String(err)})`;
+}
+
 function parseStudentId(idRaw: string): number | null {
   const id = Number(idRaw);
   return Number.isFinite(id) && id > 0 ? id : null;
@@ -112,7 +135,8 @@ router.post("/students/:id/deploy", async (req, res) => {
         details: `Contenedor ${result.containerName} desplegado en ${result.hostname}`,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error desconocido";
+      const message = describeError(err);
+      req.log.error({ err, studentId, username: student.username }, "Deploy alumno falló");
       await db
         .update(studentsTable)
         .set({ dolibarrSyncStatus: "error", dolibarrSyncError: message })
@@ -351,7 +375,8 @@ router.post("/teachers/:id/deploy", async (req, res) => {
         details: `Contenedor ${result.containerName} desplegado en ${result.hostname}`,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error desconocido";
+      const message = describeError(err);
+      req.log.error({ err, teacherId, username: teacher.username }, "Deploy profesor falló");
       await db
         .update(teachersTable)
         .set({ dolibarrSyncStatus: "error", dolibarrSyncError: message })
